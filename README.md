@@ -79,6 +79,25 @@ All package managers supported. The script auto-detects your package manager.
 - Run inside WSL Linux environment, not Windows
 - Works with Docker Desktop WSL2 backend
 
+### Windows (PowerShell)
+
+For native Windows, use `windows/fu.ps1`:
+
+```powershell
+# Option 1: Clone and run locally
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu\windows
+.\fu.ps1
+
+# Option 2: Run directly from remote (bypasses execution policy)
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/windows/fu.ps1 | Invoke-Expression
+
+# Option 3: Bypass execution policy for local script
+powershell -ExecutionPolicy Bypass -File .\windows\fu.ps1
+```
+
+**Note:** If you see a "not digitally signed" error, use Option 2 or 3 above.
+
 ### ARM (Apple Silicon, Raspberry Pi)
 
 - ARM builds supported for all tools
