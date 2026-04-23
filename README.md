@@ -12,6 +12,19 @@
 - macOS (Intel & Apple Silicon) — Homebrew
 - Windows (WSL2) — Ubuntu, Debian
 
+## What Can Be Installed
+
+| Category | Tools |
+|----------|-------|
+| **Containers** | Docker |
+| **Networking** | Avahi Daemon (mDNS/NSS for local network discovery) |
+| **Languages** | Go, Rust, Node.js (LTS via nvm), Python (with pipx, uv), PHP |
+| **Runtimes** | Bun (JavaScript), Composer (PHP) |
+| **Package Managers** | Yarn (bundled with Dev Tools), npm |
+| **Web Dev** | Laravel installer (via Composer) |
+| **AI Tools** | OpenCode, Get-Shit-Done (GSD) |
+| **Productivity** | Fancy Prompt (optional shell enhancement) |
+
 ## Prerequisites
 
 - POSIX-compatible shell (bash, zsh)
@@ -24,10 +37,13 @@
 ## Quick Start
 
 ```bash
-# Clone and run
-git clone https://github.com/yourusername/fu.sh.git
-cd fu.sh
+# Option 1: Clone and run
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
 ./fu.sh
+
+# Option 2: Run directly from remote (no clone needed)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh | bash
 ```
 
 ## Usage
