@@ -1,133 +1,116 @@
-# dev-fu — Environment Setup Utility
+# fu.sh — One command to bootstrap a developer machine
 
-## Overview
+**One command to bootstrap a complete developer machine, anywhere.**
 
-`fu.sh` is a Bash/Zsh script designed to automate the installation and configuration of a basic development environment. It provides a menu-driven interface to install tools, configure prompts, check system status, and manage developer utilities.
+## Supported Platforms
 
-The script is compatible with:
+- Linux (x86_64, ARM/aarch64)
+  - Debian / Ubuntu (apt)
+  - Fedora / RHEL (dnf)
+  - Arch Linux (pacman)
+  - openSUSE (zypper)
+- macOS (Intel & Apple Silicon) — Homebrew
+- Windows (WSL2) — Ubuntu, Debian
 
-- **WSL2**
-  
-- **Linux (and LXC)**
-  
-- **ZSH on macOS**
-  
+## Prerequisites
 
-## Features
+- POSIX-compatible shell (bash, zsh)
+- curl or wget for downloads
+- sudo privileges (for system package installs)
+- Internet connection
 
-### 1. Install Docker 🐳
+**NOTE:** For WSL2, run inside the Linux distribution, not PowerShell.
 
-- Installs Docker using the official installation script.
-  
-- Skips installation if Docker is already present.
-  
+## Quick Start
 
-### 2. Fancy Prompt ✨
-
-- Downloads and sets up a custom fancy prompt.
-  
-- Option to remove the fancy prompt and restore defaults.
-  
-
-### 4. Status Check 🔍
-
-- Verifies installation and versions of key developer tools:
-  
-  - Docker, Go, Rust (rustc, cargo, rustup), Bun, Node.js, Python, pip, pipx, uv
-    
-  - NVM and Unzip
-    
-- Detects **OpenCode** and **GSD** availability:
-  
-  - Checks for `opencode` binary or npm global package.
-    
-  - Checks for `gsd-opencode` globally or via `npx`.
-    
-
-### 5. Install Dev Tools 🛠️
-
-- Installs Go, Rust, Bun, Node.js (LTS), Python, pipx, and uv.
-  
-- Configures environment variables for Rust, Bun, and NVM.
-  
-
-### 5a. Uninstall Dev Tool
-
-- Removes selected developer tools (Rust, Node, Bun, Python, Go, pipx, uv).
-
-### 6. OpenCode + GSD 🚀
-
-- Installs **OpenCode** via curl or npm.
-  
-- Installs **GSD** using `npx gsd-opencode@latest`.
-  
-- Disables mouse reporting permanently.
-  
-
-### 6a. Remove OpenCode
-
-- Uninstalls OpenCode (npm global package).
-
-### 6b. Remove GSD
-
-- Runs `gsd-opencode uninstall` to remove GSD.
+```bash
+# Clone and run
+git clone https://github.com/yourusername/fu.sh.git
+cd fu.sh
+./fu.sh
+```
 
 ## Usage
 
-1. Clone the repository:
-  
-  ```
-  git clone https://github.com/C-Fu/dev-fu.git
-  cd dev-fu
-  ```
-  
-2. Make the script executable:
-  
-  ```
-  chmod +x fu.sh
-  ```
-  
-3. Run the script:
-  
-  ```
-  ./fu.sh
-  ```
-  
-4. Use the interactive menu to select options.
-  
-
-## Run Directly with curl
-
-You can run `fu.sh` directly from the repository without cloning:
+Run `./fu.sh` and select options from the menu:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh | bash
+1) Install Docker          1a) Remove Docker
+2) Create Fancy Prompt    2a) Remove Fancy Prompt
+3) Install Avahi Daemon   3a) Remove Avahi Daemon
+4) Status Check
+5) Install Dev Tools       5a) Uninstall Dev Tool
+6) Install OpenCode + GSD  6a) Remove OpenCode
+                          6b) Remove GSD
+7) Install PHP + Laravel  7a) Uninstall PHP + Laravel
 ```
 
-## Menu Options
+Select an option by number (e.g., `5` to install dev tools).
 
+## What Gets Installed
+
+- **Docker** — Container runtime
+- **Avahi Daemon** — Local network discovery (mDNS/NSS)
+- **Go** — Programming language
+- **Rust** — Systems programming
+- **Bun** — JavaScript runtime
+- **Node.js** — JavaScript runtime (LTS via nvm)
+- **Python** — Programming language (python3, pipx, uv)
+- **Yarn** — Package manager (bundled with Dev Tools)
+- **OpenCode** — AI coding assistant
+- **GSD** — Developer workflow system
+- **PHP + Laravel** — PHP stack
+
+## Platform-Specific Notes
+
+### Linux
+
+All package managers supported. The script auto-detects your package manager.
+
+### macOS
+
+- Requires Homebrew: `brew install bash`
+- Node via nvm, not system Node
+
+### WSL2
+
+- Run inside WSL Linux environment, not Windows
+- Works with Docker Desktop WSL2 backend
+
+### ARM (Apple Silicon, Raspberry Pi)
+
+- ARM builds supported for all tools
+- Bun, Go, Rust have native ARM binaries
+
+## Troubleshooting
+
+### "command not found"
+
+Some tools install to `~/.cargo/bin`, `~/.bun/bin`, or `~/.nvm/versions/node/`. Add to PATH:
+
+```bash
+source ~/.cargo/env    # Rust
+export PATH="$HOME/.bun/bin:$PATH"  # Bun
+source ~/.nvm/nvm.sh   # Node
 ```
-1) 🐳  Install Docker
-2) ✨  Create Fancy Prompt
-   2a) Remove Fancy Prompt
-4) 🔍  Status Check (Docker, Go, Rust, Node, Python, Bun, etc.)
-5) 🛠️  Install Dev Tools (Go, Rust, Bun, Node LTS, Python)
-   5a) Uninstall Dev Tool
-6) 🚀  Install OpenCode and Get-Shit-Done
-   6a) Remove OpenCode
-   6b) Remove GSD
-q) Quit
+
+### Permission denied
+
+```bash
+chmod +x fu.sh
 ```
 
-## Notes
+### Network issues
 
-- The script uses `apt-get` for package installation (Debian/Ubuntu-based systems).
-  
-- For macOS, ensure Homebrew or equivalent package manager is available for dependencies.
-  
-- OpenCode and GSD detection logic has been improved to check both binaries and npm installs.
-  
+The script includes retry logic (3 attempts, 2s delay). For manual installs,
+see individual tool installation docs.
 
-## Author
+## Exit Codes
 
-Created by **C-Fu** for streamlined developer environment setup.
+- 0 — Success
+- 1 — Error (check error message for hint)
+- 2 — Invalid option
+
+## License
+
+MIT
