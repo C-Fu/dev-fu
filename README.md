@@ -16,14 +16,14 @@
 
 | Category | Tools |
 |----------|-------|
-| **Containers** | Docker |
-| **Networking** | Avahi Daemon (mDNS/NSS for local network discovery) |
-| **Languages** | Go, Rust, Node.js (LTS via nvm), Python (with pipx, uv), PHP |
-| **Runtimes** | Bun (JavaScript), Composer (PHP) |
-| **Package Managers** | Yarn (bundled with Dev Tools), npm |
-| **Web Dev** | Laravel installer (via Composer) |
-| **AI Tools** | OpenCode, Get-Shit-Done (GSD) |
-| **Productivity** | Fancy Prompt (optional shell enhancement) |
+| **Containers** | [Docker](https://www.docker.com/) |
+| **Networking** | [Avahi Daemon](https://github.com/lathiat/avahi) — mDNS/NSS for local network discovery |
+| **Languages** | [Go](https://go.dev/), [Rust](https://www.rust-lang.org/), [Node.js](https://nodejs.org/) (LTS via nvm), [Python](https://www.python.org/) (with pipx, uv), [PHP](https://www.php.net/) |
+| **Runtimes** | [Bun](https://bun.sh/) (JavaScript), [Composer](https://getcomposer.org/) (PHP) |
+| **Package Managers** | [Yarn](https://yarnpkg.com/) (bundled with Dev Tools), npm |
+| **Web Dev** | [Laravel](https://laravel.com/) installer (via Composer) |
+| **AI Tools** | [OpenCode](https://github.com/anomalyco/opencode), [Get-Shit-Done (GSD)](https://github.com/rokicool/gsd-opencode) |
+| **Productivity** | [Fancy Prompt](https://github.com/jonathan-scholbach/fancy-prompt) — optional shell enhancement |
 
 ## Prerequisites
 
@@ -62,20 +62,6 @@ Run `./fu.sh` and select options from the menu:
 ```
 
 Select an option by number (e.g., `5` to install dev tools).
-
-## What Gets Installed
-
-- **Docker** — Container runtime
-- **Avahi Daemon** — Local network discovery (mDNS/NSS)
-- **Go** — Programming language
-- **Rust** — Systems programming
-- **Bun** — JavaScript runtime
-- **Node.js** — JavaScript runtime (LTS via nvm)
-- **Python** — Programming language (python3, pipx, uv)
-- **Yarn** — Package manager (bundled with Dev Tools)
-- **OpenCode** — AI coding assistant
-- **GSD** — Developer workflow system
-- **PHP + Laravel** — PHP stack
 
 ## Platform-Specific Notes
 
