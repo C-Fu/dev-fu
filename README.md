@@ -43,7 +43,7 @@ cd dev-fu
 ./fu.sh
 
 # Option 2: Run directly from remote (no clone needed)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
 ## Usage
