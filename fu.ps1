@@ -296,10 +296,18 @@ function Install-OpenCode {
     }
 
     Write-Host "${CYAN}  Installing OpenCode...${NC}"
-    curl -fsSL https://opencode.ai/install | bash
+    npm install -g opencode-ai
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "${RED}  OpenCode install failed${NC}"
+        return
+    }
 
     Write-Host "${CYAN}  Installing GSD...${NC}"
-    npm exec gsd-opencode@latest
+    npx gsd-opencode@latest
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "${RED}  GSD install failed${NC}"
+        return
+    }
 
     Write-Host ""
     Write-Host "${GREEN}  ✓ OpenCode + GSD installed successfully${NC}"

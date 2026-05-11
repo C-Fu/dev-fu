@@ -35,6 +35,19 @@ UNDERLINE="\033[4m"
 NC="\033[0m"
 
 # ──────────────
+# 📡 Terminal Check (for curl | bash)
+# ──────────────
+# If stdin is not a TTY (e.g. curl | bash), reattach to /dev/tty
+# so interactive read/prompt commands work correctly
+if [ ! -t 0 ] && [ -r /dev/tty ]; then
+    exec 0</dev/tty
+elif [ ! -t 0 ]; then
+    echo "Error: This script requires an interactive terminal." >&2
+    echo "Try running: bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)" >&2
+    exit 1
+fi
+
+# ──────────────
 # ┌─ Box Drawing
 # ──────────────
 BOX_TL="┌"  # Top-left
@@ -121,10 +134,18 @@ retry_network() {
 # ──────────────
 # 🔍 Platform Detection
 # ──────────────
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/platform-detect.sh" ]; then
-    source "$SCRIPT_DIR/platform-detect.sh"
-fi
+detect_platform() {
+    local os
+    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    case "$os" in
+        linux*)     echo "linux" ;;
+        darwin*)    echo "darwin" ;;
+        msys*|cygwin*|mingw*) echo "windows" ;;
+        *)          echo "linux" ;;
+    esac
+}
+
+DETECTED_OS="$(detect_platform)"
 
 get_pkg_manager() {
     case "$DETECTED_OS" in
@@ -157,6 +178,89 @@ get_pkg_manager() {
             echo "apt"
             ;;
     esac
+}
+
+# ──────────────
+# 📦 Package Manager Abstractions
+# ──────────────
+pkg_update() {
+    local pm
+    pm="$(get_pkg_manager)"
+    case "$pm" in
+        apt)  sudo apt-get update ;;
+        dnf)  sudo dnf check-update || true ;;
+        pacman) sudo pacman -Sy ;;
+        zypper) sudo zypper refresh ;;
+        brew) brew update ;;
+        *) echo -e "${YELLOW}⚠ No update command for $pm${NC}" >&2 ;;
+    esac
+}
+
+pkg_install() {
+    local pm
+    pm="$(get_pkg_manager)"
+    case "$pm" in
+        apt)  sudo apt-get install -y "$@" ;;
+        dnf)  sudo dnf install -y "$@" ;;
+        pacman) sudo pacman -S --noconfirm "$@" ;;
+        zypper) sudo zypper install -y "$@" ;;
+        brew) brew install "$@" ;;
+        *) die "Unsupported package manager: $pm" 1 ;;
+    esac
+}
+
+pkg_remove() {
+    local pm
+    pm="$(get_pkg_manager)"
+    case "$pm" in
+        apt)  sudo apt-get remove -y "$@" ;;
+        dnf)  sudo dnf remove -y "$@" ;;
+        pacman) sudo pacman -R --noconfirm "$@" ;;
+        zypper) sudo zypper remove -y "$@" ;;
+        brew) brew uninstall "$@" || true ;;
+        *) die "Unsupported package manager: $pm" 1 ;;
+    esac
+}
+
+pkg_purge() {
+    local pm
+    pm="$(get_pkg_manager)"
+    case "$pm" in
+        apt)  sudo apt-get purge -y "$@" ;;
+        dnf)  sudo dnf remove -y "$@" ;;
+        pacman) sudo pacman -Rns --noconfirm "$@" ;;
+        zypper) sudo zypper remove -y "$@" ;;
+        brew) brew uninstall --force "$@" || true ;;
+        *) die "Unsupported package manager: $pm" 1 ;;
+    esac
+}
+
+pkg_autoremove() {
+    local pm
+    pm="$(get_pkg_manager)"
+    case "$pm" in
+        apt)  sudo apt-get autoremove -y ;;
+        dnf)  sudo dnf autoremove -y ;;
+        pacman) sudo pacman -Sc --noconfirm || true ;;
+        zypper) sudo zypper clean || true ;;
+        brew) brew cleanup || true ;;
+        *) true ;;
+    esac
+}
+
+# ──────────────
+# 🔒 Sudo Validation
+# ──────────────
+ensure_sudo() {
+    if [ "$DETECTED_OS" = "darwin" ] || [ "$DETECTED_OS" = "windows" ]; then
+        return 0
+    fi
+    if ! sudo -n true 2>/dev/null; then
+        echo -e "${YELLOW}🔒 This script requires sudo privileges for system package installation.${NC}"
+        if ! sudo -v; then
+            die "sudo access is required. Please run with a user that has sudo privileges." 1
+        fi
+    fi
 }
 
 # ──────────────
@@ -214,7 +318,7 @@ install_docker() {
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     
     echo -e "${CYAN}  Downloading Docker install script...${NC}"
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh || die "Docker download failed" 1
+    retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || die "Docker download failed" 1
     sudo sh /tmp/get-docker.sh || die "Docker install failed" 1
     rm -f /tmp/get-docker.sh
     
@@ -236,10 +340,10 @@ remove_docker() {
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     
     echo -e "${CYAN}  Removing Docker...${NC}"
-    sudo apt-get purge -y docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
+    pkg_purge docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
     sudo rm -rf /var/lib/docker /etc/docker
     sudo rm -f /etc/apt/sources.list.d/docker.list
-    sudo apt-get update
+    pkg_update || true
     
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
 }
@@ -268,8 +372,8 @@ install_avahi() {
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     
     echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
-    sudo apt-get update || die "apt-get update failed" $?
-    sudo apt-get install -y avahi-daemon avahi-utils || die "avahi-daemon install failed" $?
+    pkg_update || die "package update failed" $?
+    pkg_install avahi-daemon avahi-utils || die "avahi-daemon install failed" $?
     sudo systemctl enable avahi-daemon || die "enable avahi-daemon failed" $?
     sudo systemctl start avahi-daemon || die "start avahi-daemon failed" $?
     
@@ -293,8 +397,8 @@ remove_avahi() {
     echo -e "${CYAN}  Removing Avahi Daemon...${NC}"
     sudo systemctl stop avahi-daemon 2>/dev/null || true
     sudo systemctl disable avahi-daemon 2>/dev/null || true
-    sudo apt-get purge -y avahi-daemon avahi-utils || true
-    sudo apt-get autoremove -y
+    pkg_purge avahi-daemon avahi-utils || true
+    pkg_autoremove || true
     
     echo -e "${GREEN}  ✓ Avahi Daemon removed successfully${NC}"
 }
@@ -313,7 +417,7 @@ create_fancy_prompt() {
     read -rp "  Replace current fancy prompt? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
 
-    curl -fsSL "$url" -o "$target" || die "Download failed" 1
+    retry_network 3 5 "curl -fsSL '$url' -o '$target'" || die "Download failed" 1
     chmod +x "$target"
     append_rc_if_missing "$rc_file" "source ~/.fancy-prompt.sh"
     source "$target" 2>/dev/null || true
@@ -383,8 +487,30 @@ status_check() {
         echo -e "  ${RED}${EMOJI_CROSS}${NC} OpenCode     : ${RED}NOT installed${NC}"
     fi
 
+    # GSD detection: direct command, npm global, npx cache, or common paths
+    local gsd_found=0
+    local gsd_version=""
     if command -v gsd-opencode >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} GSD          : ${GREEN}installed${NC}"
+        gsd_found=1
+        gsd_version=$(gsd-opencode --version 2>/dev/null | head -n1 || echo "installed")
+    elif npm list -g gsd-opencode >/dev/null 2>&1; then
+        gsd_found=1
+        gsd_version="npm global"
+    elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
+        gsd_found=1
+        gsd_version="npx cache"
+    else
+        # Check common paths that may not be in PATH on Chromebooks/containers
+        for gsd_path in "$HOME/.npm/bin/gsd-opencode" "$HOME/.nvm/versions/node"/*/bin/gsd-opencode; do
+            if [ -x "$gsd_path" ]; then
+                gsd_found=1
+                gsd_version="$gsd_path"
+                break
+            fi
+        done
+    fi
+    if [ $gsd_found -eq 1 ]; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} GSD          : ${GREEN}${gsd_version}${NC}"
     else
         echo -e "  ${RED}${EMOJI_CROSS}${NC} GSD          : ${RED}NOT available${NC}"
     fi
@@ -421,29 +547,51 @@ install_dev_tools() {
     read -rp "  Proceed? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
 
+    # Rollback tracking: record successful steps for diagnostic output on partial failure
+    local rollback_log=""
+    _record_step() { rollback_log="${rollback_log}${rollback_log:+, }$1"; }
+
     echo -e "${CYAN}  Installing system packages...${NC}"
-    sudo apt-get update || die "apt-get update failed" $?
-    sudo apt-get install -y unzip golang-go python3 python3-pip python3-venv pipx || die "apt-get install failed" $?
+    ensure_sudo
+    pkg_update || die "package update failed" $?
+    pkg_install unzip golang-go python3 python3-pip python3-venv pipx || die "package install failed" $?
+    _record_step "system packages"
 
     echo -e "${CYAN}  Installing Rust...${NC}"
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y || die "Rust install failed" 1
+    retry_network 3 5 "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup.sh" || die "Rust download failed" 1
+    sh /tmp/rustup.sh -y || die "Rust install failed" 1
+    rm -f /tmp/rustup.sh
     source "$HOME/.cargo/env"
+    _record_step "Rust"
 
     echo -e "${CYAN}  Installing Bun...${NC}"
-    curl -fsSL https://bun.sh/install | bash || die "Bun install failed" 1
+    retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || die "Bun download failed" 1
+    bash /tmp/bun-install.sh || die "Bun install failed" 1
+    rm -f /tmp/bun-install.sh
     export PATH="$HOME/.bun/bin:$PATH"
+    _record_step "Bun"
 
     echo -e "${CYAN}  Installing NVM + Node.js LTS...${NC}"
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash || die "nvm install failed" 1
+    retry_network 3 5 "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
+    bash /tmp/nvm-install.sh || die "nvm install failed" 1
+    rm -f /tmp/nvm-install.sh
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
     nvm install --lts || die "Node LTS install failed" 1
+    _record_step "NVM + Node LTS"
 
     echo -e "${CYAN}  Installing Yarn...${NC}"
     npm install -g yarn || die "Yarn install failed" 1
+    _record_step "Yarn"
 
     echo -e "${CYAN}  Installing uv...${NC}"
-    pipx install uv || die "uv install failed" 1
+    # Use official standalone installer — more reliable than pipx on Chromebooks/containers
+    retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || die "uv download failed" 1
+    sh /tmp/uv-install.sh || die "uv install failed" 1
+    rm -f /tmp/uv-install.sh
+    export PATH="$HOME/.local/bin:$PATH"
+    _record_step "uv"
+    append_rc_if_missing "$(detect_rc_file)" 'export PATH="$HOME/.local/bin:$PATH"'
     
     echo
     echo -e "${GREEN}  ✓ Dev tools installation complete${NC}"
@@ -456,13 +604,13 @@ uninstall_dev_tool() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall Dev Tool${NC}"
     read -rp "  Enter tool to uninstall (rust, node, bun, python, go, pipx, uv): " tool
     case "$tool" in
-        rust) rustup self uninstall -y ;;
-        node) nvm uninstall --lts ;;
+        rust) rustup self uninstall -y || die "Rust uninstall failed" $? ;;
+        node) nvm uninstall --lts || die "Node uninstall failed" $? ;;
         bun) rm -rf ~/.bun ;;
-        python) sudo apt-get remove -y python3 python3-pip python3-venv ;;
-        go) sudo apt-get remove -y golang-go ;;
-        pipx) sudo apt-get remove -y pipx ;;
-        uv) pipx uninstall uv ;;
+        python) pkg_remove python3 python3-pip python3-venv || die "Python uninstall failed" $? ;;
+        go) pkg_remove golang-go || die "Go uninstall failed" $? ;;
+        pipx) pkg_remove pipx || die "pipx uninstall failed" $? ;;
+        uv) rm -rf "$HOME/.local/bin/uv" "$HOME/.local/share/uv" || die "uv uninstall failed" $? ;;
         *) echo "  ${YELLOW}Unknown tool: $tool${NC}" ;;
     esac
 }
@@ -497,7 +645,9 @@ install_opencode_gsd() {
     fi
 
     echo -e "${CYAN}  Installing OpenCode...${NC}"
-    curl -fsSL https://opencode.ai/install | bash || npm i -g opencode-ai || die "OpenCode install failed" 1
+    retry_network 3 5 "curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh" || die "OpenCode download failed" 1
+    bash /tmp/opencode-install.sh || npm i -g opencode-ai || die "OpenCode install failed" 1
+    rm -f /tmp/opencode-install.sh
 
     echo -e "${CYAN}  Installing GSD...${NC}"
     npx gsd-opencode@latest || die "GSD install failed" 1
@@ -517,7 +667,7 @@ remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
     read -rp "  Remove OpenCode? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
-    npm uninstall -g opencode-ai || echo -e "  ${YELLOW}OpenCode not found${NC}"
+    npm uninstall -g opencode-ai || die "OpenCode uninstall failed" $?
 }
 
 # ──────────────
@@ -527,7 +677,11 @@ remove_gsd() {
     echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
     read -rp "  Remove GSD? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
-    gsd-opencode uninstall || echo "  GSD not found"
+    if command -v gsd-opencode >/dev/null 2>&1; then
+        gsd-opencode uninstall || die "GSD uninstall failed" $?
+    else
+        echo -e "  ${YELLOW}GSD not found${NC}"
+    fi
 }
 
 # ──────────────
