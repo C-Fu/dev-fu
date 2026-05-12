@@ -616,6 +616,96 @@ uninstall_dev_tool() {
 }
 
 # ──────────────
+# ⬆️ Option 8: Upgrade All Tools
+# ──────────────
+upgrade_all() {
+    echo -e "${BCYAN}⬆️  ${BOLD}Upgrade All Tools${NC}"
+    echo -e "${DIM}   Updating installed developer tools...${NC}"
+    echo
+
+    local upgraded=0
+
+    if command -v docker >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Docker...${NC}"
+        retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || echo -e "${YELLOW}  Docker download failed, skipping${NC}"
+        if [ -f /tmp/get-docker.sh ]; then
+            sudo sh /tmp/get-docker.sh || echo -e "${YELLOW}  Docker upgrade failed${NC}"
+            rm -f /tmp/get-docker.sh
+            upgraded=1
+        fi
+    fi
+
+    if command -v rustup >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Rust...${NC}"
+        rustup update || echo -e "${YELLOW}  Rust upgrade failed${NC}"
+        upgraded=1
+    fi
+
+    if [ -s "$HOME/.nvm/nvm.sh" ]; then
+        . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+        if command -v nvm >/dev/null 2>&1; then
+            echo -e "${CYAN}  Upgrading NVM...${NC}"
+            retry_network 3 5 "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || echo -e "${YELLOW}  NVM download failed, skipping${NC}"
+            if [ -f /tmp/nvm-install.sh ]; then
+                bash /tmp/nvm-install.sh || echo -e "${YELLOW}  NVM upgrade failed${NC}"
+                rm -f /tmp/nvm-install.sh
+            fi
+            echo -e "${CYAN}  Upgrading Node.js to latest LTS...${NC}"
+            nvm install --lts --reinstall-packages-from=current || echo -e "${YELLOW}  Node LTS upgrade failed${NC}"
+            upgraded=1
+        fi
+    fi
+
+    if command -v bun >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Bun...${NC}"
+        retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || echo -e "${YELLOW}  Bun download failed, skipping${NC}"
+        if [ -f /tmp/bun-install.sh ]; then
+            bash /tmp/bun-install.sh || echo -e "${YELLOW}  Bun upgrade failed${NC}"
+            rm -f /tmp/bun-install.sh
+            upgraded=1
+        fi
+    fi
+
+    if command -v npm >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Yarn...${NC}"
+        npm upgrade -g yarn || echo -e "${YELLOW}  Yarn upgrade failed${NC}"
+        upgraded=1
+    fi
+
+    if command -v uv >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading uv...${NC}"
+        uv self update || {
+            retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || echo -e "${YELLOW}  uv download failed, skipping${NC}"
+            if [ -f /tmp/uv-install.sh ]; then
+                sh /tmp/uv-install.sh || echo -e "${YELLOW}  uv upgrade failed${NC}"
+                rm -f /tmp/uv-install.sh
+            fi
+        }
+        upgraded=1
+    fi
+
+    if command -v php >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading PHP...${NC}"
+        pkg_update || echo -e "${YELLOW}  Package update failed${NC}"
+        pkg_install php-cli php-xml php-mbstring php-curl php-json || echo -e "${YELLOW}  PHP upgrade failed${NC}"
+        upgraded=1
+    fi
+
+    if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading OpenCode...${NC}"
+        npm upgrade -g opencode-ai || echo -e "${YELLOW}  OpenCode upgrade failed${NC}"
+        upgraded=1
+    fi
+
+    if [ $upgraded -eq 0 ]; then
+        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} No installed tools found to upgrade. Install tools first (option 5).${NC}"
+    else
+        echo
+        echo -e "${GREEN}  ✓ Upgrade complete${NC}"
+    fi
+}
+
+# ──────────────
 # 🚀 Option 6: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
@@ -814,6 +904,7 @@ EOF
     echo -e "${BOX_V} ${GREEN}5${NC}) ${EMOJI_DEV}  Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
     echo -e "${BOX_V} ${GREEN}6${NC}) ${EMOJI_GSD}  Install OpenCode + GSD"
     echo -e "${BOX_V} ${GREEN}7${NC}) 🐘  Install PHP + Laravel"
+    echo -e "${BOX_V} ${GREEN}8${NC}) ⬆️  Upgrade All Tools"
     echo
     
     echo -e "${WHITE}▸ Remove:${NC}"
@@ -861,6 +952,7 @@ case "$choice" in
         6b) remove_gsd ;;
         7) install_php_laravel ;;
         7a) uninstall_php_laravel ;;
+        8|u|U) upgrade_all ;;
         q|Q)
             echo -e "${MAGENTA}Goodbye — stay productive! ${EMOJI_HEART}${NC}"
             break
