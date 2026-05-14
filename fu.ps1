@@ -711,6 +711,11 @@ function Parse-Input {
 
     $tokens = $RawInput -split '[,\s]+' | Where-Object { $_ -ne '' }
 
+    if ($tokens.Count -eq 0) {
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        return $false
+    }
+
     $candidates = @()
     $errors = @()
     foreach ($token in $tokens) {
@@ -753,7 +758,8 @@ function Parse-Input {
 
     foreach ($ridx in $rmIndices) {
         if ($addIndices -contains $ridx) {
-            Write-Host "${RED}Cannot both install and remove $($MENU_LABELS[$ridx])${NC}"
+            $clabel = $MENU_LABELS[$ridx] -replace '^(Install|Create) ',''
+            Write-Host "${RED}Cannot both install and remove $clabel${NC}"
             return $false
         }
     }
@@ -776,7 +782,8 @@ function Parse-Input {
 
     foreach ($idx in $rmIndices) {
         if ($MENU_REMOVE_FN[$idx] -eq '') {
-            Write-Host "${RED}Cannot remove $($MENU_LABELS[$idx]) — no remove operation available${NC}"
+            $rlabel = $MENU_LABELS[$idx] -replace '^(Install|Create) ',''
+            Write-Host "${RED}Cannot remove $rlabel — no remove operation available${NC}"
             return $false
         }
     }

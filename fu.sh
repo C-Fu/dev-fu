@@ -1006,6 +1006,11 @@ parse_input() {
     local -a tokens
     read -ra tokens <<< "${raw//,/ }"
 
+    if [[ ${#tokens[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        return 1
+    fi
+
     local -a candidates=()
     local -a errors=()
     local token
@@ -1055,7 +1060,9 @@ parse_input() {
     for ridx in "${rm_indices[@]}"; do
         for aidx in "${add_indices[@]}"; do
             if [[ $ridx -eq $aidx ]]; then
-                echo -e "${RED}Cannot both install and remove ${MENU_LABELS[$ridx]}${NC}"
+                local clabel="${MENU_LABELS[$ridx]#Install }"
+                clabel="${clabel#Create }"
+                echo -e "${RED}Cannot both install and remove ${clabel}${NC}"
                 return 1
             fi
         done
@@ -1079,7 +1086,9 @@ parse_input() {
 
     for idx in "${rm_indices[@]}"; do
         if [[ -z "${MENU_REMOVE_FN[$idx]}" ]]; then
-            echo -e "${RED}Cannot remove ${MENU_LABELS[$idx]} — no remove operation available${NC}"
+            local rlabel="${MENU_LABELS[$idx]#Install }"
+            rlabel="${rlabel#Create }"
+            echo -e "${RED}Cannot remove ${rlabel} — no remove operation available${NC}"
             return 1
         fi
     done
