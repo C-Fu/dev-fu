@@ -1001,30 +1001,26 @@ while true; do
     show_menu
     read -r choice
     echo
-case "$choice" in
-        1) install_docker ;;
-        1a) remove_docker ;;
-        2) create_fancy_prompt ;;
-        2a) remove_fancy_prompt ;;
-        3) install_avahi ;;
-        3a) remove_avahi ;;
-        4) status_check ;;
-        5) install_dev_tools ;;
-        5a) uninstall_dev_tool ;;
-        6) install_opencode_gsd ;;
-        6a) remove_opencode ;;
-        6b) remove_gsd ;;
-        7) install_php_laravel ;;
-        7a) uninstall_php_laravel ;;
-        8|u|U) upgrade_all ;;
-        q|Q)
-            echo -e "${MAGENTA}Goodbye — stay productive! ${EMOJI_HEART}${NC}"
-            break
-            ;;
-        *) 
+    if [[ "$choice" == "q" || "$choice" == "Q" ]]; then
+        echo -e "${MAGENTA}Goodbye — stay productive! ${EMOJI_HEART}${NC}"
+        break
+    fi
+
+    if [[ "$choice" == "u" || "$choice" == "U" ]]; then
+        upgrade_all
+    else
+        dispatched=0
+        for i in "${!MENU_INSTALL_FN[@]}"; do
+            if [[ "$choice" == "$((i + 1))" ]]; then
+                "${MENU_INSTALL_FN[$i]}"
+                dispatched=1
+                break
+            fi
+        done
+        if [[ $dispatched -eq 0 ]]; then
             echo -e "${YELLOW}  Invalid choice, try again.${NC}"
-            ;;
-    esac
+        fi
+    fi
     echo
     read -n1 -r -p "  Press any key to continue... " _
 done
