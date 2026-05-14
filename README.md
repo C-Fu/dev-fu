@@ -17,7 +17,7 @@
 | Category | Tools |
 |----------|-------|
 | **Containers** | [Docker](https://www.docker.com/) |
-| **Networking** | [Avahi Daemon](https://github.com/lathiat/avahi) — mDNS/NSS for local network discovery |
+| **Networking** | [Avahi Daemon](https://github.com/lathiat/avahi) + [systemd-resolved](https://www.freedesktop.org/wiki/Software/systemd/resolved/) — mDNS/NSS hostname discovery + DNS (Linux only) |
 | **Languages** | [Go](https://go.dev/), [Rust](https://www.rust-lang.org/), [Node.js](https://nodejs.org/) (LTS via nvm), [Python](https://www.python.org/) (with pipx, uv), [PHP](https://www.php.net/) |
 | **Runtimes** | [Bun](https://bun.sh/) (JavaScript), [Composer](https://getcomposer.org/) (PHP) |
 | **Package Managers** | [Yarn](https://yarnpkg.com/) (bundled with Dev Tools), npm |
@@ -53,7 +53,7 @@ Run `./fu.sh` and select options from the menu:
 ```
 1) Install Docker          1a) Remove Docker
 2) Create Fancy Prompt    2a) Remove Fancy Prompt
-3) Install Avahi Daemon   3a) Remove Avahi Daemon
+3) Install Hostname Discovery   3a) Remove Hostname Discovery
 4) Status Check
 5) Install Dev Tools       5a) Uninstall Dev Tool
 6) Install OpenCode + GSD  6a) Remove OpenCode
@@ -68,6 +68,8 @@ Select an option by number (e.g., `5` to install dev tools).
 ### Linux
 
 All package managers supported. The script auto-detects your package manager.
+
+Option 3 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
 
 ### macOS
 
