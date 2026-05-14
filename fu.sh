@@ -310,6 +310,9 @@ install_docker() {
     
     if command -v docker >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Docker already installed: $(docker --version | cut -d, -f1)"
+        if [ -d /mnt/wsl/docker-desktop ] || readlink -f "$(command -v docker)" 2>/dev/null | grep -q docker-desktop; then
+            echo -e "  ${BYELLOW}⚠  Managed by Docker Desktop — upgrade via Docker Desktop on Windows${NC}"
+        fi
         return 0
     fi
     
@@ -334,6 +337,11 @@ remove_docker() {
         echo -e "  ${DIM}Docker is not installed${NC}"
         return 0
     fi
+
+    if [ -d /mnt/wsl/docker-desktop ] || readlink -f "$(command -v docker)" 2>/dev/null | grep -q docker-desktop; then
+        echo -e "${BYELLOW}  ⚠  Docker is managed by Docker Desktop — uninstall via Docker Desktop on Windows${NC}"
+        return 0
+    fi
     
     echo -e "${BYELLOW}  → This will remove Docker completely${NC}"
     read -rp "  Proceed? (y/n): " confirm
@@ -348,13 +356,21 @@ remove_docker() {
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
 }
 
-# 🌐 Option 3: Install Avahi Daemon
+# 🌐 Option 3: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
 # ──────────────
 install_avahi() {
-    echo -e "${CYAN}🌐  ${BOLD}Install Avahi Daemon${NC}"
-    echo -e "${DIM}   Local network discovery (mDNS/NSS)${NC}"
+    echo -e "${CYAN}🌐  ${BOLD}Install Linux Hostname Discovery${NC}"
+    echo -e "${DIM}   avahi-daemon (mDNS/NSS) + systemd-resolved (DNS)${NC}"
     echo
-    
+
+    if [ "$DETECTED_OS" != "linux" ]; then
+        echo -e "  ${BYELLOW}⚠  This option is only available on Linux.${NC}"
+        echo -e "  ${DIM}macOS uses mDNSResponder; Windows uses Bonjour/WSL.${NC}"
+        return 0
+    fi
+
+    local already_done=1
+
     if command -v avahi-daemon >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Avahi Daemon already installed"
         if systemctl is-active --quiet avahi-daemon 2>/dev/null; then
@@ -364,43 +380,86 @@ install_avahi() {
             sudo systemctl enable avahi-daemon
             sudo systemctl start avahi-daemon
         fi
+    else
+        already_done=0
+    fi
+
+    if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} systemd-resolved is running"
+    else
+        already_done=0
+    fi
+
+    if [ $already_done -eq 1 ]; then
+        echo -e "${GREEN}  ✓ Hostname discovery already configured${NC}"
         return 0
     fi
-    
-    echo -e "${BYELLOW}  → This will install: avahi-daemon${NC}"
+
+    echo -e "${BYELLOW}  → This will install: avahi-daemon, systemd-resolved${NC}"
+    echo -e "${BYELLOW}  → DNS will be swapped to systemd-resolved${NC}"
     read -rp "  Proceed? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
-    
-    echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
-    pkg_update || die "package update failed" $?
-    pkg_install avahi-daemon avahi-utils || die "avahi-daemon install failed" $?
-    sudo systemctl enable avahi-daemon || die "enable avahi-daemon failed" $?
-    sudo systemctl start avahi-daemon || die "start avahi-daemon failed" $?
-    
-    echo -e "${GREEN}  ✓ Avahi Daemon installed and started${NC}"
+
+    if ! command -v avahi-daemon >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
+        pkg_update || die "package update failed" $?
+        pkg_install avahi-daemon avahi-utils || die "avahi-daemon install failed" $?
+        sudo systemctl enable avahi-daemon || die "enable avahi-daemon failed" $?
+        sudo systemctl start avahi-daemon || die "start avahi-daemon failed" $?
+    fi
+
+    if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        echo -e "${CYAN}  Installing systemd-resolved...${NC}"
+        pkg_install systemd-resolved || die "systemd-resolved install failed" $?
+        echo -e "${CYAN}  Enabling systemd-resolved...${NC}"
+        sudo systemctl enable --now systemd-resolved || die "enable systemd-resolved failed" $?
+    fi
+
+    echo -e "${CYAN}  Swapping DNS to systemd-resolved...${NC}"
+    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || die "DNS symlink failed" $?
+
+    echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
 
-# 🗑️ Option 3a: Remove Avahi Daemon
+# 🗑️ Option 3a: Remove Hostname Discovery (Avahi + systemd-resolved)
 # ──────────────
 remove_avahi() {
-    echo -e "${RED}🗑️  ${BOLD}Remove Avahi Daemon${NC}"
-    
-    if ! command -v avahi-daemon >/dev/null 2>&1; then
-        echo -e "  ${DIM}Avahi Daemon is not installed${NC}"
+    echo -e "${RED}🗑️  ${BOLD}Remove Hostname Discovery${NC}"
+    echo -e "${DIM}   Removes avahi-daemon and systemd-resolved${NC}"
+
+    if [ "$DETECTED_OS" != "linux" ]; then
+        echo -e "  ${BYELLOW}⚠  This option is only available on Linux.${NC}"
         return 0
     fi
-    
-    echo -e "${BYELLOW}  → This will remove Avahi Daemon completely${NC}"
+
+    if ! command -v avahi-daemon >/dev/null 2>&1 && ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        echo -e "  ${DIM}Hostname discovery is not installed${NC}"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will remove: avahi-daemon, systemd-resolved${NC}"
+    echo -e "${BYELLOW}  → DNS will be restored to default resolv.conf${NC}"
     read -rp "  Proceed? (y/n): " confirm
     [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
-    
+
+    echo -e "${CYAN}  Restoring default DNS...${NC}"
+    if [ -L /etc/resolv.conf ]; then
+        sudo rm -f /etc/resolv.conf
+        echo -e "${CYAN}  Restoring /etc/resolv.conf...${NC}"
+        sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf && echo "nameserver 8.8.4.4" >> /etc/resolv.conf'
+    fi
+
+    echo -e "${CYAN}  Stopping systemd-resolved...${NC}"
+    sudo systemctl stop systemd-resolved 2>/dev/null || true
+    sudo systemctl disable systemd-resolved 2>/dev/null || true
+
     echo -e "${CYAN}  Removing Avahi Daemon...${NC}"
     sudo systemctl stop avahi-daemon 2>/dev/null || true
     sudo systemctl disable avahi-daemon 2>/dev/null || true
     pkg_purge avahi-daemon avahi-utils || true
     pkg_autoremove || true
-    
-    echo -e "${GREEN}  ✓ Avahi Daemon removed successfully${NC}"
+
+    echo -e "${GREEN}  ✓ Hostname discovery removed successfully${NC}"
 }
 
 # ──────────────
@@ -626,13 +685,18 @@ upgrade_all() {
     local upgraded=0
 
     if command -v docker >/dev/null 2>&1; then
-        echo -e "${CYAN}  Upgrading Docker...${NC}"
-        retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || echo -e "${YELLOW}  Docker download failed, skipping${NC}"
-        if [ -f /tmp/get-docker.sh ]; then
-            sudo sh /tmp/get-docker.sh || echo -e "${YELLOW}  Docker upgrade failed${NC}"
-            rm -f /tmp/get-docker.sh
-            upgraded=1
+        if [ -d /mnt/wsl/docker-desktop ] || readlink -f "$(command -v docker)" 2>/dev/null | grep -q docker-desktop; then
+            echo -e "${CYAN}  Docker ($(docker --version | cut -d, -f1))${NC}"
+            echo -e "${BYELLOW}  ⚠  Managed by Docker Desktop — upgrade via Docker Desktop on Windows${NC}"
+        else
+            echo -e "${CYAN}  Upgrading Docker...${NC}"
+            retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || echo -e "${YELLOW}  Docker download failed, skipping${NC}"
+            if [ -f /tmp/get-docker.sh ]; then
+                sudo sh /tmp/get-docker.sh || echo -e "${YELLOW}  Docker upgrade failed${NC}"
+                rm -f /tmp/get-docker.sh
+            fi
         fi
+        upgraded=1
     fi
 
     if command -v rustup >/dev/null 2>&1; then
@@ -899,7 +963,7 @@ EOF
     echo -e "${WHITE}▸ Install/Configure:${NC}"
     echo -e "${BOX_V} ${GREEN}1${NC}) ${EMOJI_DOCKER}  Install Docker"
     echo -e "${BOX_V} ${GREEN}2${NC}) ${EMOJI_PROMPT}  Create Fancy Prompt"
-    echo -e "${BOX_V} ${GREEN}3${NC}) 🌐  Install Avahi Daemon"
+    echo -e "${BOX_V} ${GREEN}3${NC}) 🌐  Install Hostname Discovery (Linux only)"
     echo -e "${BOX_V} ${GREEN}4${NC}) ${EMOJI_STATUS}  Status Check"
     echo -e "${BOX_V} ${GREEN}5${NC}) ${EMOJI_DEV}  Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
     echo -e "${BOX_V} ${GREEN}6${NC}) ${EMOJI_GSD}  Install OpenCode + GSD"
@@ -910,7 +974,7 @@ EOF
     echo -e "${WHITE}▸ Remove:${NC}"
     echo -e "${BOX_V} ${RED}1a)${NC}       Remove Docker"
     echo -e "${BOX_V} ${RED}2a)${NC}       Remove Fancy Prompt"
-    echo -e "${BOX_V} ${RED}3a)${NC}       Remove Avahi Daemon"
+    echo -e "${BOX_V} ${RED}3a)${NC}       Remove Hostname Discovery"
     echo -e "${BOX_V}"
     echo -e "${BOX_V} ${RED}5a)${NC}       Uninstall Dev Tool"
     echo -e "${BOX_V} ${RED}6a)${NC}       Remove OpenCode"

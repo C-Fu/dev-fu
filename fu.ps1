@@ -211,19 +211,22 @@ function Remove-FancyPrompt {
 
 # Avahi Install (Windows note)
 function Install-Avahi {
-    Write-Host "${CYAN}🌐  ${BOLD}Install Avahi Daemon${NC}" -ForegroundColor Cyan
-    Write-Host "${DIM}   Local network discovery (mDNS/NSS)${NC}"
+    Write-Host "${CYAN}🌐  ${BOLD}Install Hostname Discovery${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   avahi-daemon (mDNS/NSS) + systemd-resolved (DNS)${NC}"
     Write-Host ""
-    Write-Host "  ${YELLOW}⚠ Avahi Daemon is a Linux service and is not available on Windows.${NC}"
-    Write-Host "  ${YELLOW}  For mDNS on Windows, Bonjour/Apple Bonjour Print Services is the equivalent.${NC}"
+    Write-Host "  ${RED}${EMOJI_CROSS}${NC} ${RED}This option is not available on Windows.${NC}"
+    Write-Host "  ${YELLOW}  Avahi Daemon and systemd-resolved are Linux-only services.${NC}"
+    Write-Host "  ${YELLOW}  Windows uses Bonjour for mDNS and has its own DNS resolver.${NC}"
     Write-Host "  ${YELLOW}  If using WSL2, run fu.sh inside the Linux distribution instead.${NC}"
 }
 
 # Avahi Remove (Windows note)
 function Remove-Avahi {
-    Write-Host "${RED}🗑️  ${BOLD}Remove Avahi Daemon${NC}"
+    Write-Host "${RED}🗑️  ${BOLD}Remove Hostname Discovery${NC}"
     Write-Host ""
-    Write-Host "  ${YELLOW}⚠ Avahi Daemon is a Linux service and is not installed on Windows.${NC}"
+    Write-Host "  ${RED}${EMOJI_CROSS}${NC} ${RED}This option is not available on Windows.${NC}"
+    Write-Host "  ${YELLOW}  Avahi Daemon and systemd-resolved are Linux-only services.${NC}"
+    Write-Host "  ${YELLOW}  If using WSL2, run fu.sh inside the Linux distribution instead.${NC}"
 }
 
 # Status Check
@@ -661,7 +664,7 @@ function Show-Menu {
     Write-Host "${WHITE}▸ Install/Configure:${NC}"
     Write-Host "${BOX_V} ${GREEN}1${NC}) ${EMOJI_DOCKER}  Install Docker"
     Write-Host "${BOX_V} ${GREEN}2${NC}) ✨  Create Fancy Prompt"
-    Write-Host "${BOX_V} ${GREEN}3${NC}) 🌐  Install Avahi Daemon"
+    Write-Host "${BOX_V} ${DIM}${GREEN}3${NC}${DIM}) 🌐  Install Hostname Discovery (Linux only)${NC}"
     Write-Host "${BOX_V} ${GREEN}4${NC}) ${EMOJI_STATUS}  Status Check"
     Write-Host "${BOX_V} ${GREEN}5${NC}) ${EMOJI_DEV}  Install Dev Tools"
     Write-Host "${BOX_V} ${GREEN}6${NC}) ${EMOJI_GSD}  Install OpenCode + GSD"
@@ -672,7 +675,7 @@ function Show-Menu {
     Write-Host "${WHITE}▸ Remove:${NC}"
     Write-Host "${BOX_V} ${RED}1a)${NC}       Remove Docker"
     Write-Host "${BOX_V} ${RED}2a)${NC}       Remove Fancy Prompt"
-    Write-Host "${BOX_V} ${RED}3a)${NC}       Remove Avahi Daemon"
+    Write-Host "${BOX_V} ${DIM}${RED}3a)${NC}${DIM}       Remove Hostname Discovery${NC}"
     Write-Host "${BOX_V} ${RED}5a)${NC}       Uninstall Dev Tool"
     Write-Host "${BOX_V} ${RED}6a)${NC}       Remove OpenCode"
     Write-Host "${BOX_V} ${RED}6b)${NC}       Remove GSD"
