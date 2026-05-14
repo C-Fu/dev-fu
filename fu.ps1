@@ -704,27 +704,23 @@ while ($true) {
     $choice = Read-Host
     Write-Host ""
 
-    switch ($choice) {
-        "1" { Install-Docker }
-        "1a" { Remove-Docker }
-        "2" { Install-FancyPrompt }
-        "2a" { Remove-FancyPrompt }
-        "3" { Install-Avahi }
-        "3a" { Remove-Avahi }
-        "4" { Get-StatusCheck }
-        "5" { Install-DevTools }
-        "5a" { Uninstall-DevTools }
-        "6" { Install-OpenCode }
-        "6a" { Remove-OpenCode }
-        "6b" { Remove-GSD }
-        "7" { Install-PHP }
-        "7a" { Remove-PHP }
-        "8" { Upgrade-All }
-        "q" {
-            Write-Host "${MAGENTA}Goodbye — stay productive! ${EMOJI_HEART}${NC}"
-            break
+    if ($choice -eq "q" -or $choice -eq "Q") {
+        Write-Host "${MAGENTA}Goodbye — stay productive! ${EMOJI_HEART}${NC}"
+        break
+    }
+
+    if ($choice -eq "u" -or $choice -eq "U") {
+        Upgrade-All
+    } else {
+        $dispatched = $false
+        for ($i = 0; $i -lt $MENU_INSTALL_FN.Count; $i++) {
+            if ($choice -eq "$($i + 1)") {
+                & $MENU_INSTALL_FN[$i]
+                $dispatched = $true
+                break
+            }
         }
-        default {
+        if (-not $dispatched) {
             Write-Host "${YELLOW}  Invalid choice, try again.${NC}"
         }
     }
