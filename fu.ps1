@@ -801,16 +801,13 @@ while ($true) {
     if ($choice -eq "u" -or $choice -eq "U") {
         Upgrade-All
     } else {
-        $dispatched = $false
-        for ($i = 0; $i -lt $MENU_INSTALL_FN.Count; $i++) {
-            if ($choice -eq "$($i + 1)") {
-                & $MENU_INSTALL_FN[$i]
-                $dispatched = $true
-                break
+        if (Parse-Input $choice) {
+            foreach ($idx in $Script:InstallIndices) {
+                & $MENU_INSTALL_FN[$idx]
             }
-        }
-        if (-not $dispatched) {
-            Write-Host "${YELLOW}  Invalid choice, try again.${NC}"
+            foreach ($idx in $Script:RemoveIndices) {
+                & $MENU_REMOVE_FN[$idx]
+            }
         }
     }
 
