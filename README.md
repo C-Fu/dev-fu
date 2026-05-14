@@ -2,6 +2,12 @@
 
 **One command to bootstrap a complete developer machine, anywhere.**
 
+```
+# Run Dev-Fu/fu.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+
 ## Supported Platforms
 
 - Linux (x86_64, ARM/aarch64)
