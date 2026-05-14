@@ -80,6 +80,23 @@ EMOJI_CROSS="✗"
 EMOJI_ARROW="➜"
 EMOJI_SPARKLE="⚡"
 EMOJI_HEART="💜"
+EMOJI_UPGRADE="⬆️"
+EMOJI_NETWORK="🌐"
+EMOJI_PHP="🐘"
+
+MENU_LABELS=(
+    "Status Check"
+    "Upgrade All Tools"
+    "Install Docker"
+    "Create Fancy Prompt"
+    "Install Hostname Discovery (Linux only)"
+    "Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
+    "Install OpenCode + GSD + OpenChamber"
+    "Install PHP + Laravel"
+)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_DEV" "$EMOJI_GSD" "$EMOJI_PHP")
+MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_dev_tools" "install_opencode_gsd" "install_php_laravel")
+MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "uninstall_dev_tool" "remove_opencode" "uninstall_php_laravel")
 
 # ──────────────
 # ┌─ Helpers
@@ -957,29 +974,12 @@ EOF
     echo -e "${CYAN}${BOX_BL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_BR}${NC}"
     echo
     
-    # ╭──────────────────────────────────────────╮
-    # │        Main Menu Options                 │
-    # ╰──────────────────────────────────────────╯
-    echo -e "${WHITE}▸ Install/Configure:${NC}"
-    echo -e "${BOX_V} ${GREEN}1${NC}) ${EMOJI_DOCKER}  Install Docker"
-    echo -e "${BOX_V} ${GREEN}2${NC}) ${EMOJI_PROMPT}  Create Fancy Prompt"
-    echo -e "${BOX_V} ${GREEN}3${NC}) 🌐  Install Hostname Discovery (Linux only)"
-    echo -e "${BOX_V} ${GREEN}4${NC}) ${EMOJI_STATUS}  Status Check"
-    echo -e "${BOX_V} ${GREEN}5${NC}) ${EMOJI_DEV}  Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
-    echo -e "${BOX_V} ${GREEN}6${NC}) ${EMOJI_GSD}  Install OpenCode + GSD"
-    echo -e "${BOX_V} ${GREEN}7${NC}) 🐘  Install PHP + Laravel"
-    echo -e "${BOX_V} ${GREEN}8${NC}) ⬆️  Upgrade All Tools"
+    for i in "${!MENU_LABELS[@]}"; do
+        local num=$((i + 1))
+        echo -e "${BOX_V} ${GREEN}${num}${NC}) ${MENU_EMOJIS[$i]}  ${MENU_LABELS[$i]}"
+    done
     echo
-    
-    echo -e "${WHITE}▸ Remove:${NC}"
-    echo -e "${BOX_V} ${RED}1a)${NC}       Remove Docker"
-    echo -e "${BOX_V} ${RED}2a)${NC}       Remove Fancy Prompt"
-    echo -e "${BOX_V} ${RED}3a)${NC}       Remove Hostname Discovery"
-    echo -e "${BOX_V}"
-    echo -e "${BOX_V} ${RED}5a)${NC}       Uninstall Dev Tool"
-    echo -e "${BOX_V} ${RED}6a)${NC}       Remove OpenCode"
-    echo -e "${BOX_V} ${RED}6b)${NC}       Remove GSD"
-    echo -e "${BOX_V} ${RED}7a)${NC}       Uninstall PHP + Laravel"
+    echo -e "${DIM}  Enter -N to remove (e.g. -3 removes Docker)${NC}"
     echo
     
     # ╭──────────────────────────────────────────╮
