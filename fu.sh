@@ -97,6 +97,7 @@ MENU_LABELS=(
 MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_DEV" "$EMOJI_GSD" "$EMOJI_PHP")
 MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_dev_tools" "install_opencode_gsd" "install_php_laravel")
 MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "uninstall_dev_tool" "remove_opencode" "uninstall_php_laravel")
+MENU_SINGLE_SELECT=(0 0 0 0 1 0 1 0)
 
 # ──────────────
 # ┌─ Helpers
@@ -990,6 +991,102 @@ EOF
     echo -e "${CYAN}${BOX_BL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_BR}${NC}"
     
     echo -n -e "${BCYAN}▸ Choice: ${NC}"
+}
+
+parse_input() {
+    PARSE_INSTALL_IDX=()
+    PARSE_REMOVE_IDX=()
+    local raw="$1"
+
+    if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
+        echo -e "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        return 1
+    fi
+
+    local -a tokens
+    read -ra tokens <<< "${raw//,/ }"
+
+    local -a candidates=()
+    local -a errors=()
+    local token
+    for token in "${tokens[@]}"; do
+        if [[ "$token" =~ ^-?[1-8]$ ]]; then
+            candidates+=("$token")
+        else
+            errors+=("$token")
+        fi
+    done
+
+    if [[ ${#errors[@]} -gt 0 ]]; then
+        if [[ ${#errors[@]} -eq 1 ]]; then
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-8)${NC}"
+        else
+            local error_str
+            error_str=$(printf "'%s', " "${errors[@]}")
+            error_str="${error_str%, }"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-8)${NC}"
+        fi
+        return 1
+    fi
+
+    local -A seen
+    local -a deduped=()
+    for token in "${candidates[@]}"; do
+        if [[ -z "${seen[$token]+set}" ]]; then
+            seen[$token]=1
+            deduped+=("$token")
+        fi
+    done
+
+    local -a add_indices=()
+    local -a rm_indices=()
+    local idx
+    for token in "${deduped[@]}"; do
+        if [[ "$token" == -* ]]; then
+            idx=$(( ${token#-} - 1 ))
+            rm_indices+=("$idx")
+        else
+            idx=$(( token - 1 ))
+            add_indices+=("$idx")
+        fi
+    done
+
+    local ridx aidx
+    for ridx in "${rm_indices[@]}"; do
+        for aidx in "${add_indices[@]}"; do
+            if [[ $ridx -eq $aidx ]]; then
+                echo -e "${RED}Cannot both install and remove ${MENU_LABELS[$ridx]}${NC}"
+                return 1
+            fi
+        done
+    done
+
+    local total=$(( ${#add_indices[@]} + ${#rm_indices[@]} ))
+    if [[ $total -gt 1 ]]; then
+        for idx in "${add_indices[@]}"; do
+            if [[ ${MENU_SINGLE_SELECT[$idx]} -eq 1 ]]; then
+                echo -e "${RED}Option $((idx + 1)) (${MENU_LABELS[$idx]}) must be used alone${NC}"
+                return 1
+            fi
+        done
+        for idx in "${rm_indices[@]}"; do
+            if [[ ${MENU_SINGLE_SELECT[$idx]} -eq 1 ]]; then
+                echo -e "${RED}Option $((idx + 1)) (${MENU_LABELS[$idx]}) must be used alone${NC}"
+                return 1
+            fi
+        done
+    fi
+
+    for idx in "${rm_indices[@]}"; do
+        if [[ -z "${MENU_REMOVE_FN[$idx]}" ]]; then
+            echo -e "${RED}Cannot remove ${MENU_LABELS[$idx]} — no remove operation available${NC}"
+            return 1
+        fi
+    done
+
+    PARSE_INSTALL_IDX=("${add_indices[@]}")
+    PARSE_REMOVE_IDX=("${rm_indices[@]}")
+    return 0
 }
 
 # ─────────────────────────────────────────────
