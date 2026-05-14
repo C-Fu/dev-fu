@@ -36,6 +36,23 @@ $EMOJI_CHECK = "✓"
 $EMOJI_CROSS = "✗"
 $EMOJI_ARROW = "➜"
 $EMOJI_HEART = "💜"
+$EMOJI_PROMPT = "✨"
+$EMOJI_UPGRADE = "⬆️"
+$EMOJI_NETWORK = "🌐"
+
+$MENU_LABELS = @(
+    "Status Check"
+    "Upgrade All Tools"
+    "Install Docker"
+    "Create Fancy Prompt"
+    "Install Hostname Discovery (Linux only)"
+    "Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
+    "Install OpenCode + GSD + OpenChamber"
+    "Install PHP + Laravel"
+)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_DEV, $EMOJI_GSD, $EMOJI_PHP)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-DevTools", "Install-OpenCode", "Install-PHP")
+$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Uninstall-DevTools", "Remove-OpenCode", "Remove-PHP")
 
 # Detect OS and Architecture
 function Get-DetectOs {
@@ -661,25 +678,16 @@ function Show-Menu {
     Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_BR}${NC}"
     Write-Host ""
 
-    Write-Host "${WHITE}▸ Install/Configure:${NC}"
-    Write-Host "${BOX_V} ${GREEN}1${NC}) ${EMOJI_DOCKER}  Install Docker"
-    Write-Host "${BOX_V} ${GREEN}2${NC}) ✨  Create Fancy Prompt"
-    Write-Host "${BOX_V} ${DIM}${GREEN}3${NC}${DIM}) 🌐  Install Hostname Discovery (Linux only)${NC}"
-    Write-Host "${BOX_V} ${GREEN}4${NC}) ${EMOJI_STATUS}  Status Check"
-    Write-Host "${BOX_V} ${GREEN}5${NC}) ${EMOJI_DEV}  Install Dev Tools"
-    Write-Host "${BOX_V} ${GREEN}6${NC}) ${EMOJI_GSD}  Install OpenCode + GSD"
-    Write-Host "${BOX_V} ${GREEN}7${NC}) 🐘  Install PHP + Laravel"
-    Write-Host "${BOX_V} ${GREEN}8${NC}) ⬆️  Upgrade All Tools"
+    for ($i = 0; $i -lt $MENU_LABELS.Count; $i++) {
+        $num = $i + 1
+        if ($i -eq 4) {
+            Write-Host "${BOX_V} ${DIM}${GREEN}$num${NC}${DIM}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])${NC}"
+        } else {
+            Write-Host "${BOX_V} ${GREEN}$num${NC}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])"
+        }
+    }
     Write-Host ""
-
-    Write-Host "${WHITE}▸ Remove:${NC}"
-    Write-Host "${BOX_V} ${RED}1a)${NC}       Remove Docker"
-    Write-Host "${BOX_V} ${RED}2a)${NC}       Remove Fancy Prompt"
-    Write-Host "${BOX_V} ${DIM}${RED}3a)${NC}${DIM}       Remove Hostname Discovery${NC}"
-    Write-Host "${BOX_V} ${RED}5a)${NC}       Uninstall Dev Tool"
-    Write-Host "${BOX_V} ${RED}6a)${NC}       Remove OpenCode"
-    Write-Host "${BOX_V} ${RED}6b)${NC}       Remove GSD"
-    Write-Host "${BOX_V} ${RED}7a)${NC}       Remove PHP + Laravel"
+    Write-Host "${DIM}  Enter -N to remove (e.g. -3 removes Docker)${NC}"
     Write-Host ""
 
     Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_TR}${NC}"
