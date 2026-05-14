@@ -1106,16 +1106,13 @@ while true; do
     if [[ "$choice" == "u" || "$choice" == "U" ]]; then
         upgrade_all
     else
-        dispatched=0
-        for i in "${!MENU_INSTALL_FN[@]}"; do
-            if [[ "$choice" == "$((i + 1))" ]]; then
-                "${MENU_INSTALL_FN[$i]}"
-                dispatched=1
-                break
-            fi
-        done
-        if [[ $dispatched -eq 0 ]]; then
-            echo -e "${YELLOW}  Invalid choice, try again.${NC}"
+        if parse_input "$choice"; then
+            for idx in "${PARSE_INSTALL_IDX[@]}"; do
+                "${MENU_INSTALL_FN[$idx]}"
+            done
+            for idx in "${PARSE_REMOVE_IDX[@]}"; do
+                "${MENU_REMOVE_FN[$idx]}"
+            done
         fi
     fi
     echo
