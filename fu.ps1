@@ -53,6 +53,7 @@ $MENU_LABELS = @(
 $MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_DEV, $EMOJI_GSD, $EMOJI_PHP)
 $MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-DevTools", "Install-OpenCode", "Install-PHP")
 $MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Uninstall-DevTools", "Remove-OpenCode", "Remove-PHP")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 1, 0)
 
 # Detect OS and Architecture
 function Get-DetectOs {
@@ -695,6 +696,94 @@ function Show-Menu {
     Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_BR}${NC}"
 
     Write-Host -NoNewline -ForegroundColor Cyan "▸ Choice: "
+}
+
+function Parse-Input {
+    param([string]$RawInput)
+
+    $Script:InstallIndices = @()
+    $Script:RemoveIndices = @()
+
+    if ([string]::IsNullOrWhiteSpace($RawInput)) {
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        return $false
+    }
+
+    $tokens = $RawInput -split '[,\s]+' | Where-Object { $_ -ne '' }
+
+    $candidates = @()
+    $errors = @()
+    foreach ($token in $tokens) {
+        if ($token -match '^-?[1-8]$') {
+            $candidates += $token
+        } else {
+            $errors += $token
+        }
+    }
+
+    if ($errors.Count -gt 0) {
+        if ($errors.Count -eq 1) {
+            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-8)${NC}"
+        } else {
+            $errorStr = ($errors | ForEach-Object { "'$_'" }) -join ', '
+            Write-Host "${RED}Invalid: $errorStr are not valid options (1-8)${NC}"
+        }
+        return $false
+    }
+
+    $seen = @{}
+    $unique = @()
+    foreach ($token in $candidates) {
+        if (-not $seen.ContainsKey($token)) {
+            $seen[$token] = $true
+            $unique += $token
+        }
+    }
+
+    $addIndices = @()
+    $rmIndices = @()
+    foreach ($token in $unique) {
+        if ($token.StartsWith('-')) {
+            $num = $token.TrimStart('-')
+            $rmIndices += [int]$num - 1
+        } else {
+            $addIndices += [int]$token - 1
+        }
+    }
+
+    foreach ($ridx in $rmIndices) {
+        if ($addIndices -contains $ridx) {
+            Write-Host "${RED}Cannot both install and remove $($MENU_LABELS[$ridx])${NC}"
+            return $false
+        }
+    }
+
+    $totalCount = $addIndices.Count + $rmIndices.Count
+    if ($totalCount -gt 1) {
+        foreach ($idx in $addIndices) {
+            if ($MENU_SINGLE_SELECT[$idx] -eq 1) {
+                Write-Host "${RED}Option $($idx + 1) ($($MENU_LABELS[$idx])) must be used alone${NC}"
+                return $false
+            }
+        }
+        foreach ($idx in $rmIndices) {
+            if ($MENU_SINGLE_SELECT[$idx] -eq 1) {
+                Write-Host "${RED}Option $($idx + 1) ($($MENU_LABELS[$idx])) must be used alone${NC}"
+                return $false
+            }
+        }
+    }
+
+    foreach ($idx in $rmIndices) {
+        if ($MENU_REMOVE_FN[$idx] -eq '') {
+            Write-Host "${RED}Cannot remove $($MENU_LABELS[$idx]) — no remove operation available${NC}"
+            return $false
+        }
+    }
+
+    $Script:InstallIndices = $addIndices
+    $Script:RemoveIndices = $rmIndices
+    return $true
 }
 
 # Main loop
