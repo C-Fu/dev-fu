@@ -178,6 +178,8 @@ get_pkg_manager() {
         linux)
             if command -v apt-get >/dev/null 2>&1; then
                 echo "apt"
+            elif command -v apk >/dev/null 2>&1; then
+                echo "apk"
             elif command -v dnf >/dev/null 2>&1; then
                 echo "dnf"
             elif command -v pacman >/dev/null 2>&1; then
@@ -214,6 +216,7 @@ pkg_update() {
     pm="$(get_pkg_manager)"
     case "$pm" in
         apt)  sudo apt-get update ;;
+        apk)  sudo apk update ;;
         dnf)  sudo dnf check-update || true ;;
         pacman) sudo pacman -Sy ;;
         zypper) sudo zypper refresh ;;
@@ -227,6 +230,7 @@ pkg_install() {
     pm="$(get_pkg_manager)"
     case "$pm" in
         apt)  sudo apt-get install -y "$@" ;;
+        apk)  sudo apk add "$@" ;;
         dnf)  sudo dnf install -y "$@" ;;
         pacman) sudo pacman -S --noconfirm "$@" ;;
         zypper) sudo zypper install -y "$@" ;;
@@ -240,6 +244,7 @@ pkg_remove() {
     pm="$(get_pkg_manager)"
     case "$pm" in
         apt)  sudo apt-get remove -y "$@" ;;
+        apk)  sudo apk del "$@" ;;
         dnf)  sudo dnf remove -y "$@" ;;
         pacman) sudo pacman -R --noconfirm "$@" ;;
         zypper) sudo zypper remove -y "$@" ;;
@@ -253,6 +258,7 @@ pkg_purge() {
     pm="$(get_pkg_manager)"
     case "$pm" in
         apt)  sudo apt-get purge -y "$@" ;;
+        apk)  sudo apk del --purge "$@" ;;
         dnf)  sudo dnf remove -y "$@" ;;
         pacman) sudo pacman -Rns --noconfirm "$@" ;;
         zypper) sudo zypper remove -y "$@" ;;
@@ -266,6 +272,7 @@ pkg_autoremove() {
     pm="$(get_pkg_manager)"
     case "$pm" in
         apt)  sudo apt-get autoremove -y ;;
+        apk)  sudo apk autoremove ;;
         dnf)  sudo dnf autoremove -y ;;
         pacman) sudo pacman -Sc --noconfirm || true ;;
         zypper) sudo zypper clean || true ;;
@@ -643,7 +650,9 @@ install_go() {
 
     ensure_sudo
     pkg_update || die "package update failed" $?
-    pkg_install golang-go || die "Go install failed" $?
+    local go_pkg="golang-go"
+    if command -v apk >/dev/null 2>&1; then go_pkg="go"; fi
+    pkg_install $go_pkg || die "Go install failed" $?
 
     echo -e "${GREEN}  ✓ Go installed successfully${NC}"
 }
@@ -655,7 +664,9 @@ remove_go() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    pkg_remove golang-go || die "Go removal failed" $?
+    local go_pkg="golang-go"
+    if command -v apk >/dev/null 2>&1; then go_pkg="go"; fi
+    pkg_remove $go_pkg || die "Go removal failed" $?
     echo -e "${GREEN}  ✓ Go removed${NC}"
 }
 
@@ -721,12 +732,20 @@ install_python() {
 
     if ! command -v python3 >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Python + pip...${NC}"
-        pkg_install python3 python3-pip python3-venv || die "Python install failed" $?
+        if command -v apk >/dev/null 2>&1; then
+            pkg_install python3 py3-pip || die "Python install failed" $?
+        else
+            pkg_install python3 python3-pip python3-venv || die "Python install failed" $?
+        fi
     fi
 
     if ! command -v pipx >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing pipx...${NC}"
-        pkg_install pipx || die "pipx install failed" $?
+        if command -v apk >/dev/null 2>&1; then
+            pkg_install py3-pipx || die "pipx install failed" $?
+        else
+            pkg_install pipx || die "pipx install failed" $?
+        fi
     fi
 
     if ! command -v uv >/dev/null 2>&1; then
@@ -988,7 +1007,9 @@ upgrade_all() {
     if command -v php >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading PHP...${NC}"
         pkg_update || echo -e "${YELLOW}  Package update failed${NC}"
-        pkg_install php-cli php-xml php-mbstring php-curl php-json || echo -e "${YELLOW}  PHP upgrade failed${NC}"
+        local php_pkgs="php-cli php-xml php-mbstring php-curl php-json"
+        if command -v apk >/dev/null 2>&1; then php_pkgs="php-cli php-xml php-mbstring php-curl php-json composer"; fi
+        pkg_install $php_pkgs || echo -e "${YELLOW}  PHP upgrade failed${NC}"
         upgraded=1
     fi
 
@@ -1108,6 +1129,11 @@ install_php_laravel() {
             sudo apt-get update
             sudo apt-get install -y php-cli php-xml php-mbstring php-curl php-json php-composer
             ;;
+        apk)
+            echo -e "${CYAN}  Installing PHP via apk...${NC}"
+            sudo apk update
+            sudo apk add php-cli php-xml php-mbstring php-curl php-json composer
+            ;;
         brew)
             echo -e "${CYAN}  Installing PHP via Homebrew...${NC}"
             brew install php
@@ -1153,6 +1179,9 @@ uninstall_php_laravel() {
         apt)
             sudo apt-get remove -y php-cli php-xml php-mbstring php-curl php-json php-common 2>/dev/null || true
             sudo apt-get autoremove -y
+            ;;
+        apk)
+            sudo apk del php-cli php-xml php-mbstring php-curl php-json composer 2>/dev/null || true
             ;;
         brew)
             brew uninstall php

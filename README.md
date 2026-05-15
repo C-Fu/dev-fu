@@ -10,8 +10,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/
 ## Why dev-fu
 
 - **Zero dependencies** — Pure Bash 4+ and PowerShell 5.1+. No Python, no Node, no framework required to run the script itself. Everything it installs is fetched from official sources.
-- **Runs everywhere** — Same script works across WSL2, Linux, macOS, and Windows (PowerShell). Supports x86, x64, and ARM architectures. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
-- **Multi-distro** — Auto-detects your package manager (apt, dnf, pacman, zypper, brew, winget, choco). Works on Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, and Windows.
+- **Runs everywhere** — Same script works across WSL2, Linux, macOS, and Windows (PowerShell). Supports x86, x64, ARM (Raspberry Pi, Apple Silicon), and bare metal. Tested in LXC containers and VMs. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
+- **Multi-distro** — Auto-detects your package manager (apk, apt, dnf, pacman, zypper, brew, winget, choco). Works on Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, and Windows.
 - **Multi-select menu** — Select multiple operations in one pass. Batch install Go, Rust, and Python without re-running the script.
 - **Atomic operations** — Each install has a matching remove. Every operation confirms before proceeding.
 
@@ -19,12 +19,16 @@ bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/
 
 | Platform | Architecture | Package Manager | Script |
 |----------|-------------|-----------------|--------|
+| Alpine Linux | x86_64, ARM | apk | `fu.sh` |
 | Debian / Ubuntu | x86_64, ARM | apt | `fu.sh` |
 | Fedora / RHEL | x86_64, ARM | dnf | `fu.sh` |
 | Arch Linux | x86_64, ARM | pacman | `fu.sh` |
 | openSUSE | x86_64, ARM | zypper | `fu.sh` |
 | macOS (Intel & Apple Silicon) | x64, ARM | Homebrew | `fu.sh` |
 | WSL2 (Ubuntu, Debian) | x86_64, ARM | apt | `fu.sh` |
+| LXC / LXD containers | x86_64, ARM | auto-detected | `fu.sh` |
+| Bare metal servers | x86_64, ARM | auto-detected | `fu.sh` |
+| Raspberry Pi (Pi OS, Ubuntu) | ARM | apt | `fu.sh` |
 | Windows (native) | x64, ARM | winget / choco | `fu.ps1` |
 
 ## What Can Be Installed
@@ -73,12 +77,12 @@ Run `./fu.sh` and select options from the interactive menu:
  4) ✨  Create Fancy Prompt
  5) 🌐  Install Hostname Discovery (Linux only)
  6) 🐹  Install Go
- 7) 🦀  Install Rust
+ 7) ☢️  Install Rust
  8) 🐍  Install Python + Pip + UV + Pipx
  9) 📦  Install NVM + Node LTS
 10) 🥟  Install Bun
 11) ⚡  Install Yarn
-12) ⚡  Disable Mouse Reporting in Terminal
+12) 🐁  Disable Mouse Reporting in Terminal
 13) 🐘  Install PHP + Laravel
 14) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
