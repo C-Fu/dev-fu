@@ -173,8 +173,10 @@ function Install-FancyPrompt {
     $target = "$env:USERPROFILE\.fancy-prompt.ps1"
     $url = "https://raw.githubusercontent.com/jonathan-scholbach/fancy-prompt/refs/heads/master/prompt.sh"
 
-    $confirm = Read-Host "  Replace current fancy prompt? (y/n)"
-    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Replace current fancy prompt? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
 
     try {
         Invoke-WebRequest -Uri $url -OutFile $target -ErrorAction Stop
@@ -200,8 +202,10 @@ function Install-FancyPrompt {
 # Fancy Prompt Remove
 function Remove-FancyPrompt {
     Write-Host "${RED}➜ Remove Fancy Prompt${NC}"
-    $confirm = Read-Host "  Remove fancy prompt? (y/n)"
-    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove fancy prompt? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
 
     $target = "$env:USERPROFILE\.fancy-prompt.ps1"
     if (Test-Path $target) {
@@ -480,8 +484,10 @@ function Install-OpenCode {
 # OpenCode Remove
 function Remove-OpenCode {
     Write-Host "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
-    $confirm = Read-Host "  Remove OpenCode? (y/n)"
-    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove OpenCode? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
     npm uninstall -g opencode-ai
     if ($LASTEXITCODE -ne 0) {
         Write-Host "${RED}  OpenCode removal failed${NC}"
@@ -493,8 +499,10 @@ function Remove-OpenCode {
 # GSD Remove
 function Remove-GSD {
     Write-Host "${RED}🗑️  ${BOLD}Remove GSD${NC}"
-    $confirm = Read-Host "  Remove GSD? (y/n)"
-    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove GSD? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
     if (Get-Command gsd-opencode -ErrorAction SilentlyContinue) {
         gsd-opencode uninstall
         if ($LASTEXITCODE -ne 0) {
@@ -621,8 +629,10 @@ function Install-PHP {
 # PHP Remove
 function Remove-PHP {
     Write-Host "${RED}🗑️  ${BOLD}Remove PHP + Laravel${NC}"
-    $confirm = Read-Host "  Remove PHP and Laravel? (y/n)"
-    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove PHP and Laravel? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
 
     $pkgMgr = Get-PackageManager
     if ($pkgMgr -eq "winget") {
