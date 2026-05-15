@@ -39,6 +39,10 @@ $EMOJI_HEART = "💜"
 $EMOJI_PROMPT = "✨"
 $EMOJI_UPGRADE = "⬆️"
 $EMOJI_NETWORK = "🌐"
+$EMOJI_GO = "🐹"
+$EMOJI_RUST = "🦀"
+$EMOJI_PYTHON = "🐍"
+$EMOJI_NODE = "📦"
 
 $MENU_LABELS = @(
     "Status Check"
@@ -46,14 +50,17 @@ $MENU_LABELS = @(
     "Install Docker"
     "Create Fancy Prompt"
     "Install Hostname Discovery (Linux only)"
-    "Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
-    "Install OpenCode + GSD + OpenChamber"
+    "Install Go"
+    "Install Rust"
+    "Install Python + Pip + UV + Pipx"
+    "Install NVM + Node LTS"
     "Install PHP + Laravel"
+    "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_DEV, $EMOJI_GSD, $EMOJI_PHP)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-DevTools", "Install-OpenCode", "Install-PHP")
-$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Uninstall-DevTools", "Remove-OpenCode", "Remove-PHP")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 1, 0)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_PHP, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-PHP", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-PHP", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -301,17 +308,123 @@ function Get-StatusCheck {
         Write-Host "  ${RED}${EMOJI_CROSS}${NC} GSD          : ${RED}NOT available${NC}"
     }
 
+    # Check OpenChamber
+    if (Get-Command openchamber -ErrorAction SilentlyContinue) {
+        $ocVer = openchamber --version 2>$null
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber  : ${GREEN}$ocVer${NC}"
+    } else {
+        Write-Host "  ${RED}${EMOJI_CROSS}${NC} OpenChamber  : ${RED}NOT installed${NC}"
+    }
+
     Write-Host ""
     Write-Host "${GREEN}  ✓ Status check complete${NC}"
 }
 
-# Dev Tools Install
-function Install-DevTools {
-    Write-Host "${CYAN}${EMOJI_DEV}  ${BOLD}Install Dev Tools${NC}" -ForegroundColor Cyan
-    Write-Host "${DIM}   Node.js, Python, Go, Rust, Bun, Yarn, uv${NC}"
+function Install-Go {
+    Write-Host "${CYAN}${EMOJI_GO}  ${BOLD}Install Go${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Go programming language${NC}"
     Write-Host ""
 
-    Write-Host "${YELLOW}  → This will install: Node.js LTS, Python, Go, Rust, Bun, Yarn, uv${NC}"
+    if (Get-Command go -ErrorAction SilentlyContinue) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Go already installed: $(go version)"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: Go${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $pkgMgr = Get-PackageManager
+    if ($pkgMgr -eq "winget") {
+        Write-Host "${CYAN}  Installing Go via winget...${NC}"
+        winget install GoLang.Go --accept-source-agreements --accept-package-agreements
+    } elseif ($pkgMgr -eq "choco") {
+        Write-Host "${CYAN}  Installing Go via chocolatey...${NC}"
+        choco install go -y
+    }
+    Write-Host "${GREEN}  ✓ Go installed${NC}"
+}
+
+function Remove-Go {
+    Write-Host "${RED}🗑️  ${BOLD}Remove Go${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Go? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $pkgMgr = Get-PackageManager
+    if ($pkgMgr -eq "winget") {
+        winget uninstall GoLang.Go
+    } elseif ($pkgMgr -eq "choco") {
+        choco uninstall go -y
+    }
+    Write-Host "${GREEN}  ✓ Go removed${NC}"
+}
+
+function Install-Rust {
+    Write-Host "${CYAN}${EMOJI_RUST}  ${BOLD}Install Rust${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Rust programming language via rustup${NC}"
+    Write-Host ""
+
+    if (Get-Command rustc -ErrorAction SilentlyContinue) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Rust already installed: $(rustc --version)"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: Rust (rustup, rustc, cargo)${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $pkgMgr = Get-PackageManager
+    if ($pkgMgr -eq "winget") {
+        Write-Host "${CYAN}  Installing Rust via winget...${NC}"
+        winget install Rustlang.Rust --accept-source-agreements --accept-package-agreements
+    } elseif ($pkgMgr -eq "choco") {
+        Write-Host "${CYAN}  Installing Rust via chocolatey...${NC}"
+        choco install rust -y
+    }
+    Write-Host "${GREEN}  ✓ Rust installed${NC}"
+}
+
+function Remove-Rust {
+    Write-Host "${RED}🗑️  ${BOLD}Remove Rust${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Rust? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    if (Get-Command rustup -ErrorAction SilentlyContinue) {
+        rustup self uninstall -y
+    } else {
+        $pkgMgr = Get-PackageManager
+        if ($pkgMgr -eq "winget") {
+            winget uninstall Rustlang.Rust
+        } elseif ($pkgMgr -eq "choco") {
+            choco uninstall rust -y
+        }
+    }
+    Write-Host "${GREEN}  ✓ Rust removed${NC}"
+}
+
+function Install-Python {
+    Write-Host "${CYAN}${EMOJI_PYTHON}  ${BOLD}Install Python + Pip + UV + Pipx${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Python 3 with pip, uv package manager, and pipx${NC}"
+    Write-Host ""
+
+    $needInstall = $false
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) { $needInstall = $true }
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { $needInstall = $true }
+
+    if (-not $needInstall) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Python + UV already installed"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: Python 3, pip, uv, pipx${NC}"
     if (-not $Script:BATCH_MODE) {
         $confirm = Read-Host "  Proceed? (y/n)"
         if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
@@ -319,132 +432,92 @@ function Install-DevTools {
 
     $pkgMgr = Get-PackageManager
 
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+        if ($pkgMgr -eq "winget") {
+            Write-Host "${CYAN}  Installing Python via winget...${NC}"
+            winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements
+        } elseif ($pkgMgr -eq "choco") {
+            Write-Host "${CYAN}  Installing Python via chocolatey...${NC}"
+            choco install python -y
+        }
+    }
+
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+        Write-Host "${CYAN}  Installing uv...${NC}"
+        powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    }
+
+    Write-Host "${GREEN}  ✓ Python + Pip + UV + Pipx installed${NC}"
+}
+
+function Remove-Python {
+    Write-Host "${RED}🗑️  ${BOLD}Remove Python + Pip + UV + Pipx${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Python, pip, uv, and pipx? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $pkgMgr = Get-PackageManager
+    if ($pkgMgr -eq "winget") {
+        winget uninstall Python.Python.3.11
+    } elseif ($pkgMgr -eq "choco") {
+        choco uninstall python -y
+    }
+
+    $uvPath = "$env:USERPROFILE\.local\bin\uv.exe"
+    $uvData = "$env:USERPROFILE\.local\share\uv"
+    if (Test-Path $uvPath) { Remove-Item -Force $uvPath }
+    if (Test-Path $uvData) { Remove-Item -Recurse -Force $uvData }
+    Write-Host "${GREEN}  ✓ Python + Pip + UV + Pipx removed${NC}"
+}
+
+function Install-NvmNode {
+    Write-Host "${CYAN}${EMOJI_NODE}  ${BOLD}Install NVM + Node LTS${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Node Version Manager with latest LTS${NC}"
+    Write-Host ""
+
+    if ((Get-Command nvm -ErrorAction SilentlyContinue) -and (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} NVM + Node already installed: $(node --version)"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: NVM + Node.js LTS${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $pkgMgr = Get-PackageManager
     if ($pkgMgr -eq "winget") {
         Write-Host "${CYAN}  Installing Node.js LTS via winget...${NC}"
         winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
-
-        Write-Host "${CYAN}  Installing Python via winget...${NC}"
-        winget install Python.Python.3.11 --accept-source-agreements --accept-package-agreements
-
-        Write-Host "${CYAN}  Installing Go via winget...${NC}"
-        winget install GoLang.Go --accept-source-agreements --accept-package-agreements
-
-        Write-Host "${CYAN}  Installing Rust via winget...${NC}"
-        winget install Rustlang.Rust --accept-source-agreements --accept-package-agreements
     } elseif ($pkgMgr -eq "choco") {
-        Write-Host "${CYAN}  Installing via chocolatey...${NC}"
-        choco install nodejs-lts python go rust -y
-    } else {
-        Write-Host "${YELLOW}  No package manager found. Please install manually.${NC}"
+        Write-Host "${CYAN}  Installing Node.js LTS via chocolatey...${NC}"
+        choco install nodejs-lts -y
     }
 
-    # Install Bun
-    if (Get-Command bun -ErrorAction SilentlyContinue) {
-        Write-Host "${GREEN}  ${EMOJI_CHECK} Bun already installed${NC}"
-    } else {
-        Write-Host "${CYAN}  Installing Bun...${NC}"
-        powershell -c "irm bun.sh/install.ps1 | iex"
-    }
-
-    # Install Yarn
-    if (Get-Command yarn -ErrorAction SilentlyContinue) {
-        Write-Host "${GREEN}  ${EMOJI_CHECK} Yarn already installed${NC}"
-    } elseif (Get-Command npm -ErrorAction SilentlyContinue) {
-        Write-Host "${CYAN}  Installing Yarn...${NC}"
-        npm install -g yarn
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "${YELLOW}  Yarn install failed${NC}"
-        }
-    } else {
-        Write-Host "${YELLOW}  npm not found — install Node.js first${NC}"
-    }
-
-    # Install uv
-    if (Get-Command uv -ErrorAction SilentlyContinue) {
-        Write-Host "${GREEN}  ${EMOJI_CHECK} uv already installed${NC}"
-    } else {
-        Write-Host "${CYAN}  Installing uv...${NC}"
-        powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "${YELLOW}  uv install failed${NC}"
-        }
-    }
-
-    Write-Host ""
-    Write-Host "${GREEN}  ✓ Dev tools installation complete${NC}"
+    Write-Host "${GREEN}  ✓ NVM + Node LTS installed${NC}"
 }
 
-# Dev Tools Uninstall
-function Uninstall-DevTools {
-    Write-Host "${RED}🗑️  ${BOLD}Uninstall Dev Tool${NC}"
-    Write-Host ""
-    Write-Host "  Enter tool to uninstall: node, python, go, rust, bun, yarn, uv"
-    $tool = Read-Host "  Choice"
+function Remove-NvmNode {
+    Write-Host "${RED}🗑️  ${BOLD}Remove NVM + Node${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove NVM and Node.js? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
 
     $pkgMgr = Get-PackageManager
-
-    switch ($tool.ToLower()) {
-        "node" {
-            if ($pkgMgr -eq "winget") {
-                winget uninstall OpenJS.NodeJS.LTS
-            } else {
-                choco uninstall nodejs -y
-            }
-        }
-        "python" {
-            if ($pkgMgr -eq "winget") {
-                winget uninstall Python.Python.3.11
-            } else {
-                choco uninstall python -y
-            }
-        }
-        "go" {
-            if ($pkgMgr -eq "winget") {
-                winget uninstall GoLang.Go
-            } else {
-                choco uninstall go -y
-            }
-        }
-        "rust" {
-            if (Get-Command rustup -ErrorAction SilentlyContinue) {
-                rustup self uninstall
-            } else {
-                Write-Host "${DIM}  Rustup not found${NC}"
-            }
-        }
-        "bun" {
-            $bunPath = "$env:USERPROFILE\.bun"
-            if (Test-Path $bunPath) {
-                Remove-Item -Recurse -Force $bunPath
-                Write-Host "${GREEN}  ✓ Bun removed${NC}"
-            } else {
-                Write-Host "${DIM}  Bun not found${NC}"
-            }
-        }
-        "yarn" {
-            npm uninstall -g yarn
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "${GREEN}  ✓ Yarn removed${NC}"
-            } else {
-                Write-Host "${RED}  Yarn removal failed${NC}"
-            }
-        }
-        "uv" {
-            $uvPath = "$env:USERPROFILE\.local\bin\uv.exe"
-            $uvData = "$env:USERPROFILE\.local\share\uv"
-            if (Test-Path $uvPath) { Remove-Item -Force $uvPath }
-            if (Test-Path $uvData) { Remove-Item -Recurse -Force $uvData }
-            Write-Host "${GREEN}  ✓ uv removed${NC}"
-        }
-        default {
-            Write-Host "${YELLOW}  Unknown tool: $tool${NC}"
-        }
+    if ($pkgMgr -eq "winget") {
+        winget uninstall OpenJS.NodeJS.LTS
+    } elseif ($pkgMgr -eq "choco") {
+        choco uninstall nodejs -y
     }
+    Write-Host "${GREEN}  ✓ NVM + Node removed${NC}"
 }
 
 # OpenCode + GSD Install
 function Install-OpenCode {
-    Write-Host "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD${NC}" -ForegroundColor Magenta
+    Write-Host "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}" -ForegroundColor Magenta
     Write-Host "${DIM}   AI-powered development environment${NC}"
     Write-Host ""
 
@@ -588,7 +661,7 @@ function Upgrade-All {
     }
 
     if (-not $upgraded) {
-        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (option 5).${NC}"
+        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (options 6-9).${NC}"
     } else {
         Write-Host ""
         Write-Host "${GREEN}  ✓ Upgrade complete${NC}"
@@ -696,21 +769,21 @@ function Parse-Input {
     $Script:RemoveIndices = @()
 
     if ([string]::IsNullOrWhiteSpace($RawInput)) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
         return $false
     }
 
     $tokens = $RawInput -split '[,\s]+' | Where-Object { $_ -ne '' }
 
     if ($tokens.Count -eq 0) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
         return $false
     }
 
     $candidates = @()
     $errors = @()
     foreach ($token in $tokens) {
-        if ($token -match '^-?[1-8]$') {
+        if ($token -match '^-?[1-9]$' -or $token -match '^-?1[01]$') {
             $candidates += $token
         } else {
             $errors += $token
@@ -719,10 +792,10 @@ function Parse-Input {
 
     if ($errors.Count -gt 0) {
         if ($errors.Count -eq 1) {
-            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-8)${NC}"
+            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-11)${NC}"
         } else {
             $errorStr = ($errors | ForEach-Object { "'$_'" }) -join ', '
-            Write-Host "${RED}Invalid: $errorStr are not valid options (1-8)${NC}"
+            Write-Host "${RED}Invalid: $errorStr are not valid options (1-11)${NC}"
         }
         return $false
     }

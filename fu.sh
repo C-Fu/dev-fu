@@ -90,14 +90,17 @@ MENU_LABELS=(
     "Install Docker"
     "Create Fancy Prompt"
     "Install Hostname Discovery (Linux only)"
-    "Install Dev Tools - Go, Rust, Bun, Python+UV+PIPX, NVM+Node LTS"
-    "Install OpenCode + GSD + OpenChamber"
+    "Install Go"
+    "Install Rust"
+    "Install Python + Pip + UV + Pipx"
+    "Install NVM + Node LTS"
     "Install PHP + Laravel"
+    "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_DEV" "$EMOJI_GSD" "$EMOJI_PHP")
-MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_dev_tools" "install_opencode_gsd" "install_php_laravel")
-MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "uninstall_dev_tool" "remove_opencode" "uninstall_php_laravel")
-MENU_SINGLE_SELECT=(0 0 0 0 1 0 1 0)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_PHP" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_php_laravel" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "uninstall_php_laravel" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 1 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -569,6 +572,12 @@ status_check() {
     check_cmd_version "Composer" "composer" "--version"
 
     echo
+    if command -v openchamber >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber   : ${GREEN}$(openchamber --version 2>/dev/null || echo 'installed')${NC}"
+    else
+        echo -e "  ${RED}${EMOJI_CROSS}${NC} OpenChamber   : ${RED}NOT installed${NC}"
+    fi
+
     if command -v opencode >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenCode     : ${GREEN}$(opencode --version 2>/dev/null || echo 'installed')${NC}"
     elif npm list -g opencode-ai >/dev/null 2>&1; then
@@ -612,99 +621,181 @@ status_check() {
 # ──────────────
 # 🛠️ Option 5: Install Dev Tools
 # ──────────────
-install_dev_tools() {
-    echo -e "${CYAN}${EMOJI_DEV}  ${BOLD}Install Dev Tools${NC}"
-    echo -e "${DIM}   Go, Rust, Bun, Node LTS, Python, Yarn${NC}"
+install_go() {
+    echo -e "${CYAN}${EMOJI_GO}  ${BOLD}Install Go${NC}"
+    echo -e "${DIM}   Go programming language${NC}"
     echo
-    
-    local need_install=0
-    local install_list=""
-    
-    command -v go >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Go will be installed"; need_install=1; }
-    command -v rustc >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Rust will be installed"; need_install=1; }
-    command -v bun >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Bun will be installed"; need_install=1; }
-    [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
-    command -v node >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Node.js will be installed"; need_install=1; }
-    command -v python3 >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Python will be installed"; need_install=1; }
-    command -v yarn >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Yarn will be installed"; need_install=1; }
-    
-    if [ $need_install -eq 0 ]; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} All dev tools already installed${NC}"
+
+    if command -v go >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Go already installed: $(go version)"
         return 0
     fi
-    
-    echo -e "${BYELLOW}  → This will install: Go, Rust, Bun, Node LTS, Python, Yarn, uv, pipx${NC}"
+
+    echo -e "${BYELLOW}  → This will install: Go${NC}"
     if [[ "$BATCH_MODE" != "1" ]]; then
         read -rp "  Proceed? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    # Rollback tracking: record successful steps for diagnostic output on partial failure
-    local rollback_log=""
-    _record_step() { rollback_log="${rollback_log}${rollback_log:+, }$1"; }
-
-    echo -e "${CYAN}  Installing system packages...${NC}"
     ensure_sudo
     pkg_update || die "package update failed" $?
-    pkg_install unzip golang-go python3 python3-pip python3-venv pipx || die "package install failed" $?
-    _record_step "system packages"
+    pkg_install golang-go || die "Go install failed" $?
 
-    echo -e "${CYAN}  Installing Rust...${NC}"
+    echo -e "${GREEN}  ✓ Go installed successfully${NC}"
+}
+
+remove_go() {
+    echo -e "${RED}🗑️  ${BOLD}Remove Go${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Go? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    pkg_remove golang-go || die "Go removal failed" $?
+    echo -e "${GREEN}  ✓ Go removed${NC}"
+}
+
+install_rust() {
+    echo -e "${CYAN}${EMOJI_RUST}  ${BOLD}Install Rust${NC}"
+    echo -e "${DIM}   Rust programming language via rustup${NC}"
+    echo
+
+    if command -v rustc >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Rust already installed: $(rustc --version)"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will install: Rust (rustup, rustc, cargo)${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
     retry_network 3 5 "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup.sh" || die "Rust download failed" 1
     sh /tmp/rustup.sh -y || die "Rust install failed" 1
     rm -f /tmp/rustup.sh
     source "$HOME/.cargo/env"
-    _record_step "Rust"
 
-    echo -e "${CYAN}  Installing Bun...${NC}"
-    retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || die "Bun download failed" 1
-    bash /tmp/bun-install.sh || die "Bun install failed" 1
-    rm -f /tmp/bun-install.sh
-    export PATH="$HOME/.bun/bin:$PATH"
-    _record_step "Bun"
-
-    echo -e "${CYAN}  Installing NVM + Node.js LTS...${NC}"
-    retry_network 3 5 "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
-    bash /tmp/nvm-install.sh || die "nvm install failed" 1
-    rm -f /tmp/nvm-install.sh
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-    nvm install --lts || die "Node LTS install failed" 1
-    _record_step "NVM + Node LTS"
-
-    echo -e "${CYAN}  Installing Yarn...${NC}"
-    npm install -g yarn || die "Yarn install failed" 1
-    _record_step "Yarn"
-
-    echo -e "${CYAN}  Installing uv...${NC}"
-    # Use official standalone installer — more reliable than pipx on Chromebooks/containers
-    retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || die "uv download failed" 1
-    sh /tmp/uv-install.sh || die "uv install failed" 1
-    rm -f /tmp/uv-install.sh
-    export PATH="$HOME/.local/bin:$PATH"
-    _record_step "uv"
-    append_rc_if_missing "$(detect_rc_file)" 'export PATH="$HOME/.local/bin:$PATH"'
-    
-    echo
-    echo -e "${GREEN}  ✓ Dev tools installation complete${NC}"
+    echo -e "${GREEN}  ✓ Rust installed successfully${NC}"
 }
 
-# ──────────────
-# 🗑️ Option 5a: Uninstall Dev Tool
-# ──────────────
-uninstall_dev_tool() {
-    echo -e "${RED}🗑️  ${BOLD}Uninstall Dev Tool${NC}"
-    read -rp "  Enter tool to uninstall (rust, node, bun, python, go, pipx, uv): " tool
-    case "$tool" in
-        rust) rustup self uninstall -y || die "Rust uninstall failed" $? ;;
-        node) nvm uninstall --lts || die "Node uninstall failed" $? ;;
-        bun) rm -rf ~/.bun ;;
-        python) pkg_remove python3 python3-pip python3-venv || die "Python uninstall failed" $? ;;
-        go) pkg_remove golang-go || die "Go uninstall failed" $? ;;
-        pipx) pkg_remove pipx || die "pipx uninstall failed" $? ;;
-        uv) rm -rf "$HOME/.local/bin/uv" "$HOME/.local/share/uv" || die "uv uninstall failed" $? ;;
-        *) echo "  ${YELLOW}Unknown tool: $tool${NC}" ;;
-    esac
+remove_rust() {
+    echo -e "${RED}🗑️  ${BOLD}Remove Rust${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Rust? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    rustup self uninstall -y || die "Rust uninstall failed" $?
+    echo -e "${GREEN}  ✓ Rust removed${NC}"
+}
+
+install_python() {
+    echo -e "${CYAN}${EMOJI_PYTHON}  ${BOLD}Install Python + Pip + UV + Pipx${NC}"
+    echo -e "${DIM}   Python 3 with pip, uv package manager, and pipx${NC}"
+    echo
+
+    local need_install=0
+    command -v python3 >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Python will be installed"; need_install=1; }
+    command -v pip3 >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} pip will be installed"; need_install=1; }
+    command -v uv >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} uv will be installed"; need_install=1; }
+    command -v pipx >/dev/null 2>&1 || { echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} pipx will be installed"; need_install=1; }
+
+    if [ $need_install -eq 0 ]; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Python + Pip + UV + Pipx already installed"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will install: Python 3, pip, uv, pipx${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    ensure_sudo
+    pkg_update || die "package update failed" $?
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing Python + pip...${NC}"
+        pkg_install python3 python3-pip python3-venv || die "Python install failed" $?
+    fi
+
+    if ! command -v pipx >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing pipx...${NC}"
+        pkg_install pipx || die "pipx install failed" $?
+    fi
+
+    if ! command -v uv >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing uv...${NC}"
+        retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || die "uv download failed" 1
+        sh /tmp/uv-install.sh || die "uv install failed" 1
+        rm -f /tmp/uv-install.sh
+        export PATH="$HOME/.local/bin:$PATH"
+        append_rc_if_missing "$(detect_rc_file)" 'export PATH="$HOME/.local/bin:$PATH"'
+    fi
+
+    echo -e "${GREEN}  ✓ Python + Pip + UV + Pipx installed successfully${NC}"
+}
+
+remove_python() {
+    echo -e "${RED}🗑️  ${BOLD}Remove Python + Pip + UV + Pipx${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Python, pip, uv, and pipx? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    pkg_remove python3 python3-pip python3-venv pipx 2>/dev/null || true
+    rm -rf "$HOME/.local/bin/uv" "$HOME/.local/share/uv" 2>/dev/null || true
+    echo -e "${GREEN}  ✓ Python + Pip + UV + Pipx removed${NC}"
+}
+
+install_nvm_node() {
+    echo -e "${CYAN}${EMOJI_NODE}  ${BOLD}Install NVM + Node LTS${NC}"
+    echo -e "${DIM}   Node Version Manager with latest LTS${NC}"
+    echo
+
+    [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+
+    if command -v nvm >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} NVM + Node already installed: $(node --version)"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will install: NVM + Node.js LTS${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    if ! command -v nvm >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing NVM...${NC}"
+        retry_network 3 5 "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
+        bash /tmp/nvm-install.sh || die "NVM install failed" 1
+        rm -f /tmp/nvm-install.sh
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+    fi
+
+    if ! command -v node >/dev/null 2>&1; then
+        echo -e "${CYAN}  Installing Node.js LTS...${NC}"
+        nvm install --lts || die "Node LTS install failed" 1
+    fi
+
+    echo -e "${GREEN}  ✓ NVM + Node LTS installed successfully${NC}"
+}
+
+remove_nvm_node() {
+    echo -e "${RED}🗑️  ${BOLD}Remove NVM + Node${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove NVM and Node.js? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    if command -v nvm >/dev/null 2>&1; then
+        nvm uninstall --lts 2>/dev/null || true
+    fi
+    rm -rf "$HOME/.nvm" 2>/dev/null || true
+    echo -e "${GREEN}  ✓ NVM + Node removed${NC}"
 }
 
 # ──────────────
@@ -803,10 +894,10 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🚀 Option 6: OpenCode + GSD
+# 🚀 Option 11: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
-    echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD${NC}"
+    echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
     echo -e "${DIM}   AI-powered development environment${NC}"
     echo
     
@@ -822,8 +913,8 @@ install_opencode_gsd() {
     fi
     
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
-    command -v nvm >/dev/null || { echo "  ${RED}${EMOJI_CROSS} NVM missing - install Dev Tools first (option 5)${NC}"; return; }
-    command -v node >/dev/null || { echo "  ${RED}${EMOJI_CROSS} Node missing - install Dev Tools first (option 5)${NC}"; return; }
+    command -v nvm >/dev/null || { echo "  ${RED}${EMOJI_CROSS} NVM missing - install NVM + Node LTS first (option 9)${NC}"; return; }
+    command -v node >/dev/null || { echo "  ${RED}${EMOJI_CROSS} Node missing - install NVM + Node LTS first (option 9)${NC}"; return; }
     
     if [ $opencode_installed -eq 0 ]; then
         echo -e "${BYELLOW}  → This will install: OpenCode + GSD${NC}"
@@ -850,7 +941,7 @@ install_opencode_gsd() {
 }
 
 # ──────────────
-# 🗑️ Option 6a: Remove OpenCode
+# 🗑️ Option 11a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
@@ -862,7 +953,7 @@ remove_opencode() {
 }
 
 # ──────────────
-# 🗑️ Option 6b: Remove GSD
+# 🗑️ Option 11b: Remove GSD
 # ──────────────
 remove_gsd() {
     echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
@@ -878,7 +969,7 @@ remove_gsd() {
 }
 
 # ──────────────
-# 🐘 Option 7: Install PHP + Laravel
+# 🐘 Option 10: Install PHP + Laravel
 # ──────────────
 install_php_laravel() {
     echo -e "${MAGENTA}🐘  ${BOLD}Install PHP + Laravel${NC}"
@@ -939,7 +1030,7 @@ install_php_laravel() {
 }
 
 # ──────────────
-# 🗑️ Option 7a: Uninstall PHP + Laravel
+# 🗑️ Option 10a: Uninstall PHP + Laravel
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
@@ -1024,7 +1115,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1032,7 +1123,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-8) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1040,7 +1131,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-8]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[01]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -1049,12 +1140,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-8)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-11)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-8)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-11)${NC}"
         fi
         return 1
     fi
