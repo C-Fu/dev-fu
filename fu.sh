@@ -98,6 +98,7 @@ MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$
 MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_dev_tools" "install_opencode_gsd" "install_php_laravel")
 MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "uninstall_dev_tool" "remove_opencode" "uninstall_php_laravel")
 MENU_SINGLE_SELECT=(0 0 0 0 1 0 1 0)
+BATCH_MODE=0
 
 # ──────────────
 # ┌─ Helpers
@@ -335,8 +336,10 @@ install_docker() {
     fi
     
     echo -e "${BYELLOW}  → This will install: Docker (latest)${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
     
     echo -e "${CYAN}  Downloading Docker install script...${NC}"
     retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || die "Docker download failed" 1
@@ -362,8 +365,10 @@ remove_docker() {
     fi
     
     echo -e "${BYELLOW}  → This will remove Docker completely${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
     
     echo -e "${CYAN}  Removing Docker...${NC}"
     pkg_purge docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
@@ -415,8 +420,10 @@ install_avahi() {
 
     echo -e "${BYELLOW}  → This will install: avahi-daemon, systemd-resolved${NC}"
     echo -e "${BYELLOW}  → DNS will be swapped to systemd-resolved${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     if ! command -v avahi-daemon >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
@@ -457,8 +464,10 @@ remove_avahi() {
 
     echo -e "${BYELLOW}  → This will remove: avahi-daemon, systemd-resolved${NC}"
     echo -e "${BYELLOW}  → DNS will be restored to default resolv.conf${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     echo -e "${CYAN}  Restoring default DNS...${NC}"
     if [ -L /etc/resolv.conf ]; then
@@ -491,8 +500,10 @@ create_fancy_prompt() {
     local target="$HOME/.fancy-prompt.sh"
     local url="https://raw.githubusercontent.com/jonathan-scholbach/fancy-prompt/refs/heads/master/prompt.sh"
 
-    read -rp "  Replace current fancy prompt? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Replace current fancy prompt? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     retry_network 3 5 "curl -fsSL '$url' -o '$target'" || die "Download failed" 1
     chmod +x "$target"
@@ -504,8 +515,10 @@ create_fancy_prompt() {
 
 remove_fancy_prompt() {
     echo -e "${RED}➜ Remove Fancy Prompt${NC}"
-    read -rp "  Remove fancy prompt? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove fancy prompt? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
     
     rm -f "$HOME/.fancy-prompt.sh"
     sed -i.bak '/source ~\/.fancy-prompt.sh/d' "$(detect_rc_file)" 2>/dev/null || true
@@ -621,8 +634,10 @@ install_dev_tools() {
     fi
     
     echo -e "${BYELLOW}  → This will install: Go, Rust, Bun, Node LTS, Python, Yarn, uv, pipx${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     # Rollback tracking: record successful steps for diagnostic output on partial failure
     local rollback_log=""
@@ -812,8 +827,10 @@ install_opencode_gsd() {
     
     if [ $opencode_installed -eq 0 ]; then
         echo -e "${BYELLOW}  → This will install: OpenCode + GSD${NC}"
-        read -rp "  Proceed? (y/n): " confirm
-        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+        if [[ "$BATCH_MODE" != "1" ]]; then
+            read -rp "  Proceed? (y/n): " confirm
+            [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+        fi
     fi
 
     echo -e "${CYAN}  Installing OpenCode...${NC}"
@@ -837,8 +854,10 @@ install_opencode_gsd() {
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
-    read -rp "  Remove OpenCode? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove OpenCode? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
     npm uninstall -g opencode-ai || die "OpenCode uninstall failed" $?
 }
 
@@ -847,8 +866,10 @@ remove_opencode() {
 # ──────────────
 remove_gsd() {
     echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
-    read -rp "  Remove GSD? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove GSD? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
     if command -v gsd-opencode >/dev/null 2>&1; then
         gsd-opencode uninstall || die "GSD uninstall failed" $?
     else
@@ -875,8 +896,10 @@ install_php_laravel() {
     fi
     
     echo -e "${BYELLOW}  → This will install: PHP 8.x, Composer, Laravel installer${NC}"
-    read -rp "  Proceed? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     local pkg_manager=$(get_pkg_manager)
     case "$pkg_manager" in
@@ -920,8 +943,10 @@ install_php_laravel() {
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
-    read -rp "  Remove PHP and Laravel? (y/n): " confirm
-    [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove PHP and Laravel? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
 
     local pkg_manager=$(get_pkg_manager)
     case "$pkg_manager" in
@@ -1098,6 +1123,55 @@ parse_input() {
     return 0
 }
 
+show_confirmation_screen() {
+    local total=$(( ${#PARSE_INSTALL_IDX[@]} + ${#PARSE_REMOVE_IDX[@]} ))
+
+    if [[ $total -eq 0 ]]; then
+        return 1
+    fi
+
+    if [[ $total -eq 1 ]]; then
+        return 0
+    fi
+
+    echo -e "${BOLD}${WHITE}Operations to execute:${NC}"
+
+    local box_inner=54
+    local border="${BOX_TL}"
+    for ((i=0; i<box_inner; i++)); do border="${border}${BOX_H}"; done
+    border="${border}${BOX_TR}"
+    echo -e "${CYAN}${border}${NC}"
+
+    local num=1
+    for idx in "${PARSE_INSTALL_IDX[@]}"; do
+        local label="${MENU_EMOJIS[$idx]}  ${MENU_LABELS[$idx]}"
+        local padded="${label}                                                       "
+        padded="${padded:0:$((box_inner - 4))}"
+        echo -e "${BOX_V} ${GREEN}${num}) ${padded}${NC} ${BOX_V}"
+        ((num++))
+    done
+    for idx in "${PARSE_REMOVE_IDX[@]}"; do
+        local label="${MENU_EMOJIS[$idx]}  ${MENU_LABELS[$idx]}"
+        local padded="${label}                                                       "
+        padded="${padded:0:$((box_inner - 5))}"
+        echo -e "${BOX_V} ${RED}-${num}) ${padded}${NC} ${BOX_V}"
+        ((num++))
+    done
+
+    local bottom="${BOX_BL}"
+    for ((i=0; i<box_inner; i++)); do bottom="${bottom}${BOX_H}"; done
+    bottom="${bottom}${BOX_BR}"
+    echo -e "${CYAN}${bottom}${NC}"
+
+    echo -e "${YELLOW}Run ${total} operations? (y/n)${NC}"
+    read -rp "  ▸ " confirm
+    if [[ $confirm != [yY] ]]; then
+        echo -e "${DIM}  Cancelled.${NC}"
+        return 1
+    fi
+    return 0
+}
+
 # ─────────────────────────────────────────────
 # Main loop
 # ─────────────────────────────────────────────
@@ -1116,12 +1190,16 @@ while true; do
         upgrade_all
     else
         if parse_input "$choice"; then
-            for idx in "${PARSE_INSTALL_IDX[@]}"; do
-                "${MENU_INSTALL_FN[$idx]}"
-            done
-            for idx in "${PARSE_REMOVE_IDX[@]}"; do
-                "${MENU_REMOVE_FN[$idx]}"
-            done
+            if show_confirmation_screen; then
+                BATCH_MODE=1
+                for idx in "${PARSE_INSTALL_IDX[@]}"; do
+                    "${MENU_INSTALL_FN[$idx]}"
+                done
+                for idx in "${PARSE_REMOVE_IDX[@]}"; do
+                    "${MENU_REMOVE_FN[$idx]}"
+                done
+                BATCH_MODE=0
+            fi
         fi
     fi
     echo
