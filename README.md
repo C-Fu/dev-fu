@@ -1,22 +1,31 @@
-# fu.sh — One command to bootstrap a developer machine
+# dev-fu — One command to bootstrap a developer machine
 
 **One command to bootstrap a complete developer machine, anywhere.**
 
-```
+```bash
 # Run Dev-Fu/fu.sh
 bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
+## Why dev-fu
+
+- **Zero dependencies** — Pure Bash 4+ and PowerShell 5.1+. No Python, no Node, no framework required to run the script itself. Everything it installs is fetched from official sources.
+- **Runs everywhere** — Same script works across WSL2, Linux, macOS, and Windows (PowerShell). Supports x86, x64, and ARM architectures. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
+- **Multi-distro** — Auto-detects your package manager (apt, dnf, pacman, zypper, brew, winget, choco). Works on Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, and Windows.
+- **Multi-select menu** — Select multiple operations in one pass. Batch install Go, Rust, and Python without re-running the script.
+- **Atomic operations** — Each install has a matching remove. Every operation confirms before proceeding.
 
 ## Supported Platforms
 
-- Linux (x86_64, ARM/aarch64)
-  - Debian / Ubuntu (apt)
-  - Fedora / RHEL (dnf)
-  - Arch Linux (pacman)
-  - openSUSE (zypper)
-- macOS (Intel & Apple Silicon) — Homebrew
-- Windows (WSL2) — Ubuntu, Debian
+| Platform | Architecture | Package Manager | Script |
+|----------|-------------|-----------------|--------|
+| Debian / Ubuntu | x86_64, ARM | apt | `fu.sh` |
+| Fedora / RHEL | x86_64, ARM | dnf | `fu.sh` |
+| Arch Linux | x86_64, ARM | pacman | `fu.sh` |
+| openSUSE | x86_64, ARM | zypper | `fu.sh` |
+| macOS (Intel & Apple Silicon) | x64, ARM | Homebrew | `fu.sh` |
+| WSL2 (Ubuntu, Debian) | x86_64, ARM | apt | `fu.sh` |
+| Windows (native) | x64, ARM | winget / choco | `fu.ps1` |
 
 ## What Can Be Installed
 
@@ -24,16 +33,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/
 |----------|-------|
 | **Containers** | [Docker](https://www.docker.com/) |
 | **Networking** | [Avahi Daemon](https://github.com/lathiat/avahi) + [systemd-resolved](https://www.freedesktop.org/wiki/Software/systemd/resolved/) — mDNS/NSS hostname discovery + DNS (Linux only) |
-| **Languages** | [Go](https://go.dev/), [Rust](https://www.rust-lang.org/), [Node.js](https://nodejs.org/) (LTS via nvm), [Python](https://www.python.org/) (with pipx, uv), [PHP](https://www.php.net/) |
-| **Runtimes** | [Bun](https://bun.sh/) (JavaScript), [Composer](https://getcomposer.org/) (PHP) |
-| **Package Managers** | [Yarn](https://yarnpkg.com/) (bundled with Dev Tools), npm |
+| **Languages** | [Go](https://go.dev/), [Rust](https://www.rust-lang.org/), [Python](https://www.python.org/) (with pip, pipx, uv), [Node.js](https://nodejs.org/) (LTS via nvm), [PHP](https://www.php.net/) |
+| **Runtimes** | [Bun](https://bun.sh/) |
+| **Package Managers** | [Yarn](https://yarnpkg.com/), [Composer](https://getcomposer.org/) (PHP), npm |
 | **Web Dev** | [Laravel](https://laravel.com/) installer (via Composer) |
-| **AI Tools** | [OpenCode](https://github.com/anomalyco/opencode), [Get-Shit-Done (GSD)](https://github.com/rokicool/gsd-opencode) |
+| **AI Tools** | [OpenCode](https://github.com/anomalyco/opencode), [GSD](https://github.com/rokicool/gsd-opencode) (Rokicool), [OpenChamber](https://github.com/rokicool/openchamber) |
 | **Productivity** | [Fancy Prompt](https://github.com/jonathan-scholbach/fancy-prompt) — optional shell enhancement |
+| **Terminal** | Disable mouse reporting — prevents terminal mouse events from interfering with CLI tools |
 
 ## Prerequisites
 
-- POSIX-compatible shell (bash, zsh)
+- POSIX-compatible shell (bash, zsh) — or PowerShell 5.1+ on Windows
 - curl or wget for downloads
 - sudo privileges (for system package installs)
 - Internet connection
@@ -54,20 +64,31 @@ bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/
 
 ## Usage
 
-Run `./fu.sh` and select options from the menu:
+Run `./fu.sh` and select options from the interactive menu:
 
 ```
-1) Install Docker          1a) Remove Docker
-2) Create Fancy Prompt    2a) Remove Fancy Prompt
-3) Install Hostname Discovery   3a) Remove Hostname Discovery
-4) Status Check
-5) Install Dev Tools       5a) Uninstall Dev Tool
-6) Install OpenCode + GSD  6a) Remove OpenCode
-                          6b) Remove GSD
-7) Install PHP + Laravel  7a) Uninstall PHP + Laravel
+ 1) 🔍  Status Check
+ 2) ⬆️  Upgrade All Tools
+ 3) 🐳  Install Docker
+ 4) ✨  Create Fancy Prompt
+ 5) 🌐  Install Hostname Discovery (Linux only)
+ 6) 🐹  Install Go
+ 7) 🦀  Install Rust
+ 8) 🐍  Install Python + Pip + UV + Pipx
+ 9) 📦  Install NVM + Node LTS
+10) 🥟  Install Bun
+11) ⚡  Install Yarn
+12) ⚡  Disable Mouse Reporting in Terminal
+13) 🐘  Install PHP + Laravel
+14) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
-Select an option by number (e.g., `5` to install dev tools).
+- **Multi-select:** Enter comma or space-separated numbers (e.g. `6,7,8` to install Go, Rust, and Python together)
+- **Remove:** Prefix with `-` (e.g. `-3` to remove Docker)
+- **Upgrade all:** Press `u` at the prompt
+- **Quit:** Press `q`
+
+Single-select options (Hostname Discovery, OpenCode+GSD) must be used alone.
 
 ## Platform-Specific Notes
 
@@ -75,7 +96,7 @@ Select an option by number (e.g., `5` to install dev tools).
 
 All package managers supported. The script auto-detects your package manager.
 
-Option 3 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
+Option 5 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
 
 ### macOS
 
@@ -89,19 +110,19 @@ Option 3 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-
 
 ### Windows (PowerShell)
 
-For native Windows, use `windows/fu.ps1`:
+For native Windows, use `fu.ps1`:
 
 ```powershell
 # Option 1: Clone and run locally
 git clone https://github.com/C-Fu/dev-fu.git
-cd dev-fu\windows
+cd dev-fu
 .\fu.ps1
 
 # Option 2: Run directly from remote (bypasses execution policy)
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/windows/fu.ps1 | Invoke-Expression
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invoke-Expression
 
 # Option 3: Bypass execution policy for local script
-powershell -ExecutionPolicy Bypass -File .\windows\fu.ps1
+powershell -ExecutionPolicy Bypass -File .\fu.ps1
 ```
 
 **Note:** If you see a "not digitally signed" error, use Option 2 or 3 above.
