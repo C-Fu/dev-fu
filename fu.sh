@@ -94,13 +94,16 @@ MENU_LABELS=(
     "Install Rust"
     "Install Python + Pip + UV + Pipx"
     "Install NVM + Node LTS"
+    "Install Bun"
+    "Install Yarn"
+    "Disable Mouse Reporting in Terminal"
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_PHP" "$EMOJI_GSD")
-MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_php_laravel" "install_opencode_gsd")
-MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "uninstall_php_laravel" "remove_opencode")
-MENU_SINGLE_SELECT=(0 0 0 0 1 0 0 0 0 0 1)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_SPARKLE" "$EMOJI_PHP" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 1 0 0 0 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -798,6 +801,115 @@ remove_nvm_node() {
     echo -e "${GREEN}  ✓ NVM + Node removed${NC}"
 }
 
+install_bun() {
+    echo -e "${CYAN}${EMOJI_BUN}  ${BOLD}Install Bun${NC}"
+    echo -e "${DIM}   Fast JavaScript runtime & package manager${NC}"
+    echo
+
+    if command -v bun >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Bun already installed: $(bun --version)"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will install: Bun${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || die "Bun download failed" 1
+    bash /tmp/bun-install.sh || die "Bun install failed" 1
+    rm -f /tmp/bun-install.sh
+    export PATH="$HOME/.bun/bin:$PATH"
+
+    echo -e "${GREEN}  ✓ Bun installed successfully${NC}"
+}
+
+remove_bun() {
+    echo -e "${RED}🗑️  ${BOLD}Remove Bun${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Bun? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    rm -rf "$HOME/.bun"
+    echo -e "${GREEN}  ✓ Bun removed${NC}"
+}
+
+install_yarn() {
+    echo -e "${CYAN}${EMOJI_SPARKLE}  ${BOLD}Install Yarn${NC}"
+    echo -e "${DIM}   Fast, reliable dependency management${NC}"
+    echo
+
+    if command -v yarn >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Yarn already installed: $(yarn --version)"
+        return 0
+    fi
+
+    [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
+    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 9)${NC}"; return; }
+
+    echo -e "${BYELLOW}  → This will install: Yarn${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    npm install -g yarn || die "Yarn install failed" 1
+
+    echo -e "${GREEN}  ✓ Yarn installed successfully${NC}"
+}
+
+remove_yarn() {
+    echo -e "${RED}🗑️  ${BOLD}Remove Yarn${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Yarn? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    npm uninstall -g yarn 2>/dev/null || true
+    echo -e "${GREEN}  ✓ Yarn removed${NC}"
+}
+
+disable_mouse_reporting() {
+    echo -e "${CYAN}${EMOJI_SPARKLE}  ${BOLD}Disable Mouse Reporting in Terminal${NC}"
+    echo -e "${DIM}   Prevents terminal mouse events from interfering with CLI tools${NC}"
+    echo
+
+    local rc_file=$(detect_rc_file)
+    local mouse_line="printf '\\e[?1000l\\e[?1002l\\e[?1003l\\e[?1006l'"
+
+    if grep -F -- "$mouse_line" "$rc_file" >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Mouse reporting already disabled in ${rc_file}"
+        return 0
+    fi
+
+    echo -e "${BYELLOW}  → This will add mouse disable commands to ${rc_file}${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'
+    append_rc_if_missing "$rc_file" "$mouse_line"
+
+    echo -e "${GREEN}  ✓ Mouse reporting disabled${NC}"
+}
+
+enable_mouse_reporting() {
+    echo -e "${RED}🗑️  ${BOLD}Re-enable Mouse Reporting${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Re-enable mouse reporting? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    local rc_file=$(detect_rc_file)
+    local mouse_line="printf '\\e[?1000l\\e[?1002l\\e[?1003l\\e[?1006l'"
+    sed -i.bak "/$(echo "$mouse_line" | sed 's/\[/\\[/g; s/\]/\\]/g')/d" "$rc_file" 2>/dev/null || true
+
+    echo -e "${GREEN}  ✓ Mouse reporting re-enabled${NC}"
+}
+
 # ──────────────
 # ⬆️ Option 8: Upgrade All Tools
 # ──────────────
@@ -894,7 +1006,7 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🚀 Option 11: OpenCode + GSD
+# 🚀 Option 14: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
@@ -931,17 +1043,13 @@ install_opencode_gsd() {
 
     echo -e "${CYAN}  Installing GSD...${NC}"
     npx gsd-opencode@latest || die "GSD install failed" 1
-
-    # Disable mouse reporting
-    printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'
-    append_rc_if_missing "$(detect_rc_file)" "printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'"
     
     echo
     echo -e "${GREEN}  ✓ OpenCode + GSD installed successfully${NC}"
 }
 
 # ──────────────
-# 🗑️ Option 11a: Remove OpenCode
+# 🗑️ Option 14a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
@@ -953,7 +1061,7 @@ remove_opencode() {
 }
 
 # ──────────────
-# 🗑️ Option 11b: Remove GSD
+# 🗑️ Option 14b: Remove GSD
 # ──────────────
 remove_gsd() {
     echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
@@ -969,7 +1077,7 @@ remove_gsd() {
 }
 
 # ──────────────
-# 🐘 Option 10: Install PHP + Laravel
+# 🐘 Option 13: Install PHP + Laravel
 # ──────────────
 install_php_laravel() {
     echo -e "${MAGENTA}🐘  ${BOLD}Install PHP + Laravel${NC}"
@@ -1030,7 +1138,7 @@ install_php_laravel() {
 }
 
 # ──────────────
-# 🗑️ Option 10a: Uninstall PHP + Laravel
+# 🗑️ Option 13a: Uninstall PHP + Laravel
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
@@ -1115,7 +1223,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1123,7 +1231,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1131,7 +1239,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[01]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-4]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -1140,12 +1248,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-11)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-14)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-11)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-14)${NC}"
         fi
         return 1
     fi

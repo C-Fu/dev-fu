@@ -43,6 +43,9 @@ $EMOJI_GO = "🐹"
 $EMOJI_RUST = "🦀"
 $EMOJI_PYTHON = "🐍"
 $EMOJI_NODE = "📦"
+$EMOJI_BUN = "🥟"
+$EMOJI_BUN = "🥟"
+$EMOJI_SPARKLE = "⚡"
 
 $MENU_LABELS = @(
     "Status Check"
@@ -54,13 +57,16 @@ $MENU_LABELS = @(
     "Install Rust"
     "Install Python + Pip + UV + Pipx"
     "Install NVM + Node LTS"
+    "Install Bun"
+    "Install Yarn"
+    "Disable Mouse Reporting in Terminal"
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_PHP, $EMOJI_GSD)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-PHP", "Install-OpenCode")
-$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-PHP", "Remove-OpenCode")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_SPARKLE, $EMOJI_PHP, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -515,6 +521,139 @@ function Remove-NvmNode {
     Write-Host "${GREEN}  ✓ NVM + Node removed${NC}"
 }
 
+# Bun Install
+function Install-Bun {
+    Write-Host "${CYAN}${EMOJI_BUN}  ${BOLD}Install Bun${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Fast JavaScript runtime & package manager${NC}"
+    Write-Host ""
+
+    if (Get-Command bun -ErrorAction SilentlyContinue) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Bun already installed: $(bun --version)"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: Bun${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    Write-Host "${CYAN}  Installing Bun...${NC}"
+    powershell -c "irm bun.sh/install.ps1 | iex"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "${RED}  Bun install failed${NC}"
+        return
+    }
+    Write-Host "${GREEN}  ✓ Bun installed${NC}"
+}
+
+# Bun Remove
+function Remove-Bun {
+    Write-Host "${RED}🗑️  ${BOLD}Remove Bun${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Bun? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $bunPath = "$env:USERPROFILE\.bun"
+    if (Test-Path $bunPath) {
+        Remove-Item -Recurse -Force $bunPath
+    }
+    Write-Host "${GREEN}  ✓ Bun removed${NC}"
+}
+
+# Yarn Install
+function Install-Yarn {
+    Write-Host "${CYAN}${EMOJI_SPARKLE}  ${BOLD}Install Yarn${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Fast, reliable dependency management${NC}"
+    Write-Host ""
+
+    if (Get-Command yarn -ErrorAction SilentlyContinue) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Yarn already installed: $(yarn --version)"
+        return
+    }
+
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Host "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 9)${NC}"
+        return
+    }
+
+    Write-Host "${YELLOW}  → This will install: Yarn${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    Write-Host "${CYAN}  Installing Yarn...${NC}"
+    npm install -g yarn
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "${RED}  Yarn install failed${NC}"
+        return
+    }
+    Write-Host "${GREEN}  ✓ Yarn installed${NC}"
+}
+
+# Yarn Remove
+function Remove-Yarn {
+    Write-Host "${RED}🗑️  ${BOLD}Remove Yarn${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Yarn? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    npm uninstall -g yarn 2>$null
+    Write-Host "${GREEN}  ✓ Yarn removed${NC}"
+}
+
+# Disable Mouse Reporting
+function Disable-MouseReporting {
+    Write-Host "${CYAN}${EMOJI_SPARKLE}  ${BOLD}Disable Mouse Reporting in Terminal${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Prevents terminal mouse events from interfering with CLI tools${NC}"
+    Write-Host ""
+
+    $profilePath = $PROFILE
+    $mouseLine = "Write-Host `"`e[?1000l`e[?1002l`e[?1003l`e[?1006l`" -NoNewline"
+
+    if (Test-Path $profilePath) {
+        $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+        if ($content -and $content -match '\?\s*1000l.*\?\s*1002l.*\?\s*1006l') {
+            Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Mouse reporting already disabled in profile"
+            return
+        }
+    }
+
+    Write-Host "${YELLOW}  → This will add mouse disable commands to your PowerShell profile${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    if (-not (Test-Path $profilePath)) {
+        New-Item -ItemType File -Path $profilePath -Force | Out-Null
+    }
+    Add-Content -Path $profilePath -Value $mouseLine
+    Write-Host "${GREEN}  ✓ Mouse reporting disabled${NC}"
+}
+
+# Enable Mouse Reporting
+function Enable-MouseReporting {
+    Write-Host "${RED}🗑️  ${BOLD}Re-enable Mouse Reporting${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Re-enable mouse reporting? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $profilePath = $PROFILE
+    if (Test-Path $profilePath) {
+        $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+        if ($content) {
+            $cleaned = $content -replace "(?m)^\s*Write-Host.*\?\s*1000l.*\?\s*1006l.*-NoNewline\s*\r?\n?", ""
+            Set-Content -Path $profilePath -Value $cleaned -NoNewline
+        }
+    }
+    Write-Host "${GREEN}  ✓ Mouse reporting re-enabled${NC}"
+}
+
 # OpenCode + GSD Install
 function Install-OpenCode {
     Write-Host "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}" -ForegroundColor Magenta
@@ -661,7 +800,7 @@ function Upgrade-All {
     }
 
     if (-not $upgraded) {
-        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (options 6-9).${NC}"
+        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (options 6-11).${NC}"
     } else {
         Write-Host ""
         Write-Host "${GREEN}  ✓ Upgrade complete${NC}"
@@ -769,21 +908,21 @@ function Parse-Input {
     $Script:RemoveIndices = @()
 
     if ([string]::IsNullOrWhiteSpace($RawInput)) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
         return $false
     }
 
     $tokens = $RawInput -split '[,\s]+' | Where-Object { $_ -ne '' }
 
     if ($tokens.Count -eq 0) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-11) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
         return $false
     }
 
     $candidates = @()
     $errors = @()
     foreach ($token in $tokens) {
-        if ($token -match '^-?[1-9]$' -or $token -match '^-?1[01]$') {
+        if ($token -match '^-?[1-9]$' -or $token -match '^-?1[0-4]$') {
             $candidates += $token
         } else {
             $errors += $token
@@ -792,10 +931,10 @@ function Parse-Input {
 
     if ($errors.Count -gt 0) {
         if ($errors.Count -eq 1) {
-            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-11)${NC}"
+            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-14)${NC}"
         } else {
             $errorStr = ($errors | ForEach-Object { "'$_'" }) -join ', '
-            Write-Host "${RED}Invalid: $errorStr are not valid options (1-11)${NC}"
+            Write-Host "${RED}Invalid: $errorStr are not valid options (1-14)${NC}"
         }
         return $false
     }
