@@ -1204,6 +1204,7 @@ EOF
         echo -e "${BOX_V} ${GREEN}${num}${NC}) ${MENU_EMOJIS[$i]}  ${MENU_LABELS[$i]}"
     done
     echo
+    echo -e "${DIM}  Enter your selected options, split by commas or spaces (1,2 3 4)${NC}"
     echo -e "${DIM}  Enter -N to remove (e.g. -3 removes Docker)${NC}"
     echo
     

@@ -891,6 +891,7 @@ function Show-Menu {
         }
     }
     Write-Host ""
+    Write-Host "${DIM}  Enter your selected options, split by commas or spaces (1,2 3 4)${NC}"
     Write-Host "${DIM}  Enter -N to remove (e.g. -3 removes Docker)${NC}"
     Write-Host ""
 
