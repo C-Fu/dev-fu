@@ -54,6 +54,7 @@ $MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $E
 $MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-DevTools", "Install-OpenCode", "Install-PHP")
 $MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Uninstall-DevTools", "Remove-OpenCode", "Remove-PHP")
 $MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 1, 0)
+$Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
 function Get-DetectOs {
@@ -110,10 +111,9 @@ function Install-Docker {
     }
 
     Write-Host "${YELLOW}  → This will install: Docker Desktop${NC}"
-    $confirm = Read-Host "  Proceed? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
 
     $pkgMgr = Get-PackageManager
@@ -140,10 +140,9 @@ function Remove-Docker {
     }
 
     Write-Host "${YELLOW}  → This will remove Docker${NC}"
-    $confirm = Read-Host "  Proceed? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
 
     $pkgMgr = Get-PackageManager
@@ -175,10 +174,7 @@ function Install-FancyPrompt {
     $url = "https://raw.githubusercontent.com/jonathan-scholbach/fancy-prompt/refs/heads/master/prompt.sh"
 
     $confirm = Read-Host "  Replace current fancy prompt? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
-    }
+    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
 
     try {
         Invoke-WebRequest -Uri $url -OutFile $target -ErrorAction Stop
@@ -205,10 +201,7 @@ function Install-FancyPrompt {
 function Remove-FancyPrompt {
     Write-Host "${RED}➜ Remove Fancy Prompt${NC}"
     $confirm = Read-Host "  Remove fancy prompt? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
-    }
+    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
 
     $target = "$env:USERPROFILE\.fancy-prompt.ps1"
     if (Test-Path $target) {
@@ -315,10 +308,9 @@ function Install-DevTools {
     Write-Host ""
 
     Write-Host "${YELLOW}  → This will install: Node.js LTS, Python, Go, Rust, Bun, Yarn, uv${NC}"
-    $confirm = Read-Host "  Proceed? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
 
     $pkgMgr = Get-PackageManager
@@ -461,10 +453,9 @@ function Install-OpenCode {
     }
 
     if (-not $opencodeInstalled) {
-        $confirm = Read-Host "  Proceed? (y/n)"
-        if ($confirm -ne "y" -and $confirm -ne "Y") {
-            Write-Host "${DIM}  Cancelled.${NC}"
-            return
+        if (-not $Script:BATCH_MODE) {
+            $confirm = Read-Host "  Proceed? (y/n)"
+            if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
         }
     }
 
@@ -490,10 +481,7 @@ function Install-OpenCode {
 function Remove-OpenCode {
     Write-Host "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
     $confirm = Read-Host "  Remove OpenCode? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
-    }
+    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     npm uninstall -g opencode-ai
     if ($LASTEXITCODE -ne 0) {
         Write-Host "${RED}  OpenCode removal failed${NC}"
@@ -506,10 +494,7 @@ function Remove-OpenCode {
 function Remove-GSD {
     Write-Host "${RED}🗑️  ${BOLD}Remove GSD${NC}"
     $confirm = Read-Host "  Remove GSD? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
-    }
+    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     if (Get-Command gsd-opencode -ErrorAction SilentlyContinue) {
         gsd-opencode uninstall
         if ($LASTEXITCODE -ne 0) {
@@ -615,10 +600,9 @@ function Install-PHP {
     }
 
     Write-Host "${YELLOW}  → This will install: PHP 8.x, Composer, Laravel installer${NC}"
-    $confirm = Read-Host "  Proceed? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
 
     $pkgMgr = Get-PackageManager
@@ -638,10 +622,7 @@ function Install-PHP {
 function Remove-PHP {
     Write-Host "${RED}🗑️  ${BOLD}Remove PHP + Laravel${NC}"
     $confirm = Read-Host "  Remove PHP and Laravel? (y/n)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "${DIM}  Cancelled.${NC}"
-        return
-    }
+    if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
 
     $pkgMgr = Get-PackageManager
     if ($pkgMgr -eq "winget") {
@@ -793,6 +774,44 @@ function Parse-Input {
     return $true
 }
 
+function Show-ConfirmationScreen {
+    $total = $Script:InstallIndices.Count + $Script:RemoveIndices.Count
+
+    if ($total -eq 0) { return $false }
+    if ($total -eq 1) { return $true }
+
+    Write-Host "${BOLD}${WHITE}Operations to execute:${NC}"
+
+    $boxInner = 54
+    $border = "${BOX_TL}" + ($BOX_H * $boxInner) + "${BOX_TR}"
+    Write-Host "${CYAN}${border}${NC}"
+
+    $num = 1
+    foreach ($idx in $Script:InstallIndices) {
+        $label = "$($MENU_EMOJIS[$idx])  $($MENU_LABELS[$idx])"
+        $padded = $label.PadRight($boxInner - 4).Substring(0, $boxInner - 4)
+        Write-Host "${BOX_V} ${GREEN}${num}) ${padded}${NC} ${BOX_V}"
+        $num++
+    }
+    foreach ($idx in $Script:RemoveIndices) {
+        $label = "$($MENU_EMOJIS[$idx])  $($MENU_LABELS[$idx])"
+        $padded = $label.PadRight($boxInner - 5).Substring(0, $boxInner - 5)
+        Write-Host "${BOX_V} ${RED}-${num}) ${padded}${NC} ${BOX_V}"
+        $num++
+    }
+
+    $bottom = "${BOX_BL}" + ($BOX_H * $boxInner) + "${BOX_BR}"
+    Write-Host "${CYAN}${bottom}${NC}"
+
+    Write-Host "${YELLOW}Run ${total} operations? (y/n)${NC}"
+    $confirm = Read-Host "  ▸"
+    if ($confirm -notin @('y','Y')) {
+        Write-Host "${DIM}  Cancelled.${NC}"
+        return $false
+    }
+    return $true
+}
+
 # Main loop
 while ($true) {
     Show-PreflightStatus
@@ -809,11 +828,19 @@ while ($true) {
         Upgrade-All
     } else {
         if (Parse-Input $choice) {
-            foreach ($idx in $Script:InstallIndices) {
-                & $MENU_INSTALL_FN[$idx]
-            }
-            foreach ($idx in $Script:RemoveIndices) {
-                & $MENU_REMOVE_FN[$idx]
+            if (Show-ConfirmationScreen) {
+                if ($Script:InstallIndices -contains 4) {
+                    Write-Host "${YELLOW}Hostname Discovery is not available on Windows${NC}"
+                    $Script:InstallIndices = @($Script:InstallIndices | Where-Object { $_ -ne 4 })
+                }
+                $Script:BATCH_MODE = $true
+                foreach ($idx in $Script:InstallIndices) {
+                    & $MENU_INSTALL_FN[$idx]
+                }
+                foreach ($idx in $Script:RemoveIndices) {
+                    & $MENU_REMOVE_FN[$idx]
+                }
+                $Script:BATCH_MODE = $false
             }
         }
     }
