@@ -1146,14 +1146,14 @@ show_confirmation_screen() {
     for idx in "${PARSE_INSTALL_IDX[@]}"; do
         local label="${MENU_EMOJIS[$idx]}  ${MENU_LABELS[$idx]}"
         local padded="${label}                                                       "
-        padded="${padded:0:$((box_inner - 4))}"
+        padded="${padded:0:$((box_inner - 5))}"
         echo -e "${BOX_V} ${GREEN}${num}) ${padded}${NC} ${BOX_V}"
         ((num++))
     done
     for idx in "${PARSE_REMOVE_IDX[@]}"; do
         local label="${MENU_EMOJIS[$idx]}  ${MENU_LABELS[$idx]}"
         local padded="${label}                                                       "
-        padded="${padded:0:$((box_inner - 5))}"
+        padded="${padded:0:$((box_inner - 6))}"
         echo -e "${BOX_V} ${RED}-${num}) ${padded}${NC} ${BOX_V}"
         ((num++))
     done

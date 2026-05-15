@@ -673,7 +673,7 @@ function Show-Menu {
     for ($i = 0; $i -lt $MENU_LABELS.Count; $i++) {
         $num = $i + 1
         if ($i -eq 4) {
-            Write-Host "${BOX_V} ${DIM}${GREEN}$num${NC}${DIM}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])${NC}"
+            Write-Host "${BOX_V} ${GREEN}${DIM}$num${NC}${DIM}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])${NC}"
         } else {
             Write-Host "${BOX_V} ${GREEN}$num${NC}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])"
         }
@@ -799,13 +799,13 @@ function Show-ConfirmationScreen {
     $num = 1
     foreach ($idx in $Script:InstallIndices) {
         $label = "$($MENU_EMOJIS[$idx])  $($MENU_LABELS[$idx])"
-        $padded = $label.PadRight($boxInner - 4).Substring(0, $boxInner - 4)
+        $padded = $label.PadRight($boxInner - 5).Substring(0, $boxInner - 5)
         Write-Host "${BOX_V} ${GREEN}${num}) ${padded}${NC} ${BOX_V}"
         $num++
     }
     foreach ($idx in $Script:RemoveIndices) {
         $label = "$($MENU_EMOJIS[$idx])  $($MENU_LABELS[$idx])"
-        $padded = $label.PadRight($boxInner - 5).Substring(0, $boxInner - 5)
+        $padded = $label.PadRight($boxInner - 6).Substring(0, $boxInner - 6)
         Write-Host "${BOX_V} ${RED}-${num}) ${padded}${NC} ${BOX_V}"
         $num++
     }
