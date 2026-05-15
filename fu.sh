@@ -71,7 +71,7 @@ EMOJI_STATUS="🔍"
 EMOJI_DEV="🛠️"
 EMOJI_GSD="🚀"
 EMOJI_GO="🐹"
-EMOJI_RUST="🦀"
+EMOJI_RUST="☢️"
 EMOJI_NODE="📦"
 EMOJI_PYTHON="🐍"
 EMOJI_BUN="🥟"
@@ -83,6 +83,7 @@ EMOJI_HEART="💜"
 EMOJI_UPGRADE="⬆️"
 EMOJI_NETWORK="🌐"
 EMOJI_PHP="🐘"
+EMOJI_MOUSE="🐁"
 
 MENU_LABELS=(
     "Status Check"
@@ -100,7 +101,7 @@ MENU_LABELS=(
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_SPARKLE" "$EMOJI_PHP" "$EMOJI_GSD")
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
 MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
 MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
 MENU_SINGLE_SELECT=(0 0 0 0 1 0 0 0 0 0 0 0 0 1)
@@ -1201,7 +1202,9 @@ EOF
     
     for i in "${!MENU_LABELS[@]}"; do
         local num=$((i + 1))
-        echo -e "${BOX_V} ${GREEN}${num}${NC}) ${MENU_EMOJIS[$i]}  ${MENU_LABELS[$i]}"
+        local pad=""
+        [[ $num -lt 10 ]] && pad=" "
+        echo -e "${BOX_V} ${GREEN}${num})${pad} ${MENU_EMOJIS[$i]}  ${MENU_LABELS[$i]}"
     done
     echo
     echo -e "${DIM}  Enter your selected options, split by commas or spaces (1,2 3 4)${NC}"

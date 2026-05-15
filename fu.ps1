@@ -40,12 +40,13 @@ $EMOJI_PROMPT = "✨"
 $EMOJI_UPGRADE = "⬆️"
 $EMOJI_NETWORK = "🌐"
 $EMOJI_GO = "🐹"
-$EMOJI_RUST = "🦀"
+$EMOJI_RUST = "☢️"
 $EMOJI_PYTHON = "🐍"
 $EMOJI_NODE = "📦"
 $EMOJI_BUN = "🥟"
 $EMOJI_BUN = "🥟"
 $EMOJI_SPARKLE = "⚡"
+$EMOJI_MOUSE = "🐁"
 
 $MENU_LABELS = @(
     "Status Check"
@@ -63,7 +64,7 @@ $MENU_LABELS = @(
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_SPARKLE, $EMOJI_PHP, $EMOJI_GSD)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_GSD)
 $MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-OpenCode")
 $MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-OpenCode")
 $MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1)
@@ -884,10 +885,11 @@ function Show-Menu {
 
     for ($i = 0; $i -lt $MENU_LABELS.Count; $i++) {
         $num = $i + 1
+        $pad = if ($num -lt 10) { " " } else { "" }
         if ($i -eq 4) {
-            Write-Host "${BOX_V} ${GREEN}${DIM}$num${NC}${DIM}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])${NC}"
+            Write-Host "${BOX_V} ${GREEN}${DIM}$num${NC}${DIM})${pad} $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])${NC}"
         } else {
-            Write-Host "${BOX_V} ${GREEN}$num${NC}) $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])"
+            Write-Host "${BOX_V} ${GREEN}$num${NC})${pad} $($MENU_EMOJIS[$i])  $($MENU_LABELS[$i])"
         }
     }
     Write-Host ""
