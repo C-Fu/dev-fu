@@ -3,8 +3,14 @@
 **One command to bootstrap a complete developer machine, anywhere.**
 
 ```bash
-# Run Dev-Fu/fu.sh
+# Linux / macOS / WSL2
 bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+```powershell
+# Windows (PowerShell) — bypasses execution policy for unsigned scripts
+Set-ExecutionPolicy Bypass -Scope Process -Force
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invoke-Expression
 ```
 
 ## Why dev-fu

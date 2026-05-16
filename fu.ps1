@@ -319,6 +319,8 @@ function Get-StatusCheck {
     if (Get-Command openchamber -ErrorAction SilentlyContinue) {
         $ocVer = openchamber --version 2>$null
         Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber  : ${GREEN}$ocVer${NC}"
+    } elseif (npm list -g @openchamber/web 2>$null) {
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber  : ${GREEN}(npm global)${NC}"
     } else {
         Write-Host "  ${RED}${EMOJI_CROSS}${NC} OpenChamber  : ${RED}NOT installed${NC}"
     }
@@ -690,8 +692,15 @@ function Install-OpenCode {
         return
     }
 
+    Write-Host "${CYAN}  Installing OpenChamber...${NC}"
+    npm install -g @openchamber/web
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "${RED}  OpenChamber install failed${NC}"
+        return
+    }
+
     Write-Host ""
-    Write-Host "${GREEN}  ✓ OpenCode + GSD installed successfully${NC}"
+    Write-Host "${GREEN}  ✓ OpenCode + GSD + OpenChamber installed successfully${NC}"
 }
 
 # OpenCode Remove
@@ -701,7 +710,7 @@ function Remove-OpenCode {
         $confirm = Read-Host "  Remove OpenCode? (y/n)"
         if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
-    npm uninstall -g opencode-ai
+    npm uninstall -g opencode-ai @openchamber/web
     if ($LASTEXITCODE -ne 0) {
         Write-Host "${RED}  OpenCode removal failed${NC}"
         return
@@ -797,6 +806,12 @@ function Upgrade-All {
     if ((Get-Command opencode -ErrorAction SilentlyContinue) -or ((npm list -g opencode-ai 2>$null) -match "opencode-ai")) {
         Write-Host "${CYAN}  Upgrading OpenCode...${NC}"
         npm upgrade -g opencode-ai
+        $upgraded = $true
+    }
+
+    if ((Get-Command openchamber -ErrorAction SilentlyContinue) -or ((npm list -g @openchamber/web 2>$null) -match "openchamber")) {
+        Write-Host "${CYAN}  Upgrading OpenChamber...${NC}"
+        npm upgrade -g @openchamber/web
         $upgraded = $true
     }
 

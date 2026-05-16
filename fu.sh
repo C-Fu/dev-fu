@@ -585,6 +585,8 @@ status_check() {
     echo
     if command -v openchamber >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber   : ${GREEN}$(openchamber --version 2>/dev/null || echo 'installed')${NC}"
+    elif npm list -g @openchamber/web >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber   : ${GREEN}(npm global)${NC}"
     else
         echo -e "  ${RED}${EMOJI_CROSS}${NC} OpenChamber   : ${RED}NOT installed${NC}"
     fi
@@ -1019,6 +1021,12 @@ upgrade_all() {
         upgraded=1
     fi
 
+    if command -v openchamber >/dev/null 2>&1 || npm list -g @openchamber/web >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading OpenChamber...${NC}"
+        npm upgrade -g @openchamber/web || echo -e "${YELLOW}  OpenChamber upgrade failed${NC}"
+        upgraded=1
+    fi
+
     if [ $upgraded -eq 0 ]; then
         echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} No installed tools found to upgrade. Install tools first (option 5).${NC}"
     else
@@ -1065,9 +1073,12 @@ install_opencode_gsd() {
 
     echo -e "${CYAN}  Installing GSD...${NC}"
     npx gsd-opencode@latest || die "GSD install failed" 1
-    
+
+    echo -e "${CYAN}  Installing OpenChamber...${NC}"
+    npm i -g @openchamber/web || die "OpenChamber install failed" 1
+
     echo
-    echo -e "${GREEN}  ✓ OpenCode + GSD installed successfully${NC}"
+    echo -e "${GREEN}  ✓ OpenCode + GSD + OpenChamber installed successfully${NC}"
 }
 
 # ──────────────
@@ -1079,7 +1090,7 @@ remove_opencode() {
         read -rp "  Remove OpenCode? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
-    npm uninstall -g opencode-ai || die "OpenCode uninstall failed" $?
+    npm uninstall -g opencode-ai @openchamber/web || die "OpenCode uninstall failed" $?
 }
 
 # ──────────────
