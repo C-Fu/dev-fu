@@ -230,7 +230,7 @@ function Remove-FancyPrompt {
     if (Test-Path $profilePath) {
         $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
         if ($content) {
-            $cleaned = $content -replace "\r?\n?\s*\.\s*['\"]$([regex]::Escape($target))['\"]\s*", ""
+            $cleaned = $content -replace "\r?\n?\s*\.\s*['""]$([regex]::Escape($target))['""]\s*", ""
             Set-Content -Path $profilePath -Value $cleaned -NoNewline
         }
     }
