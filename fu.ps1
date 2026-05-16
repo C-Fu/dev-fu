@@ -6,17 +6,18 @@
 # ============================================================
 
 # Colors
-$RED = "`e[0;31m"
-$GREEN = "`e[0;32m"
-$YELLOW = "`e[1;33m"
-$BLUE = "`e[0;34m"
-$CYAN = "`e[0;36m"
-$MAGENTA = "`e[0;35m"
-$WHITE = "`e[1;37m"
-$BOLD = "`e[1m"
-$DIM = "`e[2m"
-$NC = "`e[0m"
-$BCYAN = "`e[1;36m"
+$ESC = [char]27
+$RED = "$ESC[0;31m"
+$GREEN = "$ESC[0;32m"
+$YELLOW = "$ESC[1;33m"
+$BLUE = "$ESC[0;34m"
+$CYAN = "$ESC[0;36m"
+$MAGENTA = "$ESC[0;35m"
+$WHITE = "$ESC[1;37m"
+$BOLD = "$ESC[1m"
+$DIM = "$ESC[2m"
+$NC = "$ESC[0m"
+$BCYAN = "$ESC[1;36m"
 
 # Box Drawing
 $BOX_TL = "┌"
@@ -101,12 +102,12 @@ function Get-PackageManager {
 # System Info Display
 function Show-PreflightStatus {
     Write-Host ""
-    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_TR}${NC}"
+    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_TR}${NC}"
     Write-Host "${BOX_V} ${WHITE}Architecture:${NC} $DETECTED_ARCH                        ${BOX_V}"
     Write-Host "${BOX_V} ${WHITE}OS:${NC} Windows                                   ${BOX_V}"
     Write-Host "${BOX_V} ${WHITE}Package Mgr:${NC} $(Get-PackageManager)                            ${BOX_V}"
     Write-Host "${BOX_V} ${WHITE}Shell:${NC} PowerShell                               ${BOX_V}"
-    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_BR}${NC}"
+    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_BR}${NC}"
     Write-Host ""
 }
 
@@ -615,7 +616,7 @@ function Disable-MouseReporting {
     Write-Host ""
 
     $profilePath = $PROFILE
-    $mouseLine = "Write-Host `"`e[?1000l`e[?1002l`e[?1003l`e[?1006l`" -NoNewline"
+    $mouseLine = 'Write-Host "$([char]27)[?1000l$([char]27)[?1002l$([char]27)[?1003l$([char]27)[?1006l" -NoNewline'
 
     if (Test-Path $profilePath) {
         $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
@@ -893,9 +894,9 @@ function Show-Menu {
     Write-Host "     ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝"
     Write-Host "${NC}"
 
-    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_TR}${NC}"
+    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_TR}${NC}"
     Write-Host "${BOX_V} ${BOLD}${WHITE}Environment Setup Utility${NC}                  ${BOX_V}"
-    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_BR}${NC}"
+    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_BR}${NC}"
     Write-Host ""
 
     for ($i = 0; $i -lt $MENU_LABELS.Count; $i++) {
@@ -912,9 +913,9 @@ function Show-Menu {
     Write-Host "${DIM}  Enter -N to remove (e.g. -3 removes Docker)${NC}"
     Write-Host ""
 
-    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_TR}${NC}"
+    Write-Host "${CYAN}$BOX_TL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_TR}${NC}"
     Write-Host "${BOX_V}${DIM}  Press ${BOLD}q${NC}${DIM} to quit              ${BOX_V}"
-    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_BR}${NC}"
+    Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_BR}${NC}"
 
     Write-Host -NoNewline -ForegroundColor Cyan "▸ Choice: "
 }
