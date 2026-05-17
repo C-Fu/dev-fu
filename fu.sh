@@ -1009,11 +1009,16 @@ upgrade_all() {
             echo -e "${BYELLOW}  ⚠  Managed by Docker Desktop — upgrade via Docker Desktop on Windows${NC}"
         else
             echo -e "${CYAN}  Upgrading Docker...${NC}"
-            retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || echo -e "${YELLOW}  Docker download failed, skipping${NC}"
-            if [ -f /tmp/get-docker.sh ]; then
-                sudo sh /tmp/get-docker.sh || echo -e "${YELLOW}  Docker upgrade failed${NC}"
-                rm -f /tmp/get-docker.sh
-            fi
+            local pm="$(get_pkg_manager)"
+            case "$pm" in
+                apt)  sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin ;;
+                apk)  sudo apk upgrade docker ;;
+                dnf)  sudo dnf upgrade -y docker-ce docker-ce-cli containerd.io docker-compose-plugin ;;
+                pacman) sudo pacman -Syu --noconfirm docker ;;
+                zypper) sudo zypper update -y docker ;;
+                brew) brew upgrade docker ;;
+                *) echo -e "${YELLOW}  Docker upgrade skipped — no supported package manager${NC}" ;;
+            esac
         fi
         upgraded=1
     fi
