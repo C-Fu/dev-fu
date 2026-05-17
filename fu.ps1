@@ -672,6 +672,18 @@ function Install-OpenCode {
         Write-Host "${YELLOW}  → OpenCode will be installed${NC}"
     }
 
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "${YELLOW}  → Node.js required — installing first...${NC}"
+        $pkgMgr = Get-PackageManager
+        if ($pkgMgr -eq "winget") {
+            Write-Host "${CYAN}  Installing Node.js LTS via winget...${NC}"
+            winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+        } elseif ($pkgMgr -eq "choco") {
+            Write-Host "${CYAN}  Installing Node.js LTS via chocolatey...${NC}"
+            choco install nodejs-lts -y
+        }
+    }
+
     if (-not $opencodeInstalled) {
         if (-not $Script:BATCH_MODE) {
             $confirm = Read-Host "  Proceed? (y/n)"

@@ -1055,8 +1055,22 @@ install_opencode_gsd() {
     fi
     
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
-    command -v nvm >/dev/null || { echo "  ${RED}${EMOJI_CROSS} NVM missing - install NVM + Node LTS first (option 9)${NC}"; return; }
-    command -v node >/dev/null || { echo "  ${RED}${EMOJI_CROSS} Node missing - install NVM + Node LTS first (option 9)${NC}"; return; }
+
+    if ! command -v nvm >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
+        echo -e "${YELLOW}  → NVM + Node required — installing first...${NC}"
+        if ! command -v nvm >/dev/null 2>&1; then
+            echo -e "${CYAN}  Installing NVM...${NC}"
+            retry_network 3 5 "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
+            bash /tmp/nvm-install.sh || die "NVM install failed" 1
+            rm -f /tmp/nvm-install.sh
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+        fi
+        if ! command -v node >/dev/null 2>&1; then
+            echo -e "${CYAN}  Installing Node.js LTS...${NC}"
+            nvm install --lts || die "Node LTS install failed" 1
+        fi
+    fi
     
     if [ $opencode_installed -eq 0 ]; then
         echo -e "${BYELLOW}  → This will install: OpenCode + GSD${NC}"
