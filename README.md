@@ -76,6 +76,7 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invok
 | **AI Tools** | [OpenCode](https://github.com/anomalyco/opencode), [GSD](https://github.com/rokicool/gsd-opencode) (Rokicool), [OpenChamber](https://github.com/rokicool/openchamber) |
 | **Productivity** | [Fancy Prompt](https://github.com/jonathan-scholbach/fancy-prompt) — optional shell enhancement |
 | **Terminal** | Disable mouse reporting — prevents terminal mouse events from interfering with CLI tools |
+| **Diagnostics** | Status Check — shows installed tools and versions; Compare With Latest — fetches latest versions from GitHub/npm/go.dev/nodejs.org and shows which tools need updating |
 
 ## Prerequisites
 
@@ -120,8 +121,9 @@ Run `./fu.sh` and select options from the interactive menu:
 15) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
-- **Multi-select:** Enter comma or space-separated numbers (e.g. `6,7 8` to install Go, Rust, and Python together)
-- **Remove:** Prefix with `-` (e.g. `-3` to remove Docker)
+- **Multi-select:** Enter comma or space-separated numbers (e.g. `7,8 9` to install Go, Rust, and Python together)
+- **Remove:** Prefix with `-` (e.g. `-4` to remove Docker)
+- **Compare versions:** Option 2 fetches latest versions online and compares with your local installs
 - **Upgrade all:** Press `u` at the prompt
 - **Quit:** Press `q`
 

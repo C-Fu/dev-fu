@@ -76,6 +76,7 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invok
 | **Alat AI** | OpenCode, GSD (Rokicool), OpenChamber |
 | **Produktiviti** | Fancy Prompt - penambahbaikan shell pilihan |
 | **Terminal** | Lumpuhkan pelaporan tetikus - mengelakkan acara tetikus mengganggu alat baris arahan |
+| **Diagnostik** | Status Check - tunjuk alat dan versi yang dipasang; Compare With Latest - ambil versi terkini dari GitHub/npm/go.dev/nodejs.org dan tunjuk alat mana perlu dikemas kini |
 
 ## Prasyarat
 
@@ -120,9 +121,10 @@ Jalankan `./fu.sh` dan pilih pilihan dari menu interaktif:
 15)  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
-- **Multi-select:** Masukkan nombor yang dipisahkan koma atau ruang (contoh `6,7 8` untuk pasang Go, Rust dan Python bersama)  
-- **Remove:** Awalkan dengan `-` (contoh `-3` untuk keluarkan Docker)  
-- **Upgrade all:** Tekan `u` pada prompt  
+- **Multi-select:** Masukkan nombor yang dipisahkan koma atau ruang (contoh `7,8 9` untuk pasang Go, Rust dan Python bersama)  
+- **Remove:** Awalkan dengan `-` (contoh `-4` untuk keluarkan Docker)  
+- **Banding versi:** Pilihan 2 mengambil versi terkini dari internet dan membandingkannya dengan pemasangan tempatan anda
+- **Upgrade all:** Tekan `u` pada prompt
 - **Quit:** Tekan `q`
 
 Pilihan yang perlu dipilih sendiri sahaja (Hostname Discovery, OpenCode+GSD) mesti digunakan bersendirian.
