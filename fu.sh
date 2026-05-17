@@ -643,9 +643,11 @@ status_check() {
     check_cmd_version "Bun" "bun" "--version"
     
     if command -v nvm >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} NVM           : ${GREEN}installed${NC}"
+        local nvm_ver
+        nvm_ver=$(nvm --version 2>/dev/null)
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "NVM" "${nvm_ver:-installed}"
     else
-        echo -e "  ${RED}${EMOJI_CROSS}${NC} NVM           : ${RED}NOT installed${NC}"
+        printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "NVM"
     fi
     
     check_cmd_version "Node.js" "node" "--version"
@@ -1448,7 +1450,7 @@ EOF
     # ╰──────────────────────────────────────────╯
     echo -e "${CYAN}://─────────────────────────║${NC}"
     echo -e "${BOX_V}${DIM}  Press ${BOLD}q${NC}${DIM} to quit${NC}"
-    echo -e "${CYAN}▉═══════════════${NC}"
+    echo -e "${CYAN}▉══════════════════${NC}"
     
     echo -n -e "${BCYAN}▸ Choice: ${NC}"
 }
