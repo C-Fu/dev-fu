@@ -104,19 +104,20 @@ Run `./fu.sh` and select options from the interactive menu:
 
 ```
  1) 🔍  Status Check
- 2) ⬆️  Upgrade All Tools
- 3) 🐳  Install Docker
- 4) ✨  Create Fancy Prompt
- 5) 🌐  Install Hostname Discovery (Linux only)
- 6) 🐹  Install Go
- 7) ☢️  Install Rust
- 8) 🐍  Install Python + Pip + UV + Pipx
- 9) 📦  Install NVM + Node LTS
-10) 🥟  Install Bun
-11) ⚡  Install Yarn
-12) 🐁  Disable Mouse Reporting in Terminal
-13) 🐘  Install PHP + Laravel
-14) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
+ 2) 🔄  Compare With Latest
+ 3) ⬆️  Upgrade All Tools
+ 4) 🐳  Install Docker
+ 5) ✨  Create Fancy Prompt
+ 6) 🌐  Install Hostname Discovery (Linux only)
+ 7) 🐹  Install Go
+ 8) ☢️  Install Rust
+ 9) 🐍  Install Python + Pip + UV + Pipx
+10) 📦  Install NVM + Node LTS
+11) 🥟  Install Bun
+12) ⚡  Install Yarn
+13) 🐁  Disable Mouse Reporting in Terminal
+14) 🐘  Install PHP + Laravel
+15) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
 - **Multi-select:** Enter comma or space-separated numbers (e.g. `6,7 8` to install Go, Rust, and Python together)

@@ -84,9 +84,11 @@ EMOJI_UPGRADE="⬆️"
 EMOJI_NETWORK="🌐"
 EMOJI_PHP="🐘"
 EMOJI_MOUSE="🐁"
+EMOJI_COMPARE="🔄"
 
 MENU_LABELS=(
     "Status Check"
+    "Compare With Latest"
     "Upgrade All Tools"
     "Install Docker"
     "Create Fancy Prompt"
@@ -101,10 +103,10 @@ MENU_LABELS=(
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
-MENU_INSTALL_FN=("status_check" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
-MENU_REMOVE_FN=("" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
-MENU_SINGLE_SELECT=(0 0 0 0 1 0 0 0 0 0 0 0 0 1)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 0 1 0 0 0 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -385,7 +387,7 @@ pre_install_summary() {
 
 # ──────────────
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🐳 Option 1: Install Docker
+# 🐳 Option 4: Install Docker
 # ──────────────
 install_docker() {
     echo -e "${BLUE}${EMOJI_DOCKER}  ${BOLD}Install Docker${NC}"
@@ -414,7 +416,7 @@ install_docker() {
     echo -e "${GREEN}  ✓ Docker installed successfully${NC}"
 }
 
-# 🗑️ Option 1a: Remove Docker
+# 🗑️ Option 4a: Remove Docker
 # ──────────────
 remove_docker() {
     echo -e "${RED}🗑️  ${BOLD}Remove Docker${NC}"
@@ -444,7 +446,7 @@ remove_docker() {
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
 }
 
-# 🌐 Option 3: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
+# 🌐 Option 6: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
 # ──────────────
 install_avahi() {
     echo -e "${CYAN}🌐  ${BOLD}Install Linux Hostname Discovery${NC}"
@@ -517,7 +519,7 @@ install_avahi() {
     echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
 
-# 🗑️ Option 3a: Remove Hostname Discovery (Avahi + systemd-resolved)
+# 🗑️ Option 6a: Remove Hostname Discovery (Avahi + systemd-resolved)
 # ──────────────
 remove_avahi() {
     echo -e "${RED}🗑️  ${BOLD}Remove Hostname Discovery${NC}"
@@ -561,7 +563,7 @@ remove_avahi() {
 }
 
 # ──────────────
-# ✨ Option 2: Fancy Prompt
+# ✨ Option 5: Fancy Prompt
 # ──────────────
 create_fancy_prompt() {
     echo -e "${MAGENTA}${EMOJI_PROMPT}  ${BOLD}Create Fancy Prompt${NC}"
@@ -599,7 +601,7 @@ remove_fancy_prompt() {
 }
 
 # ──────────────
-# 🔍 Option 4: Status Check
+# 🔍 Option 1: Status Check
 # ──────────────
 status_check() {
     echo -e "${CYAN}${EMOJI_STATUS}  ${BOLD}Status Check${NC}"
@@ -692,8 +694,106 @@ status_check() {
     echo -e "${GREEN}  ✓ Status check complete${NC}"
 }
 
+status_check_compare() {
+    echo -e "${CYAN}${EMOJI_COMPARE}  ${BOLD}Compare Local vs Latest Versions${NC}"
+    echo -e "${DIM}   Fetching latest versions online...${NC}"
+    echo
+
+    [[ -s "$HOME/.nvm/nvm.sh" ]] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+
+    _scc_gh() {
+        local tag
+        tag=$(curl -fsSL --max-time 5 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+            | grep '"tag_name"' | head -1 \
+            | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        tag="${tag#v}"
+        tag="${tag#bun-v}"
+        tag="${tag#php-}"
+        echo "$tag"
+    }
+
+    _scc_local() {
+        local cmd="$1" flag="$2"
+        if command -v "$cmd" >/dev/null 2>&1; then
+            if command -v timeout >/dev/null 2>&1; then
+                timeout 5 "$cmd" $flag 2>/dev/null | head -n1
+            else
+                "$cmd" $flag 2>/dev/null | head -n1
+            fi
+        fi
+    }
+
+    _scc_ver() {
+        echo "$1" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?([._-]?[a-zA-Z0-9]+)*' | head -1
+    }
+
+    _scc_row() {
+        local name="$1" local_raw="$2" latest="$3"
+        local local_ver="" lat="${latest:---}"
+
+        if [[ -z "$local_raw" ]]; then
+            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed" "$lat"
+            echo -e "${DIM}—${NC}"
+            return
+        fi
+
+        local_ver=$(_scc_ver "$local_raw")
+        printf "  %-13s %-22s %-16s " "$name" "$local_ver" "$lat"
+
+        if [[ -z "$latest" ]]; then
+            echo -e "${DIM}?${NC}"
+        elif [[ -z "$local_ver" ]]; then
+            echo -e "${DIM}?${NC}"
+        elif [[ "$local_ver" == "$latest" ]]; then
+            echo -e "${GREEN}✓ up to date${NC}"
+        else
+            echo -e "${YELLOW}⬆ update available${NC}"
+        fi
+    }
+
+    echo -e "  ${BOLD}Tool           Installed              Latest           Status${NC}"
+    echo -e "  $(printf '%.0s─' {1..70})"
+
+    _scc_row "Docker"   "$(_scc_local docker --version)"   "$(_scc_gh moby/moby)"
+    _scc_row "Go"       "$(_scc_local go version)"         "$(curl -fsSL --max-time 5 'https://go.dev/dl/?mode=json' 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"go\([^"]*\)".*/\1/')"
+    _scc_row "Rust"     "$(_scc_local rustc --version)"    "$(_scc_gh rust-lang/rust)"
+    _scc_row "Bun"      "$(_scc_local bun --version)"      "$(_scc_gh oven-sh/bun)"
+
+    local nvm_local=""
+    [[ -s "$HOME/.nvm/nvm.sh" ]] && nvm_local="nvm $(source "$HOME/.nvm/nvm.sh" 2>/dev/null && nvm --version)"
+    _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
+
+    _scc_row "Node.js"  "$(_scc_local node --version)"     "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"v\([^"]*\)".*/\1/')"
+    _scc_row "Python"   "$(_scc_local python3 --version)"  "$(_scc_gh python/cpython)"
+    _scc_row "uv"       "$(_scc_local uv --version)"       "$(_scc_gh astral-sh/uv)"
+    _scc_row "PHP"      "$(_scc_local php -v)"             "$(_scc_gh php/php-src)"
+
+    local yarn_latest=""
+    command -v npm >/dev/null 2>&1 && yarn_latest=$(npm view yarn version 2>/dev/null)
+    _scc_row "Yarn"     "$(_scc_local yarn --version)"     "$yarn_latest"
+
+    _scc_row "Composer" "$(_scc_local composer --version)" "$(_scc_gh composer/composer)"
+    _scc_row "OpenCode" "$(_scc_local opencode --version)" "$(_scc_gh anomalyco/opencode)"
+
+    local oc_local=""
+    command -v openchamber >/dev/null 2>&1 && oc_local=$(timeout 5 openchamber --version 2>/dev/null | head -n1)
+    local oc_latest=""
+    command -v npm >/dev/null 2>&1 && oc_latest=$(npm view @openchamber/web version 2>/dev/null)
+    _scc_row "OpenChamber" "$oc_local" "$oc_latest"
+
+    local gsd_local=""
+    command -v gsd-opencode >/dev/null 2>&1 && gsd_local=$(timeout 5 gsd-opencode --version 2>/dev/null | head -n1)
+    local gsd_latest=""
+    command -v npm >/dev/null 2>&1 && gsd_latest=$(npm view gsd-opencode version 2>/dev/null)
+    _scc_row "GSD"      "$gsd_local"                       "$gsd_latest"
+
+    echo -e "  $(printf '%.0s─' {1..70})"
+    echo
+    echo -e "${GREEN}  ✓ Comparison complete${NC}"
+}
+
 # ──────────────
-# 🛠️ Option 5: Install Dev Tools
+# 🛠️ Option 7: Install Dev Tools
 # ──────────────
 install_go() {
     echo -e "${CYAN}${EMOJI_GO}  ${BOLD}Install Go${NC}"
@@ -930,7 +1030,7 @@ install_yarn() {
     fi
 
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
-    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 9)${NC}"; return; }
+    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 10)${NC}"; return; }
 
     echo -e "${BYELLOW}  → This will install: Yarn${NC}"
     if [[ "$BATCH_MODE" != "1" ]]; then
@@ -994,7 +1094,7 @@ enable_mouse_reporting() {
 }
 
 # ──────────────
-# ⬆️ Option 8: Upgrade All Tools
+# ⬆️ Option 3: Upgrade All Tools
 # ──────────────
 upgrade_all() {
     echo -e "${BCYAN}⬆️  ${BOLD}Upgrade All Tools${NC}"
@@ -1094,7 +1194,7 @@ upgrade_all() {
     fi
 
     if [ $upgraded -eq 0 ]; then
-        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} No installed tools found to upgrade. Install tools first (option 5).${NC}"
+        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} No installed tools found to upgrade. Install tools first (option 4+).${NC}"
     else
         echo
         echo -e "${GREEN}  ✓ Upgrade complete${NC}"
@@ -1102,7 +1202,7 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🚀 Option 14: OpenCode + GSD
+# 🚀 Option 15: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
@@ -1162,7 +1262,7 @@ install_opencode_gsd() {
 }
 
 # ──────────────
-# 🗑️ Option 14a: Remove OpenCode
+# 🗑️ Option 15a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
@@ -1174,7 +1274,7 @@ remove_opencode() {
 }
 
 # ──────────────
-# 🗑️ Option 14b: Remove GSD
+# 🗑️ Option 15b: Remove GSD
 # ──────────────
 remove_gsd() {
     echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
@@ -1190,7 +1290,7 @@ remove_gsd() {
 }
 
 # ──────────────
-# 🐘 Option 13: Install PHP + Laravel
+# 🐘 Option 14: Install PHP + Laravel
 # ──────────────
 install_php_laravel() {
     echo -e "${MAGENTA}🐘  ${BOLD}Install PHP + Laravel${NC}"
@@ -1256,7 +1356,7 @@ install_php_laravel() {
 }
 
 # ──────────────
-# 🗑️ Option 13a: Uninstall PHP + Laravel
+# 🗑️ Option 14a: Uninstall PHP + Laravel
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
@@ -1347,7 +1447,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-15) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1355,7 +1455,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-15) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -1363,7 +1463,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-4]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-5]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -1372,12 +1472,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-14)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-15)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-14)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-15)${NC}"
         fi
         return 1
     fi
