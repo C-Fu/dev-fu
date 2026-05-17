@@ -16,8 +16,8 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invok
 ## Why dev-fu
 
 - **Zero dependencies** — Pure Bash 4+ and PowerShell 5.1+. No Python, no Node, no framework required to run the script itself. Everything it installs is fetched from official sources.
-- **Runs everywhere** — Same script works across WSL2, Linux, macOS, and Windows (PowerShell). Supports x86, x64, ARM (Raspberry Pi, Apple Silicon), and bare metal. Tested in LXC containers and VMs. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
-- **Multi-distro** — Auto-detects your package manager (apk, apt, dnf, pacman, zypper, brew, winget, choco). Works on Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, and Windows.
+- **Runs everywhere** — Same script works across WSL2, Linux, macOS, Chromebooks, Android (Termux), and Windows (PowerShell). Supports x86, x64, ARM (Raspberry Pi, Apple Silicon), and bare metal. Tested in LXC containers, VMs, and ChromeOS Crostini. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
+- **Multi-distro** — Auto-detects your package manager (apk, apt, dnf, pacman, zypper, brew, winget, choco). Works on Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, ChromeOS, Android (Termux), and Windows.
 - **Multi-select menu** — Select multiple operations in one pass. Batch install Go, Rust, and Python without re-running the script.
 - **Atomic operations** — Each install has a matching remove. Every operation confirms before proceeding.
 
@@ -28,6 +28,8 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invok
   <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
   <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
   <img src="https://img.shields.io/badge/WSL2-4A4A4A?style=for-the-badge&logo=windows-terminal&logoColor=white" alt="WSL2">
+  <img src="https://img.shields.io/badge/Chromebook-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Chromebook">
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
   <br>
   <img src="https://img.shields.io/badge/Alpine-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white" alt="Alpine">
   <img src="https://img.shields.io/badge/Debian-A80030?style=for-the-badge&logo=debian&logoColor=white" alt="Debian">
@@ -57,6 +59,8 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invok
 | LXC / LXD containers | x86_64, ARM | auto-detected | `fu.sh` |
 | Bare metal servers | x86_64, ARM | auto-detected | `fu.sh` |
 | Raspberry Pi (Pi OS, Ubuntu) | ARM | apt | `fu.sh` |
+| Chromebook (Crostini) | x86_64, ARM | apt (auto-detected) | `fu.sh` |
+| Android / Termux | ARM, x86_64 | pkg (apt) | `fu.sh` |
 | Windows (native) | x64, ARM | winget / choco | `fu.ps1` |
 
 ## What Can Be Installed
@@ -163,6 +167,21 @@ powershell -ExecutionPolicy Bypass -File .\fu.ps1
 
 - ARM builds supported for all tools
 - Bun, Go, Rust have native ARM binaries
+
+### Chromebook (ChromeOS Crostini)
+
+- Enable Linux (Crostini) in ChromeOS Settings > Advanced > Developers
+- Debian-based container with `apt` — all tools work
+- Docker runs in the Crostini VM (no nested virtualization needed)
+- Option 5 (Hostname Discovery) may not work if systemd is not available
+
+### Android (Termux)
+
+- Install [Termux](https://termux.dev/) from F-Droid or GitHub releases
+- Uses `pkg` (apt-based) as the package manager
+- No `sudo` needed — Termux runs as a single user
+- Option 5 (Hostname Discovery) not available (no systemd)
+- Some tools (Docker, PHP) have limited support on Android
 
 ## Troubleshooting
 

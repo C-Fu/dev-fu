@@ -173,6 +173,18 @@ detect_platform() {
 
 DETECTED_OS="$(detect_platform)"
 
+detect_environment() {
+    if [ -f /dev/.cros_milestone ] || [ -d /opt/google/cros-containers ] || grep -q "chromiumos\|chromeos" /etc/lsb-release 2>/dev/null; then
+        echo "chromebook"
+    elif [ -n "$TERMUX_VERSION" ] || [ -d /data/data/com.termux ]; then
+        echo "termux"
+    else
+        echo "standard"
+    fi
+}
+
+DETECTED_ENV="$(detect_environment)"
+
 get_pkg_manager() {
     case "$DETECTED_OS" in
         linux)
@@ -288,6 +300,12 @@ ensure_sudo() {
     if [ "$DETECTED_OS" = "darwin" ] || [ "$DETECTED_OS" = "windows" ]; then
         return 0
     fi
+    if [ "$DETECTED_ENV" = "termux" ]; then
+        return 0
+    fi
+    if ! command -v sudo >/dev/null 2>&1; then
+        die "sudo is required but not available. Run from a user with sudo privileges." 1
+    fi
     if ! sudo -n true 2>/dev/null; then
         echo -e "${YELLOW}🔒 This script requires sudo privileges for system package installation.${NC}"
         if ! sudo -v; then
@@ -303,6 +321,9 @@ preflight_status() {
     echo -e "${CYAN}╭───────────────── System Info ─────────────────${NC}"
     echo -e "${BOX_V} ${WHITE}Architecture:${NC} $(uname -m)"
     echo -e "${BOX_V} ${WHITE}OS:${NC} ${DETECTED_OS:-$(uname -s)}"
+    if [ "$DETECTED_ENV" != "standard" ]; then
+        echo -e "${BOX_V} ${WHITE}Env:${NC} ${DETECTED_ENV}"
+    fi
     echo -e "${BOX_V} ${WHITE}Package Mgr:${NC} $(get_pkg_manager)"
     echo -e "${BOX_V} ${WHITE}Shell:${NC} ${ZSH_VERSION:-bash}"
     echo -e "${CYAN}╰────────────────────────────────────────────${NC}"
@@ -402,7 +423,13 @@ install_avahi() {
 
     if [ "$DETECTED_OS" != "linux" ]; then
         echo -e "  ${BYELLOW}⚠  This option is only available on Linux.${NC}"
-        echo -e "  ${DIM}macOS uses mDNSResponder; Windows uses Bonjour/WSL.${NC}"
+        echo -e "${DIM}  macOS uses mDNSResponder; Windows uses Bonjour/WSL.${NC}"
+        return 0
+    fi
+
+    if ! command -v systemctl >/dev/null 2>&1; then
+        echo -e "  ${BYELLOW}⚠  This option requires systemd.${NC}"
+        echo -e "${DIM}  Not available on this environment (Chromebook container, Termux, etc.).${NC}"
         return 0
     fi
 
