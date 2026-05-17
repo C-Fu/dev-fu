@@ -1,4 +1,4 @@
-# dev-fu — Satu arahan untuk menyediakan mesin pembangun
+# dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang
 
 **Satu sekerip untuk menyediakan mesin pembangun yang lengkap (lebih kurang), di mana-mana sahaja.**
 
