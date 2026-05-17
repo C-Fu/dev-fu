@@ -661,19 +661,23 @@ status_check() {
 
     echo
     if command -v openchamber >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber   : ${GREEN}$(openchamber --version 2>/dev/null || echo 'installed')${NC}"
+        local oc_ver
+        oc_ver=$(openchamber --version 2>/dev/null || echo 'installed')
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "OpenChamber" "$oc_ver"
     elif npm list -g @openchamber/web >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber   : ${GREEN}(npm global)${NC}"
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "OpenChamber" "npm global"
     else
-        echo -e "  ${RED}${EMOJI_CROSS}${NC} OpenChamber   : ${RED}NOT installed${NC}"
+        printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "OpenChamber"
     fi
 
     if command -v opencode >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenCode     : ${GREEN}$(opencode --version 2>/dev/null || echo 'installed')${NC}"
+        local oc_ver
+        oc_ver=$(opencode --version 2>/dev/null || echo 'installed')
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "OpenCode" "$oc_ver"
     elif npm list -g opencode-ai >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenCode     : ${GREEN}(npm global)${NC}"
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "OpenCode" "npm global"
     else
-        echo -e "  ${RED}${EMOJI_CROSS}${NC} OpenCode     : ${RED}NOT installed${NC}"
+        printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "OpenCode"
     fi
 
     # GSD detection: direct command, npm global, npx cache, or common paths
@@ -699,9 +703,9 @@ status_check() {
         done
     fi
     if [ $gsd_found -eq 1 ]; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} GSD          : ${GREEN}${gsd_version}${NC}"
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "GSD" "$gsd_version"
     else
-        echo -e "  ${RED}${EMOJI_CROSS}${NC} GSD          : ${RED}NOT available${NC}"
+        printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "GSD"
     fi
     
     echo
