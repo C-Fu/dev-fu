@@ -1,6 +1,6 @@
-# dev-fu — One command to bootstrap a developer machine
+# dev-fu — One command to bootstrap a developer machine ([Bahasa Melayu version](README.ms-MY.md))
 
-**One command to bootstrap a complete developer machine, anywhere.**
+**One command to bootstrap a complete (kinda) developer machine, anywhere.**
 
 ```bash
 # Linux / macOS / WSL2
