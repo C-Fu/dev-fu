@@ -342,7 +342,6 @@ ensure_sudo() {
 # 📊 System Status Display
 # ──────────────
 preflight_status() {
-    echo -e "${CYAN}╭───────────────── System Info ─────────────────${NC}"
     local os_label="${DETECTED_DISTRO}"
     if [ -n "$DETECTED_WSL" ]; then
         os_label="${DETECTED_DISTRO} (WSL2)"
@@ -351,14 +350,27 @@ preflight_status() {
     elif [ "$DETECTED_OS" = "windows" ]; then
         os_label="Windows"
     fi
+
+    local wan_ip="" lan_ip=""
+    wan_ip=$(curl -fsSL --max-time 3 https://api.ipify.org 2>/dev/null || echo "unavailable")
+    if [[ "$DETECTED_OS" == "darwin" ]]; then
+        lan_ip=$(ipconfig getifaddr en0 2>/dev/null)
+    else
+        lan_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+        [[ -z "$lan_ip" ]] && lan_ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+    fi
+    [[ -z "$lan_ip" ]] && lan_ip="unavailable"
+
+    echo -e "${CYAN}://─────────────── System Info ────────────────║${NC}"
     echo -e "${BOX_V} ${WHITE}Architecture:${NC} $(uname -m)"
     echo -e "${BOX_V} ${WHITE}OS:${NC} ${os_label}"
-    if [ "$DETECTED_ENV" != "standard" ]; then
-        echo -e "${BOX_V} ${WHITE}Env:${NC} ${DETECTED_ENV}"
-    fi
     echo -e "${BOX_V} ${WHITE}Package Mgr:${NC} $(get_pkg_manager)"
     echo -e "${BOX_V} ${WHITE}Shell:${NC} ${ZSH_VERSION:-bash}"
-    echo -e "${CYAN}╰────────────────────────────────────────────${NC}"
+    echo -e "${BOX_V} ${WHITE}WAN IP:${NC} ${wan_ip}"
+    echo -e "${BOX_V} ${WHITE}LAN IP:${NC} ${lan_ip}"
+    echo -e "${BOX_V} ${WHITE}Hostname:${NC} $(hostname 2>/dev/null || echo 'unknown')"
+    echo -e "${BOX_V} ${WHITE}User:${NC} $(whoami 2>/dev/null || echo 'unknown') ($(id -u 2>/dev/null || echo '?'):$(id -g 2>/dev/null || echo '?'))"
+    echo -e "${CYAN}▉═══════════════════by═C-Fu═══════════════════${NC}"
     echo
 }
 
@@ -1415,9 +1427,9 @@ EOF
     # ╭──────────────────────────────────────────╮
     # │  Subtitle                                │
     # ╰──────────────────────────────────────────╯
-    echo -e "${CYAN}${BOX_TL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_TR}${NC}"
-    echo -e "${BOX_V} ${BOLD}${WHITE}Environment Setup Utility${NC}${DIM}      ${BOX_V}"
-    echo -e "${CYAN}${BOX_BL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_BR}${NC}"
+    echo -e "${CYAN}://─────────────────────────────║${NC}"
+    echo -e "${BOX_V} ${BOLD}${WHITE}Environment Setup Utility${NC}"
+    echo -e "${CYAN}└════════════════════════════════${NC}"
     echo
     
     for i in "${!MENU_LABELS[@]}"; do
@@ -1434,9 +1446,9 @@ EOF
     # ╭──────────────────────────────────────────╮
     # │        Footer                            │
     # ╰──────────────────────────────────────────╯
-    echo -e "${CYAN}${BOX_TL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_TR}${NC}"
-    echo -e "${BOX_V}${DIM}  Press ${BOLD}q${NC}${DIM} to quit          ${BOX_V}"
-    echo -e "${CYAN}${BOX_BL}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_H}${BOX_BR}${NC}"
+    echo -e "${CYAN}://─────────────────────────║${NC}"
+    echo -e "${BOX_V}${DIM}  Press ${BOLD}q${NC}${DIM} to quit${NC}       ${CYAN}║${NC}"
+    echo -e "${CYAN}└═══════════════════════════║${NC}"
     
     echo -n -e "${BCYAN}▸ Choice: ${NC}"
 }
