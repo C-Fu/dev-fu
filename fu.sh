@@ -43,7 +43,7 @@ if [ ! -t 0 ] && [ -r /dev/tty ]; then
     exec 0</dev/tty
 elif [ ! -t 0 ]; then
     echo "Error: This script requires an interactive terminal." >&2
-    echo "Try running: bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)" >&2
+    echo "Try running: bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)" >&2
     exit 1
 fi
 

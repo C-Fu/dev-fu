@@ -4,13 +4,13 @@
 
 ```bash
 # Linux / macOS / WSL2
-bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
 ```powershell
 # Windows (PowerShell) - bypasses execution policy for unsigned scripts
 Set-ExecutionPolicy Bypass -Scope Process -Force
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invoke-Expression
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
 ```
 
 ## Mengapa dev-fu
@@ -96,7 +96,7 @@ cd dev-fu
 ./fu.sh
 
 # Option 2: Run directly from remote (no clone needed)
-bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
 ## Cara Guna
@@ -158,7 +158,7 @@ cd dev-fu
 .\fu.ps1
 
 # Option 2: Run directly from remote (bypasses execution policy)
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1 | Invoke-Expression
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
 
 # Option 3: Bypass execution policy for local script
 powershell -ExecutionPolicy Bypass -File .\fu.ps1
