@@ -171,7 +171,29 @@ detect_platform() {
     esac
 }
 
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release 2>/dev/null
+        echo "${ID:-linux}"
+    elif [ -f /etc/lsb-release ]; then
+        . /etc/lsb-release 2>/dev/null
+        echo "${DISTRIB_ID:-linux}" | tr '[:upper:]' '[:lower:]'
+    else
+        echo "linux"
+    fi
+}
+
+detect_wsl() {
+    if grep -qi "microsoft" /proc/version 2>/dev/null; then
+        echo "wsl"
+    else
+        echo ""
+    fi
+}
+
 DETECTED_OS="$(detect_platform)"
+DETECTED_DISTRO="$(detect_distro)"
+DETECTED_WSL="$(detect_wsl)"
 
 detect_environment() {
     if [ -f /dev/.cros_milestone ] || [ -d /opt/google/cros-containers ] || grep -q "chromiumos\|chromeos" /etc/lsb-release 2>/dev/null; then
@@ -319,8 +341,16 @@ ensure_sudo() {
 # ──────────────
 preflight_status() {
     echo -e "${CYAN}╭───────────────── System Info ─────────────────${NC}"
+    local os_label="${DETECTED_DISTRO}"
+    if [ -n "$DETECTED_WSL" ]; then
+        os_label="${DETECTED_DISTRO} (WSL2)"
+    elif [ "$DETECTED_OS" = "darwin" ]; then
+        os_label="macOS"
+    elif [ "$DETECTED_OS" = "windows" ]; then
+        os_label="Windows"
+    fi
     echo -e "${BOX_V} ${WHITE}Architecture:${NC} $(uname -m)"
-    echo -e "${BOX_V} ${WHITE}OS:${NC} ${DETECTED_OS:-$(uname -s)}"
+    echo -e "${BOX_V} ${WHITE}OS:${NC} ${os_label}"
     if [ "$DETECTED_ENV" != "standard" ]; then
         echo -e "${BOX_V} ${WHITE}Env:${NC} ${DETECTED_ENV}"
     fi
