@@ -609,8 +609,12 @@ status_check() {
     check_cmd_version() {
         local name="$1"; local cmd="$2"; local flag="$3"
         if command -v "$cmd" >/dev/null 2>&1; then
-            ver=$($cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
-            printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "$name" "$ver"
+            if command -v timeout >/dev/null 2>&1; then
+                ver=$(timeout 5 $cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
+            else
+                ver=$($cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
+            fi
+            printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "$name" "${ver:-installed}"
         else
             printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "$name"
         fi
