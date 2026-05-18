@@ -775,13 +775,25 @@ status_check_compare() {
     _scc_local() {
         local cmd="$1" flag="$2"
         [[ -s "$HOME/.nvm/nvm.sh" ]] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+        export PATH="$HOME/.local/bin:$HOME/.npm/bin:$PATH"
         if command -v "$cmd" >/dev/null 2>&1; then
             if command -v timeout >/dev/null 2>&1; then
                 timeout 5 "$cmd" $flag 2>/dev/null | head -n1
             else
                 "$cmd" $flag 2>/dev/null | head -n1
             fi
+            return
         fi
+        for p in "$HOME/.nvm/versions/node"/*/bin "$HOME/.local/bin" "$HOME/.npm/bin"; do
+            if [ -x "$p/$cmd" ]; then
+                if command -v timeout >/dev/null 2>&1; then
+                    timeout 5 "$p/$cmd" $flag 2>/dev/null | head -n1
+                else
+                    "$p/$cmd" $flag 2>/dev/null | head -n1
+                fi
+                return
+            fi
+        done
     }
 
     _scc_ver() {
@@ -837,13 +849,19 @@ status_check_compare() {
     _scc_row "OpenCode" "$(_scc_local opencode --version)" "$(_scc_gh anomalyco/opencode)"
 
     local oc_local=""
-    command -v openchamber >/dev/null 2>&1 && oc_local=$(timeout 5 openchamber --version 2>/dev/null | head -n1)
+    oc_local=$(_scc_local openchamber --version)
+    [[ -z "$oc_local" ]] && npm list -g @openchamber/web >/dev/null 2>&1 && oc_local="npm global"
     local oc_latest=""
     command -v npm >/dev/null 2>&1 && oc_latest=$(npm view @openchamber/web version 2>/dev/null)
     _scc_row "OpenChamber" "$oc_local" "$oc_latest"
 
     local gsd_local=""
-    command -v gsd-opencode >/dev/null 2>&1 && gsd_local=$(timeout 5 gsd-opencode --version 2>/dev/null | head -n1)
+    gsd_local=$(_scc_local gsd-opencode --version)
+    if [[ -z "$gsd_local" ]]; then
+        if npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
+            gsd_local="npx cache"
+        fi
+    fi
     local gsd_latest=""
     command -v npm >/dev/null 2>&1 && gsd_latest=$(npm view gsd-opencode version 2>/dev/null)
     _scc_row "GSD"      "$gsd_local"                       "$gsd_latest"
