@@ -733,7 +733,8 @@ status_check() {
         gsd_version="npm global"
     elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
         gsd_found=1
-        gsd_version="npx cache"
+        gsd_version=$(npx --yes gsd-opencode --version 2>/dev/null | head -n1)
+        [[ -z "$gsd_version" ]] && gsd_version="npx cache"
     else
         # Check common paths that may not be in PATH on Chromebooks/containers
         for gsd_path in "$HOME/.npm/bin/gsd-opencode" "$HOME/.nvm/versions/node"/*/bin/gsd-opencode; do
@@ -858,9 +859,11 @@ status_check_compare() {
     local gsd_local=""
     gsd_local=$(_scc_local gsd-opencode --version)
     if [[ -z "$gsd_local" ]]; then
-        if npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
-            gsd_local="npx cache"
-        fi
+        gsd_local=$(npm list -g gsd-opencode 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        [[ -n "$gsd_local" ]] && gsd_local="npm $gsd_local"
+    fi
+    if [[ -z "$gsd_local" ]]; then
+        gsd_local=$(npx --yes gsd-opencode --version 2>/dev/null | head -n1)
     fi
     local gsd_latest=""
     command -v npm >/dev/null 2>&1 && gsd_latest=$(npm view gsd-opencode version 2>/dev/null)
