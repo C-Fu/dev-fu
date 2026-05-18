@@ -1033,7 +1033,7 @@ install_nvm_node() {
 
     if ! command -v nvm >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing NVM...${NC}"
-        retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
+        retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
         bash /tmp/nvm-install.sh || die "NVM install failed" 1
         rm -f /tmp/nvm-install.sh
         export NVM_DIR="$HOME/.nvm"
@@ -1211,7 +1211,7 @@ upgrade_all() {
         . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
         if command -v nvm >/dev/null 2>&1; then
             echo -e "${CYAN}  Upgrading NVM...${NC}"
-            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || echo -e "${YELLOW}  NVM download failed, skipping${NC}"
+            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || echo -e "${YELLOW}  NVM download failed, skipping${NC}"
             if [ -f /tmp/nvm-install.sh ]; then
                 bash /tmp/nvm-install.sh || echo -e "${YELLOW}  NVM upgrade failed${NC}"
                 rm -f /tmp/nvm-install.sh
@@ -1333,7 +1333,7 @@ install_opencode_gsd() {
         echo -e "${YELLOW}  → NVM + Node required — installing first...${NC}"
         if ! command -v nvm >/dev/null 2>&1; then
             echo -e "${CYAN}  Installing NVM...${NC}"
-            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
+            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
             bash /tmp/nvm-install.sh || die "NVM install failed" 1
             rm -f /tmp/nvm-install.sh
             export NVM_DIR="$HOME/.nvm"
