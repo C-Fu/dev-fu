@@ -866,7 +866,7 @@ status_check_compare() {
         gsd_local=$(npx --yes gsd-opencode --version 2>/dev/null | head -n1)
     fi
     local gsd_latest=""
-    command -v npm >/dev/null 2>&1 && gsd_latest=$(_scc_gh rokicool/gsd-opencode)
+    gsd_latest=$(_scc_gh rokicool/gsd-opencode)
     _scc_row "GSD"      "$gsd_local"                       "$gsd_latest"
 
     echo -e "  $(printf '%.0s─' {1..70})"
@@ -1215,6 +1215,8 @@ upgrade_all() {
             if [ -f /tmp/nvm-install.sh ]; then
                 bash /tmp/nvm-install.sh || echo -e "${YELLOW}  NVM upgrade failed${NC}"
                 rm -f /tmp/nvm-install.sh
+                . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+                echo -e "  ${GREEN}$(nvm --version 2>/dev/null)${NC}"
             fi
             echo -e "${CYAN}  Upgrading Node.js to latest LTS...${NC}"
             nvm install --lts --reinstall-packages-from=current || echo -e "${YELLOW}  Node LTS upgrade failed${NC}"
