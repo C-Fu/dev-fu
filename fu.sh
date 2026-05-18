@@ -666,9 +666,9 @@ status_check() {
         local name="$1"; local cmd="$2"; local flag="$3"
         if command -v "$cmd" >/dev/null 2>&1; then
             if command -v timeout >/dev/null 2>&1; then
-                ver=$(timeout 5 $cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
+                ver=$(echo "y" | timeout 5 $cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
             else
-                ver=$($cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
+                ver=$(echo "y" | $cmd $flag 2>/dev/null | head -n1 | tr -s ' ')
             fi
             printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "$name" "${ver:-installed}"
         else
@@ -779,18 +779,18 @@ status_check_compare() {
         export PATH="$HOME/.local/bin:$HOME/.npm/bin:$PATH"
         if command -v "$cmd" >/dev/null 2>&1; then
             if command -v timeout >/dev/null 2>&1; then
-                timeout 5 "$cmd" $flag 2>/dev/null | head -n1
+                echo "y" | timeout 5 "$cmd" $flag 2>/dev/null | head -n1
             else
-                "$cmd" $flag 2>/dev/null | head -n1
+                echo "y" | "$cmd" $flag 2>/dev/null | head -n1
             fi
             return
         fi
         for p in "$HOME/.nvm/versions/node"/*/bin "$HOME/.local/bin" "$HOME/.npm/bin"; do
             if [ -x "$p/$cmd" ]; then
                 if command -v timeout >/dev/null 2>&1; then
-                    timeout 5 "$p/$cmd" $flag 2>/dev/null | head -n1
+                    echo "y" | timeout 5 "$p/$cmd" $flag 2>/dev/null | head -n1
                 else
-                    "$p/$cmd" $flag 2>/dev/null | head -n1
+                    echo "y" | "$p/$cmd" $flag 2>/dev/null | head -n1
                 fi
                 return
             fi
