@@ -1222,6 +1222,21 @@ upgrade_all() {
         upgraded=1
     fi
 
+    if command -v python3 >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Python...${NC}"
+        pkg_update >/dev/null 2>&1 || true
+        local pm="$(get_pkg_manager)"
+        case "$pm" in
+            apt)  sudo apt-get install -y python3 python3-pip python3-venv ;;
+            apk)  sudo apk upgrade python3 py3-pip ;;
+            dnf)  sudo dnf upgrade -y python3 python3-pip ;;
+            pacman) sudo pacman -Syu --noconfirm python python-pip ;;
+            zypper) sudo zypper update -y python3 python3-pip ;;
+            brew) brew upgrade python ;;
+        esac
+        upgraded=1
+    fi
+
     if command -v php >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading PHP...${NC}"
         pkg_update || echo -e "${YELLOW}  Package update failed${NC}"
