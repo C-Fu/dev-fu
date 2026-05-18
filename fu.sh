@@ -774,6 +774,7 @@ status_check_compare() {
 
     _scc_local() {
         local cmd="$1" flag="$2"
+        [[ -s "$HOME/.nvm/nvm.sh" ]] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
         if command -v "$cmd" >/dev/null 2>&1; then
             if command -v timeout >/dev/null 2>&1; then
                 timeout 5 "$cmd" $flag 2>/dev/null | head -n1
