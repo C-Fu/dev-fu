@@ -554,21 +554,25 @@ install_avahi() {
 
     if ! command -v avahi-daemon >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
-        pkg_update || die "package update failed" $?
-        pkg_install avahi-daemon avahi-utils || die "avahi-daemon install failed" $?
-        sudo systemctl enable avahi-daemon || die "enable avahi-daemon failed" $?
-        sudo systemctl start avahi-daemon || die "start avahi-daemon failed" $?
+        pkg_update || { echo -e "${RED}  ✗ Package update failed${NC}"; return 1; }
+        pkg_install avahi-daemon avahi-utils || { echo -e "${RED}  ✗ Avahi install failed${NC}"; return 1; }
+        sudo systemctl enable avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not enable avahi-daemon${NC}"; }
+        sudo systemctl start avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not start avahi-daemon${NC}"; }
     fi
 
     if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
         echo -e "${CYAN}  Installing systemd-resolved...${NC}"
-        pkg_install systemd-resolved || die "systemd-resolved install failed" $?
+        local resolved_pkg="systemd-resolved"
+        if ! apt-cache show systemd-resolved >/dev/null 2>&1; then
+            resolved_pkg="systemd"
+        fi
+        pkg_install "$resolved_pkg" || { echo -e "${RED}  ✗ systemd-resolved install failed${NC}"; return 1; }
         echo -e "${CYAN}  Enabling systemd-resolved...${NC}"
-        sudo systemctl enable --now systemd-resolved || die "enable systemd-resolved failed" $?
+        sudo systemctl enable --now systemd-resolved || { echo -e "${YELLOW}  ⚠ Could not enable systemd-resolved${NC}"; }
     fi
 
     echo -e "${CYAN}  Swapping DNS to systemd-resolved...${NC}"
-    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || die "DNS symlink failed" $?
+    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || { echo -e "${YELLOW}  ⚠ DNS symlink failed${NC}"; }
 
     echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
