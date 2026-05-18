@@ -824,7 +824,7 @@ status_check_compare() {
     _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
 
     _scc_row "Node.js"  "$(_scc_local node --version)"     "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"v\([^"]*\)".*/\1/')"
-    _scc_row "Python"   "$(_scc_local python3 --version)"  "$(_scc_gh python/cpython)"
+    _scc_row "Python"   "$(_scc_local python3 --version)"  "$(curl -fsSL --max-time 5 'https://endoflife.date/api/python.json' 2>/dev/null | grep -o '"latest":"[^"]*"' | head -1 | sed 's/"latest":"//;s/"//')"
     _scc_row "uv"       "$(_scc_local uv --version)"       "$(_scc_gh astral-sh/uv)"
     _scc_row "PHP"      "$(_scc_local php -v)"             "$(_scc_gh php/php-src)"
 
