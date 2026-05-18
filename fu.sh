@@ -1248,16 +1248,24 @@ upgrade_all() {
 
     if command -v python3 >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading Python...${NC}"
-        pkg_update >/dev/null 2>&1 || true
-        local pm="$(get_pkg_manager)"
-        case "$pm" in
-            apt)  sudo apt-get install -y python3 python3-pip python3-venv ;;
-            apk)  sudo apk upgrade python3 py3-pip ;;
-            dnf)  sudo dnf upgrade -y python3 python3-pip ;;
-            pacman) sudo pacman -Syu --noconfirm python python-pip ;;
-            zypper) sudo zypper update -y python3 python3-pip ;;
-            brew) brew upgrade python ;;
-        esac
+        if command -v uv >/dev/null 2>&1; then
+            uv python install --preview 2>/dev/null || uv python install latest 2>/dev/null || echo -e "${YELLOW}  uv python install failed, trying package manager${NC}"
+            if uv python list 2>/dev/null | grep -q 'cpython'; then
+                upgraded=1
+            fi
+        fi
+        if [ $upgraded -eq 0 ] || ! command -v uv >/dev/null 2>&1; then
+            pkg_update >/dev/null 2>&1 || true
+            local pm="$(get_pkg_manager)"
+            case "$pm" in
+                apt)  sudo apt-get install -y python3 python3-pip python3-venv ;;
+                apk)  sudo apk upgrade python3 py3-pip ;;
+                dnf)  sudo dnf upgrade -y python3 python3-pip ;;
+                pacman) sudo pacman -Syu --noconfirm python python-pip ;;
+                zypper) sudo zypper update -y python3 python3-pip ;;
+                brew) brew upgrade python ;;
+            esac
+        fi
         upgraded=1
     fi
 
