@@ -1248,13 +1248,16 @@ upgrade_all() {
 
     if command -v python3 >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading Python...${NC}"
+        if ! command -v uv >/dev/null 2>&1; then
+            install_uv 2>/dev/null || true
+        fi
         if command -v uv >/dev/null 2>&1; then
             uv python install --preview 2>/dev/null || uv python install latest 2>/dev/null || echo -e "${YELLOW}  uv python install failed, trying package manager${NC}"
             if uv python list 2>/dev/null | grep -q 'cpython'; then
                 upgraded=1
             fi
         fi
-        if [ $upgraded -eq 0 ] || ! command -v uv >/dev/null 2>&1; then
+        if [ $upgraded -eq 0 ]; then
             pkg_update >/dev/null 2>&1 || true
             local pm="$(get_pkg_manager)"
             case "$pm" in
