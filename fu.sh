@@ -1226,19 +1226,39 @@ install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
     echo -e "${DIM}   AI-powered development environment${NC}"
     echo
-    
-    local opencode_installed=0
-    if command -v opencode >/dev/null 2>&1; then
+
+    [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
+
+    local need_opencode=0 need_gsd=0 need_openchamber=0
+
+    if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenCode already installed"
-        opencode_installed=1
-    elif npm list -g opencode-ai >/dev/null 2>&1; then
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenCode installed (npm global)"
-        opencode_installed=1
     else
         echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} OpenCode will be installed"
+        need_opencode=1
     fi
-    
-    [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
+
+    if command -v gsd-opencode >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} GSD already installed"
+    elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} GSD already available"
+    else
+        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} GSD will be installed"
+        need_gsd=1
+    fi
+
+    if command -v openchamber >/dev/null 2>&1 || npm list -g @openchamber/web >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} OpenChamber already installed"
+    else
+        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} OpenChamber will be installed"
+        need_openchamber=1
+    fi
+
+    if [[ $need_opencode -eq 0 && $need_gsd -eq 0 && $need_openchamber -eq 0 ]]; then
+        echo
+        echo -e "${GREEN}  ✓ All components already installed${NC}"
+        return
+    fi
 
     if ! command -v nvm >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
         echo -e "${YELLOW}  → NVM + Node required — installing first...${NC}"
@@ -1255,28 +1275,62 @@ install_opencode_gsd() {
             nvm install --lts || die "Node LTS install failed" 1
         fi
     fi
-    
-    if [ $opencode_installed -eq 0 ]; then
-        echo -e "${BYELLOW}  → This will install: OpenCode + GSD${NC}"
-        if [[ "$BATCH_MODE" != "1" ]]; then
-            read -rp "  Proceed? (y/n): " confirm
-            [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+
+    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 10)${NC}"; return; }
+
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        echo -e "${BYELLOW}  → This will install the components marked above${NC}"
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    if [[ $need_openchamber -eq 1 ]]; then
+        echo -e "${CYAN}  Installing build dependencies for native modules...${NC}"
+        local pm="$(get_pkg_manager)"
+        case "$pm" in
+            apt)  pkg_install build-essential python3-dev make g++ >/dev/null 2>&1 || true ;;
+            apk)  pkg_install alpine-sdk python3 make g++ >/dev/null 2>&1 || true ;;
+            dnf)  pkg_install gcc-c++ python3-devel make >/dev/null 2>&1 || true ;;
+            pacman) pkg_install base-devel python3 >/dev/null 2>&1 || true ;;
+            zypper) pkg_install patterns-devel-base-devel_basis python3-devel >/dev/null 2>&1 || true ;;
+            brew) brew install python3 >/dev/null 2>&1 || true ;;
+        esac
+        local py_ver
+        py_ver=$(python3 -c 'import sys; v=sys.version_info; print(v.major*100+v.minor)' 2>/dev/null || echo "0")
+        if [[ $py_ver -lt 308 ]]; then
+            echo -e "${YELLOW}  Python 3.$(python3 -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo '?') detected — node-gyp requires 3.8+${NC}"
+            pkg_install python3.9 >/dev/null 2>&1 || pkg_install python3.8 >/dev/null 2>&1 || true
+            if command -v python3.9 >/dev/null 2>&1; then
+                export npm_config_python="$(command -v python3.9)"
+            elif command -v python3.8 >/dev/null 2>&1; then
+                export npm_config_python="$(command -v python3.8)"
+            fi
         fi
     fi
 
-    echo -e "${CYAN}  Installing OpenCode...${NC}"
-    retry_network 3 5 "curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh" || die "OpenCode download failed" 1
-    bash /tmp/opencode-install.sh || npm i -g opencode-ai || die "OpenCode install failed" 1
-    rm -f /tmp/opencode-install.sh
+    if [[ $need_opencode -eq 1 ]]; then
+        echo -e "${CYAN}  Installing OpenCode...${NC}"
+        retry_network 3 5 "curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh" || true
+        if [ -f /tmp/opencode-install.sh ]; then
+            bash /tmp/opencode-install.sh || npm i -g opencode-ai || die "OpenCode install failed" 1
+            rm -f /tmp/opencode-install.sh
+        else
+            npm i -g opencode-ai || die "OpenCode install failed" 1
+        fi
+    fi
 
-    echo -e "${CYAN}  Installing GSD...${NC}"
-    npx gsd-opencode@latest || die "GSD install failed" 1
+    if [[ $need_gsd -eq 1 ]]; then
+        echo -e "${CYAN}  Installing GSD...${NC}"
+        npx gsd-opencode@latest || die "GSD install failed" 1
+    fi
 
-    echo -e "${CYAN}  Installing OpenChamber...${NC}"
-    npm i -g @openchamber/web || die "OpenChamber install failed" 1
+    if [[ $need_openchamber -eq 1 ]]; then
+        echo -e "${CYAN}  Installing OpenChamber...${NC}"
+        npm i -g @openchamber/web || die "OpenChamber install failed" 1
+    fi
 
     echo
-    echo -e "${GREEN}  ✓ OpenCode + GSD + OpenChamber installed successfully${NC}"
+    echo -e "${GREEN}  ✓ All components installed successfully${NC}"
 }
 
 # ──────────────
