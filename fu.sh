@@ -1437,29 +1437,35 @@ install_opencode_gsd() {
         fi
     fi
 
+    local install_errors=0
+
     if [[ $need_opencode -eq 1 ]]; then
         echo -e "${CYAN}  Installing OpenCode...${NC}"
         retry_network 3 5 "curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh" || true
         if [ -f /tmp/opencode-install.sh ]; then
-            bash /tmp/opencode-install.sh || npm i -g opencode-ai || die "OpenCode install failed" 1
+            bash /tmp/opencode-install.sh || npm i -g opencode-ai || { echo -e "${RED}  ✗ OpenCode install failed${NC}"; install_errors=$((install_errors+1)); }
             rm -f /tmp/opencode-install.sh
         else
-            npm i -g opencode-ai || die "OpenCode install failed" 1
+            npm i -g opencode-ai || { echo -e "${RED}  ✗ OpenCode install failed${NC}"; install_errors=$((install_errors+1)); }
         fi
     fi
 
     if [[ $need_gsd -eq 1 ]]; then
         echo -e "${CYAN}  Installing GSD...${NC}"
-        npx gsd-opencode@latest || die "GSD install failed" 1
+        npx gsd-opencode@latest || { echo -e "${RED}  ✗ GSD install failed${NC}"; install_errors=$((install_errors+1)); }
     fi
 
     if [[ $need_openchamber -eq 1 ]]; then
         echo -e "${CYAN}  Installing OpenChamber...${NC}"
-        npm i -g @openchamber/web || echo -e "${RED}  ✗ OpenChamber install failed${NC}"
+        npm i -g @openchamber/web || { echo -e "${RED}  ✗ OpenChamber install failed${NC}"; install_errors=$((install_errors+1)); }
     fi
 
     echo
-    echo -e "${GREEN}  ✓ All components installed successfully${NC}"
+    if [[ $install_errors -gt 0 ]]; then
+        echo -e "${RED}  ✗ $install_errors component(s) failed to install${NC}"
+    else
+        echo -e "${GREEN}  ✓ All components installed successfully${NC}"
+    fi
 }
 
 # ──────────────
