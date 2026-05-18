@@ -1400,6 +1400,43 @@ install_opencode_gsd() {
         fi
     fi
 
+    if [[ $need_openchamber -eq 1 ]]; then
+        local gcc_ok=0
+        if command -v g++ >/dev/null 2>&1; then
+            echo 'int main(){}' | g++ -std=gnu++20 -x c++ - -o /dev/null 2>/dev/null && gcc_ok=1
+        fi
+        if [[ $gcc_ok -eq 0 ]]; then
+            echo -e "${YELLOW}  g++ does not support C++20 — trying to install newer compiler${NC}"
+            case "$pm" in
+                apt)
+                    if ! grep -q 'buster-backports' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
+                        echo "deb http://deb.debian.org/debian buster-backports main" | sudo tee /etc/apt/sources.list.d/backports.list >/dev/null 2>&1
+                        pkg_update >/dev/null 2>&1 || true
+                    fi
+                    sudo apt-get -t buster-backports install -y g++-10 >/dev/null 2>&1 || true
+                    if command -v g++-10 >/dev/null 2>&1; then
+                        export CXX=g++-10 CC=gcc-10
+                        echo -e "${GREEN}  ✓ Using g++-10 from backports${NC}"
+                        gcc_ok=1
+                    fi
+                    ;;
+                dnf)
+                    sudo dnf install -y gcc-toolset-10-gcc-c++ >/dev/null 2>&1 || true
+                    if rpm -q gcc-toolset-10-gcc-c++ >/dev/null 2>&1; then
+                        export CXX=g++-10 CC=gcc-10
+                        gcc_ok=1
+                    fi
+                    ;;
+            esac
+            if [[ $gcc_ok -eq 0 ]]; then
+                echo -e "${RED}  ✗ Compiler does not support C++20 — skipping OpenChamber${NC}"
+                echo -e "${DIM}    better-sqlite3 requires C++20 support (GCC 10+ or Clang 10+)${NC}"
+                echo -e "${DIM}    Install a newer g++ manually and retry${NC}"
+                need_openchamber=0
+            fi
+        fi
+    fi
+
     if [[ $need_opencode -eq 1 ]]; then
         echo -e "${CYAN}  Installing OpenCode...${NC}"
         retry_network 3 5 "curl -fsSL https://opencode.ai/install -o /tmp/opencode-install.sh" || true
