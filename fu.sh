@@ -1335,6 +1335,8 @@ install_opencode_gsd() {
         need_openchamber=1
     fi
 
+    local install_errors=0
+
     if [[ $need_opencode -eq 0 && $need_gsd -eq 0 && $need_openchamber -eq 0 ]]; then
         echo
         echo -e "${GREEN}  ✓ All components already installed${NC}"
@@ -1397,6 +1399,7 @@ install_opencode_gsd() {
             echo -e "${RED}  ✗ Python 3.8+ not available — skipping OpenChamber${NC}"
             echo -e "${DIM}    OpenChamber requires better-sqlite3 which needs node-gyp ≥ Python 3.8${NC}"
             need_openchamber=0
+            install_errors=$((install_errors+1))
         fi
     fi
 
@@ -1433,11 +1436,10 @@ install_opencode_gsd() {
                 echo -e "${DIM}    better-sqlite3 requires C++20 support (GCC 10+ or Clang 10+)${NC}"
                 echo -e "${DIM}    Install a newer g++ manually and retry${NC}"
                 need_openchamber=0
+                install_errors=$((install_errors+1))
             fi
         fi
     fi
-
-    local install_errors=0
 
     if [[ $need_opencode -eq 1 ]]; then
         echo -e "${CYAN}  Installing OpenCode...${NC}"
