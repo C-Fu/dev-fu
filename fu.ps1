@@ -454,7 +454,41 @@ function Install-Python {
 
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
         Write-Host "${CYAN}  Installing uv...${NC}"
-        powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+        $uvInstalled = $false
+
+        try {
+            Write-Host "${DIM}    Trying standalone installer...${NC}"
+            powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" 2>$null
+            if (Get-Command uv -ErrorAction SilentlyContinue) { $uvInstalled = $true }
+        } catch {}
+
+        if (-not $uvInstalled -and (Get-Command winget -ErrorAction SilentlyContinue)) {
+            Write-Host "${DIM}    Trying winget...${NC}"
+            winget install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements 2>$null
+            if (Get-Command uv -ErrorAction SilentlyContinue) { $uvInstalled = $true }
+        }
+
+        if (-not $uvInstalled -and (Get-Command scoop -ErrorAction SilentlyContinue)) {
+            Write-Host "${DIM}    Trying scoop...${NC}"
+            scoop install main/uv 2>$null
+            if (Get-Command uv -ErrorAction SilentlyContinue) { $uvInstalled = $true }
+        }
+
+        if (-not $uvInstalled -and (Get-Command pipx -ErrorAction SilentlyContinue)) {
+            Write-Host "${DIM}    Trying pipx...${NC}"
+            pipx install uv 2>$null
+            if (Get-Command uv -ErrorAction SilentlyContinue) { $uvInstalled = $true }
+        }
+
+        if (-not $uvInstalled -and (Get-Command pip -ErrorAction SilentlyContinue)) {
+            Write-Host "${DIM}    Trying pip...${NC}"
+            pip install uv 2>$null
+            if (Get-Command uv -ErrorAction SilentlyContinue) { $uvInstalled = $true }
+        }
+
+        if (-not $uvInstalled) {
+            Write-Host "${RED}  ✗ uv install failed — no supported install method available${NC}"
+        }
     }
 
     Write-Host "${GREEN}  ✓ Python + Pip + UV + Pipx installed${NC}"

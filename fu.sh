@@ -397,8 +397,50 @@ pre_install_summary() {
     fi
 }
 
+install_uv() {
+    command -v uv >/dev/null 2>&1 && return 0
+
+    echo -e "${CYAN}  Installing uv...${NC}"
+
+    if command -v curl >/dev/null 2>&1; then
+        retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" 2>/dev/null
+        if [ -f /tmp/uv-install.sh ]; then
+            sh /tmp/uv-install.sh && rm -f /tmp/uv-install.sh && export PATH="$HOME/.local/bin:$PATH" && return 0
+            rm -f /tmp/uv-install.sh
+        fi
+    fi
+
+    if command -v wget >/dev/null 2>&1; then
+        wget -qO /tmp/uv-install.sh https://astral.sh/uv/install.sh 2>/dev/null
+        if [ -f /tmp/uv-install.sh ]; then
+            sh /tmp/uv-install.sh && rm -f /tmp/uv-install.sh && export PATH="$HOME/.local/bin:$PATH" && return 0
+            rm -f /tmp/uv-install.sh
+        fi
+    fi
+
+    if command -v pipx >/dev/null 2>&1; then
+        pipx install uv 2>/dev/null && export PATH="$HOME/.local/bin:$PATH" && return 0
+    fi
+
+    if command -v pip3 >/dev/null 2>&1; then
+        pip3 install uv 2>/dev/null && export PATH="$HOME/.local/bin:$PATH" && return 0
+    elif command -v pip >/dev/null 2>&1; then
+        pip install uv 2>/dev/null && export PATH="$HOME/.local/bin:$PATH" && return 0
+    fi
+
+    if command -v brew >/dev/null 2>&1; then
+        brew install uv 2>/dev/null && return 0
+    fi
+
+    if command -v cargo >/dev/null 2>&1; then
+        cargo install --locked uv 2>/dev/null && export PATH="$HOME/.cargo/bin:$PATH" && return 0
+    fi
+
+    echo -e "${RED}  ✗ uv install failed — no supported install method available${NC}"
+    return 1
+}
+
 # ──────────────
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🐳 Option 4: Install Docker
 # ──────────────
 install_docker() {
@@ -930,11 +972,7 @@ install_python() {
     fi
 
     if ! command -v uv >/dev/null 2>&1; then
-        echo -e "${CYAN}  Installing uv...${NC}"
-        retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || die "uv download failed" 1
-        sh /tmp/uv-install.sh || die "uv install failed" 1
-        rm -f /tmp/uv-install.sh
-        export PATH="$HOME/.local/bin:$PATH"
+        install_uv || die "uv install failed" 1
         append_rc_if_missing "$(detect_rc_file)" 'export PATH="$HOME/.local/bin:$PATH"'
     fi
 
@@ -1180,13 +1218,7 @@ upgrade_all() {
 
     if command -v uv >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading uv...${NC}"
-        uv self update || {
-            retry_network 3 5 "curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh" || echo -e "${YELLOW}  uv download failed, skipping${NC}"
-            if [ -f /tmp/uv-install.sh ]; then
-                sh /tmp/uv-install.sh || echo -e "${YELLOW}  uv upgrade failed${NC}"
-                rm -f /tmp/uv-install.sh
-            fi
-        }
+        uv self update || echo -e "${YELLOW}  uv upgrade failed${NC}"
         upgraded=1
     fi
 
