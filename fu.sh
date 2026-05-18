@@ -1306,6 +1306,17 @@ install_opencode_gsd() {
                 export npm_config_python="$(command -v python3.8)"
             fi
         fi
+        local py_ok=0
+        if [[ -n "$npm_config_python" ]] && "$npm_config_python" -c 'import sys; assert sys.version_info >= (3,8)' 2>/dev/null; then
+            py_ok=1
+        elif python3 -c 'import sys; assert sys.version_info >= (3,8)' 2>/dev/null; then
+            py_ok=1
+        fi
+        if [[ $py_ok -eq 0 ]]; then
+            echo -e "${RED}  ✗ Python 3.8+ not available — skipping OpenChamber${NC}"
+            echo -e "${DIM}    OpenChamber requires better-sqlite3 which needs node-gyp ≥ Python 3.8${NC}"
+            need_openchamber=0
+        fi
     fi
 
     if [[ $need_opencode -eq 1 ]]; then
@@ -1326,7 +1337,7 @@ install_opencode_gsd() {
 
     if [[ $need_openchamber -eq 1 ]]; then
         echo -e "${CYAN}  Installing OpenChamber...${NC}"
-        npm i -g @openchamber/web || die "OpenChamber install failed" 1
+        npm i -g @openchamber/web || echo -e "${RED}  ✗ OpenChamber install failed${NC}"
     fi
 
     echo
