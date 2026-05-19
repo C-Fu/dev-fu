@@ -634,13 +634,459 @@ _reset_prompt() {
     export PS1="\u@\h:\w\$ "
 }
 
+_write_prompt_purple() {
+    cat > "$1" << 'PROMPT_EOF'
+#################################
+#            ICONS              #
+#################################
+
+declare -A __ICONS=( \
+  ["separator"]="" \
+  ["local_branch"]="" \
+  ["remote_branch"]="" \
+  ["merged_branch"]="" \
+  ["stashed"]="󰏢" \
+)
+
+
+#################################
+#            COLORS             #
+#################################
+
+declare -A __THEME=(\
+  ["default"]="-1"\
+  ["fg"]="253"\
+  ["bglighter"]="238"\
+  ["bglight"]="237"\
+  ["bg"]="236"\
+  ["bgdark"]="235"\
+  ["bgdarker"]="234"\
+  ["violet"]="69"\
+  ["selection"]="239"\
+  ["subtle"]="238"\
+  ["cyan"]="74"\
+  ["green"]="28"\
+  ["sky"]="38"\
+  ["orange"]="215"\
+  ["pink"]="169"\
+  ["mauve"]="99"\
+  ["red"]="203"\
+  ["yellow"]="226"\
+  ["lightgray"]="252"\
+  ["white"]="255"\
+)
+
+__bg() {
+  local color_code=$1
+  if [ "-1" = "${color_code}" ]
+  then
+    echo "\\[\\e[49m\\]"
+  else
+    echo "\\[\\e[48;5;${color_code}m\\]"
+  fi
+}
+
+__fg() {
+  local color_code=$1
+  if [ "-1" = "${color_code}" ]
+  then
+    echo "\\[\\e[39m\\]"
+  else
+    echo "\\[\\e[38;5;${color_code}m\\]"
+  fi
+}
+
+__colorized_separator() {
+  local left_color="$1"
+  local right_color="$2"
+  echo "$(__fg $left_color)$(__bg $right_color)${__ICONS[separator]}"
+}
+
+#################################
+#             USER              #
+#################################
+
+user_text="\u@\h"
+
+
+#################################
+#             PATH             #
+#################################
+
+path_text="\w"
+
+
+#################################
+#          GIT BRANCH           #
+#################################
+
+__branch_name() {
+  git rev-parse --abbrev-ref HEAD 2> /dev/null
+}
+
+__remote_branch_name() {
+  is_only_local_branch=$(git branch -r 2> /dev/null | grep -c "$param_branch_name")
+
+  if [ 0 -eq "$is_only_local_branch" ]; then echo "";fi
+  local branch_name
+
+  branch_name=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2> /dev/null | cut -d"/" -f1)
+  branch_name=${branch_name:-origin}
+  echo "$branch_name"
+}
+
+__branch_is_local_only() {
+  local param_branch_name="$1"
+  local is_only_local_branch
+
+  is_only_local_branch=$(git branch -r 2> /dev/null | grep -c "$param_branch_name")
+
+  if [ 0 -eq "$is_only_local_branch" ]; then return 0; fi
+  return 1
+}
+
+__branch_is_merged() {
+  local branch
+  local merged=""
+
+  branch=$(__branch_name)
+
+  merged=$(git branch -r --merged master 2> /dev/null | grep "$branch" 2> /dev/null)
+  if [ "" != "$merged" ]; then return 0; fi
+
+  merged=$(git branch -r --merged develop 2> /dev/null | grep "$branch" 2> /dev/null)
+  if [ "" != "$merged" ]; then return 0; fi
+
+  merged=$(git branch -r --merged main 2> /dev/null | grep "$branch" 2> /dev/null)
+  if [ "" != "$merged" ]; then return 0; else return 1; fi
+}
+
+__branch_icon() {
+  local param_branch_name="$1"
+
+  if $(__branch_is_local_only)
+  then
+      echo "${__ICONS[local_branch]}"
+      return
+  fi
+
+  if $(__branch_is_merged)
+  then
+      echo "${__ICONS[merged_branch]}"
+      return
+  fi
+
+  echo "${__ICONS[remote_branch]}"
+}
+
+__branch_text() {
+  local branch_text=""
+  if [ "" != "$(__branch_name)" ]; then branch_text="$(__branch_icon) $(__branch_name)"; fi
+  echo "${branch_text}"
+}
+
+
+#################################
+#         GIT STATUS            #
+#################################
+
+__staged() {
+  git diff --name-only --cached 2> /dev/null
+}
+
+__untracked() {
+  git ls-files --others --exclude-standard 2> /dev/null
+}
+
+__changed() {
+  git ls-files -m 2> /dev/null
+}
+
+__stashed() {
+  local msg="$(git stash list 2> /dev/null)"
+  if [[ "" != "${msg}" ]]; then echo "${__ICONS[stashed]}"; else echo ""; fi
+}
+
+__unpushed() {
+    local branch_name=$(__branch_name)
+    local remote_name=$(__remote_branch_name)
+    git log --pretty=oneline "${remote_name}"/"${branch_name}"..HEAD 2> /dev/null
+}
+
+__needs_pull() {
+  local local_only=$(__branch_is_local_only)
+  if [ "0" != "${local_only}" ]
+  then
+    echo "0"
+    return 0
+  fi
+  local branch_name=$(__branch_name)
+  if [ "" != "${branch_name}" ]
+  then
+    if [ $(git rev-parse HEAD) = $(git rev-parse @{u}) ]; then echo "0"; else echo "0"; fi
+  else
+		echo "0"
+  fi
+}
+
+#################################
+#             VENV              #
+#################################
+
+__venv() {
+  if [ "${VIRTUAL_ENV}" ]
+  then
+    echo $(basename "${VIRTUAL_ENV}")
+  else
+    echo ""
+  fi
+}
+
+#################################
+#            BLOCKS             #
+#################################
+
+__block() {
+  local prev_bg="$1"
+  local bg="$2"
+  local fg="$3"
+  local text="$4"
+
+  local color_separator="$(__colorized_separator $prev_bg $bg)"
+  local foreground="$(__fg $fg)"
+  local color_text="${foreground}${text}"
+  if [ "" = "${text}" ]
+  then
+    echo ${color_text}
+  else
+    echo " ${color_separator} ${color_text}"
+  fi
+}
+
+__chain() {
+  local blocks=("$@")
+
+  local block
+  local chain=""
+
+  local default_background="$(__bg "${__THEME[default]}")"
+  local default_fontcolor=$(__fg "${__THEME[default]}")
+
+  local prev_background
+  for raw_block in "${blocks[@]}";
+  do
+    local block_array
+    IFS=';' block_array=($raw_block)
+    local background="${block_array[0]}"
+    local font_color="${block_array[1]}"
+    local text="${block_array[2]}"
+
+    if [ -z "$prev_background" ]; then prev_background=$background; fi
+    if [ "" != "${text}" ]
+    then
+      block=$(__block "${prev_background}" "${background}" "${font_color}" "${text}")
+      chain+="${block}"
+      prev_background="${background}"
+    fi
+  done
+
+  chain+=" $(__colorized_separator "${prev_background}" "${__THEME[default]}")"
+
+  chain+="${default_background}${default_fontcolor} "
+
+  echo "${chain}"
+}
+
+
+prompt() {
+  local user="${__THEME[mauve]};${__THEME[white]};${user_text}"
+  local path="${__THEME[violet]};${__THEME[white]};${path_text}"
+
+  local branch="$(__branch_text)"
+  local branch_color="${__THEME[subtle]};${__THEME[white]}"
+  if [ "0" != "$(__needs_pull)" ]; then branch_color="${__THEME[red]};${__THEME[white]}"; fi
+  if [ "" != "$(__unpushed)" ]; then branch_color="${__THEME[green]};${__THEME[white]}"; fi
+  if [ "" != "$(__staged)" ]; then branch_color="${__THEME[yellow]};${__THEME[bgdark]}"; fi
+  if [ "" != "$(__changed)" ]; then branch_color="${__THEME[orange]};${__THEME[white]}"; fi
+  if [ "" != "$(__untracked)" ]; then branch_color="${__THEME[pink]};${__THEME[bgdark]}"; fi
+  branch="${branch_color};${branch}"
+
+  local stash="${__THEME[sky]};${__THEME[white]};$(__stashed)"
+
+  local venv=$(__venv)
+  if [ "" != __venv ]
+  then
+    venv="${__THEME[lightgray]};${__THEME[bgdark]};${venv}"
+  fi
+
+  declare -a chain=( ${user} ${path} "${stash}" "${branch}" "${venv}" )
+
+  PS1=$(__chain "${chain[@]}")
+}
+
+PROMPT_COMMAND="prompt"
+PROMPT_EOF
+}
+
+_write_prompt_blue() {
+    cat > "$1" << 'PROMPT_EOF'
+#!/bin/sh
+
+bash_prompt_command() {
+  local pwdmaxlen=25
+  local trunc_symbol=".."
+  local dir=${PWD##*/}
+  pwdmaxlen=$(( ( pwdmaxlen < ${#dir} ) ? ${#dir} : pwdmaxlen ))
+  NEW_PWD=${PWD/#$HOME/\~}
+  local pwdoffset=$(( ${#NEW_PWD} - pwdmaxlen ))
+  if [ ${pwdoffset} -gt "0" ]
+  then
+    NEW_PWD=${NEW_PWD:$pwdoffset:$pwdmaxlen}
+    NEW_PWD=${trunc_symbol}/${NEW_PWD#*/}
+  fi
+}
+
+format_font()
+{
+  local output=$1
+  case $# in
+  2)
+    eval $output="'\[\033[0;${2}m\]'"
+    ;;
+  3)
+    eval $output="'\[\033[0;${2};${3}m\]'"
+    ;;
+  4)
+    eval $output="'\[\033[0;${2};${3};${4}m\]'"
+    ;;
+  *)
+    eval $output="'\[\033[0m\]'"
+    ;;
+  esac
+}
+
+bash_prompt() {
+  local      NONE='0'
+  local      BOLD='1'
+  local       DIM='2'
+  local UNDERLINE='4'
+  local     BLINK='5'
+  local    INVERT='7'
+  local    HIDDEN='8'
+
+  local   DEFAULT='9'
+  local     BLACK='0'
+  local       RED='1'
+  local     GREEN='2'
+  local    YELLOW='3'
+  local      BLUE='4'
+  local   MAGENTA='5'
+  local      CYAN='6'
+  local    L_GRAY='7'
+  local    D_GRAY='60'
+  local     L_RED='61'
+  local   L_GREEN='62'
+  local  L_YELLOW='63'
+  local    L_BLUE='64'
+  local L_MAGENTA='65'
+  local    L_CYAN='66'
+  local     WHITE='67'
+
+  local     RESET='0'
+  local    EFFECT='0'
+  local     COLOR='30'
+  local        BG='40'
+
+  local NO_FORMAT="\[\033[0m\]"
+  local CYAN_BOLD="\[\033[1;38;5;87m\]"
+  local BLUE_BOLD="\[\033[1;38;5;74m\]"
+
+  local FONT_COLOR_1=$WHITE
+  local BACKGROUND_1=$BLUE
+  local TEXTEFFECT_1=$BOLD
+
+  local FONT_COLOR_2=$WHITE
+  local BACKGROUND_2=$L_BLUE
+  local TEXTEFFECT_2=$BOLD
+
+  local FONT_COLOR_3=$D_GRAY
+  local BACKGROUND_3=$WHITE
+  local TEXTEFFECT_3=$BOLD
+
+  local PROMT_FORMAT=$BLUE_BOLD
+
+  FC1=$(($FONT_COLOR_1+$COLOR))
+  BG1=$(($BACKGROUND_1+$BG))
+  FE1=$(($TEXTEFFECT_1+$EFFECT))
+
+  FC2=$(($FONT_COLOR_2+$COLOR))
+  BG2=$(($BACKGROUND_2+$BG))
+  FE2=$(($TEXTEFFECT_2+$EFFECT))
+
+  FC3=$(($FONT_COLOR_3+$COLOR))
+  BG3=$(($BACKGROUND_3+$BG))
+  FE3=$(($TEXTEFFECT_3+$EFFECT))
+
+  local TEXT_FORMAT_1
+  local TEXT_FORMAT_2
+  local TEXT_FORMAT_3
+  format_font TEXT_FORMAT_1 $FE1 $FC1 $BG1
+  format_font TEXT_FORMAT_2 $FE2 $FC2 $BG2
+  format_font TEXT_FORMAT_3 $FC3 $FE3 $BG3
+
+  local PROMT_USER=$"$TEXT_FORMAT_1 \u "
+  local PROMT_HOST=$"$TEXT_FORMAT_2 \h "
+  local PROMT_PWD=$"$TEXT_FORMAT_3 \${NEW_PWD} "
+  local PROMT_INPUT=$"$PROMT_FORMAT "
+
+  TSFC1=$(($BACKGROUND_1+$COLOR))
+  TSBG1=$(($BACKGROUND_2+$BG))
+
+  TSFC2=$(($BACKGROUND_2+$COLOR))
+  TSBG2=$(($BACKGROUND_3+$BG))
+
+  TSFC3=$(($BACKGROUND_3+$COLOR))
+  TSBG3=$(($DEFAULT+$BG))
+
+  local SEPARATOR_FORMAT_1
+  local SEPARATOR_FORMAT_2
+  local SEPARATOR_FORMAT_3
+  format_font SEPARATOR_FORMAT_1 $TSFC1 $TSBG1
+  format_font SEPARATOR_FORMAT_2 $TSFC2 $TSBG2
+  format_font SEPARATOR_FORMAT_3 $TSFC3 $TSBG3
+
+  local TRIANGLE=$'\uE0B0'
+  local SEPARATOR_1=$SEPARATOR_FORMAT_1$TRIANGLE
+  local SEPARATOR_2=$SEPARATOR_FORMAT_2$TRIANGLE
+  local SEPARATOR_3=$SEPARATOR_FORMAT_3$TRIANGLE
+
+  case $TERM in
+  xterm*|rxvt*)
+    local TITLEBAR='\[\033]0;\u:${NEW_PWD}\007\]'
+    ;;
+  *)
+    local TITLEBAR=""
+    ;;
+  esac
+
+  PS1="$TITLEBAR\n${PROMT_USER}${SEPARATOR_1}${PROMT_HOST}${SEPARATOR_2}${PROMT_PWD}${SEPARATOR_3}${PROMT_INPUT}"
+
+  none="$(tput sgr0)"
+  trap 'echo -ne "${none}"' DEBUG
+}
+
+PROMPT_COMMAND=bash_prompt_command
+bash_prompt
+unset bash_prompt
+PROMPT_EOF
+}
+
 create_fancy_prompt() {
     echo -e "${MAGENTA}${EMOJI_PROMPT}  ${BOLD}Create Fancy Prompt (Purple-Pink)${NC}"
     echo
-    
+
     local rc_file=$(detect_rc_file)
     local target="$HOME/.fancy-prompt.sh"
-    local url="https://raw.githubusercontent.com/jonathan-scholbach/fancy-prompt/refs/heads/master/prompt.sh"
 
     if [[ "$BATCH_MODE" != "1" ]]; then
         read -rp "  Replace current fancy prompt? (y/n): " confirm
@@ -649,7 +1095,7 @@ create_fancy_prompt() {
 
     _reset_prompt "$rc_file"
 
-    retry_network 3 5 "curl -fsSL '$url' -o '$target'" || die "Download failed" 1
+    _write_prompt_purple "$target"
     chmod +x "$target"
     append_rc_if_missing "$rc_file" "source ~/.fancy-prompt.sh"
     source "$target" 2>/dev/null || true
@@ -663,7 +1109,7 @@ remove_fancy_prompt() {
         read -rp "  Remove fancy prompt? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
-    
+
     rm -f "$HOME/.fancy-prompt.sh"
     sed -i.bak '/source ~\/.fancy-prompt.sh/d' "$(detect_rc_file)" 2>/dev/null || true
     unset PROMPT_COMMAND
@@ -677,7 +1123,6 @@ create_fancy_prompt_blue() {
 
     local rc_file=$(detect_rc_file)
     local target="$HOME/.fancy-prompt-blue.sh"
-    local url="https://raw.githubusercontent.com/C-Fu/dev-fu/main/fancy_blue.sh"
 
     if [[ "$BATCH_MODE" != "1" ]]; then
         read -rp "  Install blue fancy prompt? (y/n): " confirm
@@ -686,7 +1131,7 @@ create_fancy_prompt_blue() {
 
     _reset_prompt "$rc_file"
 
-    retry_network 3 5 "curl -fsSL -H 'Cache-Control: no-cache' '$url' -o '$target'" || { echo -e "${RED}  ✗ Download failed${NC}"; return 1; }
+    _write_prompt_blue "$target"
     chmod +x "$target"
     append_rc_if_missing "$rc_file" "source ~/.fancy-prompt-blue.sh"
     source "$target" 2>/dev/null || true
