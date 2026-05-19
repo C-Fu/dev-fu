@@ -772,6 +772,7 @@ status_check_compare() {
             | grep '"tag_name"' | head -1 \
             | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         tag="${tag#v}"
+        tag="${tag#docker-v}"
         tag="${tag#bun-v}"
         tag="${tag#php-}"
         echo "$tag"
