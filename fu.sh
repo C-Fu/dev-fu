@@ -725,14 +725,15 @@ __branch_name() {
 }
 
 __remote_branch_name() {
-  is_only_local_branch=$(git branch -r 2> /dev/null | grep -c "$param_branch_name")
+  local branch=$(__branch_name)
+  is_only_local_branch=$(git branch -r 2> /dev/null | grep -c "$branch")
 
-  if [ 0 -eq "$is_only_local_branch" ]; then echo "";fi
-  local branch_name
+  if [ 0 -eq "$is_only_local_branch" ]; then echo ""; return; fi
+  local remote_name
 
-  branch_name=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2> /dev/null | cut -d"/" -f1)
-  branch_name=${branch_name:-origin}
-  echo "$branch_name"
+  remote_name=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2> /dev/null | cut -d"/" -f1)
+  remote_name=${remote_name:-origin}
+  echo "$remote_name"
 }
 
 __branch_is_local_only() {
@@ -823,7 +824,7 @@ __needs_pull() {
   local branch_name=$(__branch_name)
   if [ "" != "${branch_name}" ]
   then
-    if [ $(git rev-parse HEAD) = $(git rev-parse @{u}) ]; then echo "0"; else echo "0"; fi
+    if [ "$(git rev-parse HEAD)" = "$(git rev-parse @{u})" ]; then echo "0"; else echo "1"; fi
   else
 		echo "0"
   fi
@@ -914,7 +915,7 @@ prompt() {
   local stash="${__THEME[sky]};${__THEME[white]};$(__stashed)"
 
   local venv=$(__venv)
-  if [ "" != __venv ]
+  if [ "" != "$venv" ]
   then
     venv="${__THEME[lightgray]};${__THEME[bgdark]};${venv}"
   fi
