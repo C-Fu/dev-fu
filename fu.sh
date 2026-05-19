@@ -625,8 +625,17 @@ remove_avahi() {
 # ──────────────
 # ✨ Option 5: Fancy Prompt
 # ──────────────
+_reset_prompt() {
+    local rc_file="$1"
+    rm -f "$HOME/.fancy-prompt.sh" "$HOME/.fancy-prompt-blue.sh"
+    sed -i.bak '/source ~\/.fancy-prompt.sh/d; /source ~\/.fancy-prompt-blue.sh/d' "$rc_file" 2>/dev/null || true
+    unset PROMPT_COMMAND 2>/dev/null || true
+    unset NEW_PWD 2>/dev/null || true
+    export PS1="\u@\h:\w\$ "
+}
+
 create_fancy_prompt() {
-    echo -e "${MAGENTA}${EMOJI_PROMPT}  ${BOLD}Create Fancy Prompt${NC}"
+    echo -e "${MAGENTA}${EMOJI_PROMPT}  ${BOLD}Create Fancy Prompt (Purple-Pink)${NC}"
     echo
     
     local rc_file=$(detect_rc_file)
@@ -638,12 +647,14 @@ create_fancy_prompt() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
+    _reset_prompt "$rc_file"
+
     retry_network 3 5 "curl -fsSL '$url' -o '$target'" || die "Download failed" 1
     chmod +x "$target"
     append_rc_if_missing "$rc_file" "source ~/.fancy-prompt.sh"
     source "$target" 2>/dev/null || true
     source "$rc_file" 2>/dev/null || true
-    echo -e "${GREEN}  ✓ Fancy prompt replaced${NC}"
+    echo -e "${GREEN}  ✓ Fancy prompt (Purple-Pink) installed${NC}"
 }
 
 remove_fancy_prompt() {
@@ -661,7 +672,7 @@ remove_fancy_prompt() {
 }
 
 create_fancy_prompt_blue() {
-    echo -e "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Blue)${NC}"
+    echo -e "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Shades of Blue)${NC}"
     echo
 
     local rc_file=$(detect_rc_file)
@@ -673,12 +684,14 @@ create_fancy_prompt_blue() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
+    _reset_prompt "$rc_file"
+
     retry_network 3 5 "curl -fsSL -H 'Cache-Control: no-cache' '$url' -o '$target'" || { echo -e "${RED}  ✗ Download failed${NC}"; return 1; }
     chmod +x "$target"
     append_rc_if_missing "$rc_file" "source ~/.fancy-prompt-blue.sh"
     source "$target" 2>/dev/null || true
     source "$rc_file" 2>/dev/null || true
-    echo -e "${GREEN}  ✓ Blue fancy prompt installed${NC}"
+    echo -e "${GREEN}  ✓ Fancy prompt (Shades of Blue) installed${NC}"
 }
 
 remove_fancy_prompt_blue() {

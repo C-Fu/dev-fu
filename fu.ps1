@@ -182,9 +182,29 @@ function Remove-Docker {
     Write-Host "${GREEN}  ✓ Docker removed${NC}"
 }
 
+function Reset-Prompt {
+    $targets = @(
+        "$env:USERPROFILE\.fancy-prompt.ps1",
+        "$env:USERPROFILE\.fancy-prompt-blue.ps1"
+    )
+    foreach ($t in $targets) {
+        if (Test-Path $t) { Remove-Item -Force $t }
+    }
+
+    $profilePath = $PROFILE
+    if (Test-Path $profilePath) {
+        $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+        if ($content) {
+            $cleaned = $content -replace "\r?\n?\s*\.\s*['""]$([regex]::Escape("$env:USERPROFILE\.fancy-prompt.ps1"))['""]\s*", ""
+            $cleaned = $cleaned -replace "\r?\n?\s*\.\s*['""]$([regex]::Escape("$env:USERPROFILE\.fancy-prompt-blue.ps1"))['""]\s*", ""
+            Set-Content -Path $profilePath -Value $cleaned -NoNewline
+        }
+    }
+}
+
 # Fancy Prompt Install
 function Install-FancyPrompt {
-    Write-Host "${MAGENTA}✨  ${BOLD}Create Fancy Prompt${NC}" -ForegroundColor Magenta
+    Write-Host "${MAGENTA}✨  ${BOLD}Create Fancy Prompt (Purple-Pink)${NC}" -ForegroundColor Magenta
     Write-Host ""
 
     $target = "$env:USERPROFILE\.fancy-prompt.ps1"
@@ -194,6 +214,8 @@ function Install-FancyPrompt {
         $confirm = Read-Host "  Replace current fancy prompt? (y/n)"
         if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
+
+    Reset-Prompt
 
     try {
         Invoke-WebRequest -Uri $url -OutFile $target -ErrorAction Stop
@@ -213,7 +235,7 @@ function Install-FancyPrompt {
     }
 
     . $target
-    Write-Host "${GREEN}  ✓ Fancy prompt replaced${NC}"
+    Write-Host "${GREEN}  ✓ Fancy prompt (Purple-Pink) installed${NC}"
 }
 
 # Fancy Prompt Remove
@@ -242,7 +264,7 @@ function Remove-FancyPrompt {
 }
 
 function Install-FancyPromptBlue {
-    Write-Host "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Blue)${NC}" -ForegroundColor Blue
+    Write-Host "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Shades of Blue)${NC}" -ForegroundColor Blue
     Write-Host ""
 
     $target = "$env:USERPROFILE\.fancy-prompt-blue.ps1"
@@ -252,6 +274,8 @@ function Install-FancyPromptBlue {
         $confirm = Read-Host "  Install blue fancy prompt? (y/n)"
         if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
     }
+
+    Reset-Prompt
 
     try {
         Invoke-WebRequest -Uri $url -OutFile $target -ErrorAction Stop
