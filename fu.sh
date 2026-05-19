@@ -864,10 +864,7 @@ status_check_compare() {
     local gsd_local=""
     gsd_local=$(npm list -g gsd-opencode 2>/dev/null | grep -oE 'gsd-opencode@[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     if [[ -z "$gsd_local" ]]; then
-        gsd_local=$(npm ls gsd-opencode 2>/dev/null | grep -oE 'gsd-opencode@[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-    fi
-    if [[ -z "$gsd_local" ]]; then
-        gsd_local=$(_scc_local gsd-opencode --version 2>/dev/null)
+        gsd_local=$(_scc_ver "$(npx --yes gsd-opencode --version 2>/dev/null | head -1)")
     fi
     local gsd_latest=""
     gsd_latest=$(_scc_gh rokicool/gsd-opencode)
