@@ -109,16 +109,17 @@ Run `./fu.sh` and select options from the interactive menu:
  3) ⬆️  Upgrade All Tools
  4) 🐳  Install Docker
  5) ✨  Create Fancy Prompt
- 6) 🌐  Install Hostname Discovery (Linux only)
- 7) 🐹  Install Go
- 8) ☢️  Install Rust
- 9) 🐍  Install Python + Pip + UV + Pipx
-10) 📦  Install NVM + Node LTS
-11) 🥟  Install Bun
-12) ⚡  Install Yarn
-13) 🐁  Disable Mouse Reporting in Terminal
-14) 🐘  Install PHP + Laravel
-15) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
+ 6) 💎  Create Fancy Prompt (Blue)
+ 7) 🌐  Install Hostname Discovery (Linux only)
+ 8) 🐹  Install Go
+ 9) ☢️  Install Rust
+10) 🐍  Install Python + Pip + UV + Pipx
+11) 📦  Install NVM + Node LTS
+12) 🥟  Install Bun
+13) ⚡  Install Yarn
+14) 🐁  Disable Mouse Reporting in Terminal
+15) 🐘  Install PHP + Laravel
+16) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
 - **Multi-select:** Enter comma or space-separated numbers (e.g. `7,8 9` to install Go, Rust, and Python together)
@@ -135,7 +136,7 @@ Single-select options (Hostname Discovery, OpenCode+GSD) must be used alone.
 
 All package managers supported. The script auto-detects your package manager.
 
-Option 5 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
+Option 7 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
 
 ### macOS
 
@@ -176,14 +177,14 @@ powershell -ExecutionPolicy Bypass -File .\fu.ps1
 - Enable Linux (Crostini) in ChromeOS Settings > Advanced > Developers
 - Debian-based container with `apt` — all tools work
 - Docker runs in the Crostini VM (no nested virtualization needed)
-- Option 5 (Hostname Discovery) may not work if systemd is not available
+- Option 7 (Hostname Discovery) may not work if systemd is not available
 
 ### Android (Termux)
 
 - Install [Termux](https://termux.dev/) from F-Droid or GitHub releases
 - Uses `pkg` (apt-based) as the package manager
 - No `sudo` needed — Termux runs as a single user
-- Option 5 (Hostname Discovery) not available (no systemd)
+- Option 7 (Hostname Discovery) not available (no systemd)
 - Some tools (Docker, PHP) have limited support on Android
 
 ## Troubleshooting

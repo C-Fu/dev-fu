@@ -85,6 +85,7 @@ EMOJI_NETWORK="🌐"
 EMOJI_PHP="🐘"
 EMOJI_MOUSE="🐁"
 EMOJI_COMPARE="🔄"
+EMOJI_PROMPT_BLUE="💎"
 
 MENU_LABELS=(
     "Status Check"
@@ -92,6 +93,7 @@ MENU_LABELS=(
     "Upgrade All Tools"
     "Install Docker"
     "Create Fancy Prompt"
+    "Create Fancy Prompt (Blue)"
     "Install Hostname Discovery (Linux only)"
     "Install Go"
     "Install Rust"
@@ -103,10 +105,10 @@ MENU_LABELS=(
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
-MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
-MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
-MENU_SINGLE_SELECT=(0 0 0 0 0 1 0 0 0 0 0 0 0 0 1)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_PROMPT_BLUE" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "create_fancy_prompt_blue" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_fancy_prompt_blue" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -656,6 +658,41 @@ remove_fancy_prompt() {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\$ "
     echo -e "${GREEN}  ✓ Fancy prompt removed${NC}"
+}
+
+create_fancy_prompt_blue() {
+    echo -e "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Blue)${NC}"
+    echo
+
+    local rc_file=$(detect_rc_file)
+    local target="$HOME/.fancy-prompt-blue.sh"
+    local url="https://raw.githubusercontent.com/C-Fu/dev-fu/main/fancy_blue.sh"
+
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Install blue fancy prompt? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    retry_network 3 5 "curl -fsSL -H 'Cache-Control: no-cache' '$url' -o '$target'" || { echo -e "${RED}  ✗ Download failed${NC}"; return 1; }
+    chmod +x "$target"
+    append_rc_if_missing "$rc_file" "source ~/.fancy-prompt-blue.sh"
+    source "$target" 2>/dev/null || true
+    source "$rc_file" 2>/dev/null || true
+    echo -e "${GREEN}  ✓ Blue fancy prompt installed${NC}"
+}
+
+remove_fancy_prompt_blue() {
+    echo -e "${RED}➜ Remove Blue Fancy Prompt${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove blue fancy prompt? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    rm -f "$HOME/.fancy-prompt-blue.sh"
+    sed -i.bak '/source ~\/.fancy-prompt-blue.sh/d' "$(detect_rc_file)" 2>/dev/null || true
+    unset PROMPT_COMMAND
+    export PS1="\u@\h:\w\$ "
+    echo -e "${GREEN}  ✓ Blue fancy prompt removed${NC}"
 }
 
 # ──────────────

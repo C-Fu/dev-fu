@@ -38,6 +38,7 @@ $EMOJI_CROSS = "✗"
 $EMOJI_ARROW = "➜"
 $EMOJI_HEART = "💜"
 $EMOJI_PROMPT = "✨"
+$EMOJI_PROMPT_BLUE = "💎"
 $EMOJI_UPGRADE = "⬆️"
 $EMOJI_NETWORK = "🌐"
 $EMOJI_GO = "🐹"
@@ -54,6 +55,7 @@ $MENU_LABELS = @(
     "Upgrade All Tools"
     "Install Docker"
     "Create Fancy Prompt"
+    "Create Fancy Prompt (Blue)"
     "Install Hostname Discovery (Linux only)"
     "Install Go"
     "Install Rust"
@@ -65,10 +67,10 @@ $MENU_LABELS = @(
     "Install PHP + Laravel"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_GSD)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-OpenCode")
-$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-OpenCode")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -237,6 +239,63 @@ function Remove-FancyPrompt {
     }
 
     Write-Host "${GREEN}  ✓ Fancy prompt removed${NC}"
+}
+
+function Install-FancyPromptBlue {
+    Write-Host "${BLUE}${EMOJI_PROMPT_BLUE}  ${BOLD}Create Fancy Prompt (Blue)${NC}" -ForegroundColor Blue
+    Write-Host ""
+
+    $target = "$env:USERPROFILE\.fancy-prompt-blue.ps1"
+    $url = "https://raw.githubusercontent.com/C-Fu/dev-fu/main/fancy_blue.sh"
+
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Install blue fancy prompt? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $target -ErrorAction Stop
+    } catch {
+        Write-Host "${RED}  Download failed${NC}"
+        return
+    }
+
+    $profilePath = $PROFILE
+    if (-not (Test-Path $profilePath)) {
+        New-Item -ItemType File -Path $profilePath -Force | Out-Null
+    }
+    $sourceLine = ". '$target'"
+    $profileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+    if ($profileContent -notmatch [regex]::Escape($sourceLine)) {
+        Add-Content -Path $profilePath -Value $sourceLine
+    }
+
+    . $target
+    Write-Host "${GREEN}  ✓ Blue fancy prompt installed${NC}"
+}
+
+function Remove-FancyPromptBlue {
+    Write-Host "${RED}➜ Remove Blue Fancy Prompt${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove blue fancy prompt? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    $target = "$env:USERPROFILE\.fancy-prompt-blue.ps1"
+    if (Test-Path $target) {
+        Remove-Item -Force $target
+    }
+
+    $profilePath = $PROFILE
+    if (Test-Path $profilePath) {
+        $content = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+        if ($content) {
+            $cleaned = $content -replace "\r?\n?\s*\.\s*['""]$([regex]::Escape($target))['""]\s*", ""
+            Set-Content -Path $profilePath -Value $cleaned -NoNewline
+        }
+    }
+
+    Write-Host "${GREEN}  ✓ Blue fancy prompt removed${NC}"
 }
 
 # Avahi Install (Windows note)

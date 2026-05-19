@@ -109,16 +109,17 @@ Jalankan `./fu.sh` dan pilih pilihan dari menu interaktif:
  3)  Upgrade All Tools
  4)  Install Docker
  5)  Create Fancy Prompt
- 6)  Install Hostname Discovery (Linux only)
- 7)  Install Go
- 8)  Install Rust
- 9)  Install Python + Pip + UV + Pipx
-10)  Install NVM + Node LTS
-11)  Install Bun
-12)  Install Yarn
-13)  Disable Mouse Reporting in Terminal
-14)  Install PHP + Laravel
-15)  Install OpenCode + GSD (Rokicool) + OpenChamber
+ 6)  Create Fancy Prompt (Blue)
+ 7)  Install Hostname Discovery (Linux only)
+ 8)  Install Go
+ 9)  Install Rust
+10)  Install Python + Pip + UV + Pipx
+11)  Install NVM + Node LTS
+12)  Install Bun
+13)  Install Yarn
+14)  Disable Mouse Reporting in Terminal
+15)  Install PHP + Laravel
+16)  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
 - **Multi-select:** Masukkan nombor yang dipisahkan koma atau ruang (contoh `7,8 9` untuk pasang Go, Rust dan Python bersama)  
@@ -135,7 +136,7 @@ Pilihan yang perlu dipilih sendiri sahaja (Hostname Discovery, OpenCode+GSD) mes
 
 Semua pengurus pakej disokong. Skrip mengesan pengurus pakej anda secara automatik.
 
-Pilihan 6 (Hostname Discovery) memasang `avahi-daemon` untuk mDNS/NSS dan `systemd-resolved` untuk resolusi DNS, kemudian membuat pautan simbolik `/etc/resolv.conf` ke stub systemd-resolved. Pilihan ini adalah untuk Linux sahaja dan tidak tersedia pada macOS, Windows atau WSL.
+Pilihan 7 (Hostname Discovery) memasang `avahi-daemon` untuk mDNS/NSS dan `systemd-resolved` untuk resolusi DNS, kemudian membuat pautan simbolik `/etc/resolv.conf` ke stub systemd-resolved. Pilihan ini adalah untuk Linux sahaja dan tidak tersedia pada macOS, Windows atau WSL.
 
 ### macOS
 
@@ -176,14 +177,14 @@ powershell -ExecutionPolicy Bypass -File .\fu.ps1
 - Aktifkan Linux (Crostini) dalam Tetapan ChromeOS > Advanced > Developers  
 - Bekas berasaskan Debian dengan `apt` - semua alat berfungsi  
 - Docker berjalan dalam VM Crostini (tiada virtualisasi bersarang diperlukan)  
-- Pilihan 6 mungkin tidak berfungsi jika systemd tidak tersedia
+- Pilihan 7 mungkin tidak berfungsi jika systemd tidak tersedia
 
 ### Android (Termux)
 
 - Pasang Termux dari F-Droid atau keluaran GitHub  
 - Menggunakan `pkg` (apt-based) sebagai pengurus pakej  
 - Tiada `sudo` diperlukan - Termux berjalan sebagai satu pengguna  
-- Pilihan 6 tidak tersedia (tiada systemd)  
+- Pilihan 7 tidak tersedia (tiada systemd)  
 - Sesetengah alat (Docker, PHP) mempunyai sokongan terhad pada Android
 
 ## FAQ - Penyelesaian Masalah
