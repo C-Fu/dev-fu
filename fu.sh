@@ -2155,7 +2155,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-15) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-16) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2163,7 +2163,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-15) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-16) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2171,7 +2171,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-5]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-6]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -2180,12 +2180,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-15)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-16)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-15)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-16)${NC}"
         fi
         return 1
     fi
