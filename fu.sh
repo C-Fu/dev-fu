@@ -465,8 +465,8 @@ install_docker() {
     fi
     
     echo -e "${CYAN}  Downloading Docker install script...${NC}"
-    retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || die "Docker download failed" 1
-    sudo sh /tmp/get-docker.sh || die "Docker install failed" 1
+    retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || { echo -e "${RED}  ✗ Docker download failed${NC}"; return 1; }
+    sudo sh /tmp/get-docker.sh || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
     rm -f /tmp/get-docker.sh
     
     echo -e "${GREEN}  ✓ Docker installed successfully${NC}"
@@ -1392,10 +1392,10 @@ install_go() {
     fi
 
     ensure_sudo
-    pkg_update || die "package update failed" $?
+    pkg_update || { echo -e "${RED}  ✗ package update failed${NC}"; return 1; }
     local go_pkg="golang-go"
     if command -v apk >/dev/null 2>&1; then go_pkg="go"; fi
-    pkg_install $go_pkg || die "Go install failed" $?
+    pkg_install $go_pkg || { echo -e "${RED}  ✗ Go install failed${NC}"; return 1; }
 
     echo -e "${GREEN}  ✓ Go installed successfully${NC}"
 }
@@ -1409,7 +1409,7 @@ remove_go() {
 
     local go_pkg="golang-go"
     if command -v apk >/dev/null 2>&1; then go_pkg="go"; fi
-    pkg_remove $go_pkg || die "Go removal failed" $?
+    pkg_remove $go_pkg || { echo -e "${RED}  ✗ Go removal failed${NC}"; return 1; }
     echo -e "${GREEN}  ✓ Go removed${NC}"
 }
 
@@ -1429,8 +1429,8 @@ install_rust() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    retry_network 3 5 "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup.sh" || die "Rust download failed" 1
-    sh /tmp/rustup.sh -y || die "Rust install failed" 1
+    retry_network 3 5 "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup.sh" || { echo -e "${RED}  ✗ Rust download failed${NC}"; return 1; }
+    sh /tmp/rustup.sh -y || { echo -e "${RED}  ✗ Rust install failed${NC}"; return 1; }
     rm -f /tmp/rustup.sh
     source "$HOME/.cargo/env"
 
@@ -1444,7 +1444,7 @@ remove_rust() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    rustup self uninstall -y || die "Rust uninstall failed" $?
+    rustup self uninstall -y || { echo -e "${RED}  ✗ Rust uninstall failed${NC}"; return 1; }
     echo -e "${GREEN}  ✓ Rust removed${NC}"
 }
 
@@ -1471,28 +1471,28 @@ install_python() {
     fi
 
     ensure_sudo
-    pkg_update || die "package update failed" $?
+    pkg_update || { echo -e "${RED}  ✗ package update failed${NC}"; return 1; }
 
     if ! command -v python3 >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Python + pip...${NC}"
         if command -v apk >/dev/null 2>&1; then
-            pkg_install python3 py3-pip || die "Python install failed" $?
+            pkg_install python3 py3-pip || { echo -e "${RED}  ✗ Python install failed${NC}"; return 1; }
         else
-            pkg_install python3 python3-pip python3-venv || die "Python install failed" $?
+            pkg_install python3 python3-pip python3-venv || { echo -e "${RED}  ✗ Python install failed${NC}"; return 1; }
         fi
     fi
 
     if ! command -v pipx >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing pipx...${NC}"
         if command -v apk >/dev/null 2>&1; then
-            pkg_install py3-pipx || die "pipx install failed" $?
+            pkg_install py3-pipx || { echo -e "${RED}  ✗ pipx install failed${NC}"; return 1; }
         else
-            pkg_install pipx || die "pipx install failed" $?
+            pkg_install pipx || { echo -e "${RED}  ✗ pipx install failed${NC}"; return 1; }
         fi
     fi
 
     if ! command -v uv >/dev/null 2>&1; then
-        install_uv || die "uv install failed" 1
+        install_uv || { echo -e "${RED}  ✗ uv install failed${NC}"; return 1; }
         append_rc_if_missing "$(detect_rc_file)" 'export PATH="$HOME/.local/bin:$PATH"'
     fi
 
@@ -1531,8 +1531,8 @@ install_nvm_node() {
 
     if ! command -v nvm >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing NVM...${NC}"
-        retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
-        bash /tmp/nvm-install.sh || die "NVM install failed" 1
+        retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || { echo -e "${RED}  ✗ NVM download failed${NC}"; return 1; }
+        bash /tmp/nvm-install.sh || { echo -e "${RED}  ✗ NVM install failed${NC}"; return 1; }
         rm -f /tmp/nvm-install.sh
         export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -1540,7 +1540,7 @@ install_nvm_node() {
 
     if ! command -v node >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Node.js LTS...${NC}"
-        nvm install --lts || die "Node LTS install failed" 1
+        nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
     fi
 
     echo -e "${GREEN}  ✓ NVM + Node LTS installed successfully${NC}"
@@ -1576,8 +1576,8 @@ install_bun() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || die "Bun download failed" 1
-    bash /tmp/bun-install.sh || die "Bun install failed" 1
+    retry_network 3 5 "curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh" || { echo -e "${RED}  ✗ Bun download failed${NC}"; return 1; }
+    bash /tmp/bun-install.sh || { echo -e "${RED}  ✗ Bun install failed${NC}"; return 1; }
     rm -f /tmp/bun-install.sh
     export PATH="$HOME/.bun/bin:$PATH"
 
@@ -1614,7 +1614,7 @@ install_yarn() {
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
 
-    npm install -g yarn || die "Yarn install failed" 1
+    npm install -g yarn || { echo -e "${RED}  ✗ Yarn install failed${NC}"; return 1; }
 
     echo -e "${GREEN}  ✓ Yarn installed successfully${NC}"
 }
@@ -1846,15 +1846,15 @@ install_opencode_gsd() {
         echo -e "${YELLOW}  → NVM + Node required — installing first...${NC}"
         if ! command -v nvm >/dev/null 2>&1; then
             echo -e "${CYAN}  Installing NVM...${NC}"
-            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || die "NVM download failed" 1
-            bash /tmp/nvm-install.sh || die "NVM install failed" 1
+            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || { echo -e "${RED}  ✗ NVM download failed${NC}"; return 1; }
+            bash /tmp/nvm-install.sh || { echo -e "${RED}  ✗ NVM install failed${NC}"; return 1; }
             rm -f /tmp/nvm-install.sh
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
         fi
         if ! command -v node >/dev/null 2>&1; then
             echo -e "${CYAN}  Installing Node.js LTS...${NC}"
-            nvm install --lts || die "Node LTS install failed" 1
+            nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
         fi
     fi
 
@@ -1978,7 +1978,7 @@ remove_opencode() {
         read -rp "  Remove OpenCode? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
-    npm uninstall -g opencode-ai @openchamber/web || die "OpenCode uninstall failed" $?
+    npm uninstall -g opencode-ai @openchamber/web || { echo -e "${RED}  ✗ OpenCode uninstall failed${NC}"; return 1; }
 }
 
 # ──────────────
