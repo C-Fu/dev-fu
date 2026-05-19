@@ -1786,6 +1786,12 @@ upgrade_all() {
         upgraded=1
     fi
 
+    if npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
+        echo -e "${CYAN}  Upgrading GSD...${NC}"
+        npx gsd-opencode@latest || echo -e "${YELLOW}  GSD upgrade failed${NC}"
+        upgraded=1
+    fi
+
     if command -v openchamber >/dev/null 2>&1 || npm list -g @openchamber/web >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading OpenChamber...${NC}"
         npm upgrade -g @openchamber/web || echo -e "${YELLOW}  OpenChamber upgrade failed${NC}"
@@ -1974,27 +1980,14 @@ install_opencode_gsd() {
 # 🗑️ Option 15a: Remove OpenCode
 # ──────────────
 remove_opencode() {
-    echo -e "${RED}🗑️  ${BOLD}Remove OpenCode${NC}"
+    echo -e "${RED}🗑️  ${BOLD}Remove OpenCode + GSD + OpenChamber${NC}"
     if [[ "$BATCH_MODE" != "1" ]]; then
-        read -rp "  Remove OpenCode? (y/n): " confirm
+        read -rp "  Remove all? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
     fi
-    npm uninstall -g opencode-ai @openchamber/web || { echo -e "${RED}  ✗ OpenCode uninstall failed${NC}"; return 1; }
-}
-
-# ──────────────
-# 🗑️ Option 15b: Remove GSD
-# ──────────────
-remove_gsd() {
-    echo -e "${RED}🗑️  ${BOLD}Remove GSD${NC}"
-    if [[ "$BATCH_MODE" != "1" ]]; then
-        read -rp "  Remove GSD? (y/n): " confirm
-        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
-    fi
+    npm uninstall -g opencode-ai @openchamber/web || { echo -e "${RED}  ✗ OpenCode/OpenChamber uninstall failed${NC}"; return 1; }
     if command -v gsd-opencode >/dev/null 2>&1; then
-        gsd-opencode uninstall || die "GSD uninstall failed" $?
-    else
-        echo -e "  ${YELLOW}GSD not found${NC}"
+        gsd-opencode uninstall || echo -e "${YELLOW}  ⚠ GSD uninstall failed${NC}"
     fi
 }
 
