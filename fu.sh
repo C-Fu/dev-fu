@@ -29,8 +29,7 @@ WHITE="\033[1;37m"
 # Styles
 BOLD="\033[1m"
 DIM="\033[2m"
-ITALIC="\033[3m"
-UNDERLINE="\033[4m"
+
 
 NC="\033[0m"
 
@@ -123,16 +122,6 @@ append_rc_if_missing() {
     local line="$2"
     local pattern=$(echo "$line" | sed 's/\[/\\[/g; s/\]/\\]/g')
     grep -F -- "$line" "$rc" >/dev/null 2>&1 || grep -F -- "$pattern" "$rc" >/dev/null 2>&1 || printf "%s\n" "$line" >> "$rc"
-}
-
-# ──────────────
-# ⚠ Error Handling
-# ──────────────
-handle_error() {
-    local exit_code=$?
-    echo -e "${RED}⚠ Error: $1 (exit code: $exit_code)${NC}" >&2
-    echo -e "${YELLOW}→ Hint: $2${NC}" >&2
-    exit $exit_code
 }
 
 die() {
@@ -376,29 +365,6 @@ preflight_status() {
     echo
 }
 
-# ──────────────
-# 📋 Pre-Install Summary
-# ──────────────
-pre_install_summary() {
-    local tool_name="$1"
-    local tool_cmd="$2"
-    local tool_version_flag="${3:-}"
-    
-    if command -v "$tool_cmd" >/dev/null 2>&1; then
-        local version
-        if [ -n "$tool_version_flag" ]; then
-            version=$($tool_cmd $tool_version_flag 2>/dev/null | head -n1)
-        else
-            version=$($tool_cmd --version 2>/dev/null | head -n1)
-        fi
-        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} ${BOLD}$tool_name${NC} ${GREEN}installed${NC}: ${DIM}$version${NC}"
-        return 1
-    else
-        echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} ${BOLD}$tool_name${NC} ${YELLOW}will be installed${NC}"
-        return 0
-    fi
-}
-
 install_uv() {
     command -v uv >/dev/null 2>&1 && return 0
 
@@ -502,7 +468,7 @@ remove_docker() {
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
 }
 
-# 🌐 Option 6: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
+# 🌐 Option 7: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
 # ──────────────
 install_avahi() {
     echo -e "${CYAN}🌐  ${BOLD}Install Linux Hostname Discovery${NC}"
@@ -579,7 +545,7 @@ install_avahi() {
     echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
 
-# 🗑️ Option 6a: Remove Hostname Discovery (Avahi + systemd-resolved)
+# 🗑️ Option 7a: Remove Hostname Discovery (Avahi + systemd-resolved)
 # ──────────────
 remove_avahi() {
     echo -e "${RED}🗑️  ${BOLD}Remove Hostname Discovery${NC}"
@@ -1374,7 +1340,7 @@ status_check_compare() {
 }
 
 # ──────────────
-# 🛠️ Option 7: Install Dev Tools
+# 🛠️ Option 8: Install Go
 # ──────────────
 install_go() {
     echo -e "${CYAN}${EMOJI_GO}  ${BOLD}Install Go${NC}"
@@ -1632,7 +1598,7 @@ remove_yarn() {
 }
 
 disable_mouse_reporting() {
-    echo -e "${CYAN}${EMOJI_SPARKLE}  ${BOLD}Disable Mouse Reporting in Terminal${NC}"
+    echo -e "${CYAN}${EMOJI_MOUSE}  ${BOLD}Disable Mouse Reporting in Terminal${NC}"
     echo -e "${DIM}   Prevents terminal mouse events from interfering with CLI tools${NC}"
     echo
 
@@ -1807,7 +1773,7 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🚀 Option 15: OpenCode + GSD
+# 🚀 Option 16: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
@@ -1977,7 +1943,7 @@ install_opencode_gsd() {
 }
 
 # ──────────────
-# 🗑️ Option 15a: Remove OpenCode
+# 🗑️ Option 16a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode + GSD + OpenChamber${NC}"
@@ -1992,7 +1958,7 @@ remove_opencode() {
 }
 
 # ──────────────
-# 🐘 Option 14: Install PHP + Laravel
+# 🐘 Option 15: Install PHP + Laravel
 # ──────────────
 install_php_laravel() {
     echo -e "${MAGENTA}🐘  ${BOLD}Install PHP + Laravel${NC}"
@@ -2058,7 +2024,7 @@ install_php_laravel() {
 }
 
 # ──────────────
-# 🗑️ Option 14a: Uninstall PHP + Laravel
+# 🗑️ Option 15a: Uninstall PHP + Laravel
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
@@ -2137,6 +2103,7 @@ EOF
     # │        Footer                            │
     # ╰──────────────────────────────────────────╯
     echo -e "${CYAN}://─────────────────────────║${NC}"
+    echo -e "${BOX_V}${DIM}  Press ${BOLD}u${NC}${DIM} to upgrade all${NC}"
     echo -e "${BOX_V}${DIM}  Press ${BOLD}q${NC}${DIM} to quit${NC}"
     echo -e "${CYAN}▉══════════════════${NC}"
     
