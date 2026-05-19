@@ -108,8 +108,8 @@ Run `./fu.sh` and select options from the interactive menu:
  2) 🔄  Compare With Latest
  3) ⬆️  Upgrade All Tools
  4) 🐳  Install Docker
- 5) ✨  Create Fancy Prompt
- 6) 💎  Create Fancy Prompt (Blue)
+ 5) ✨  Create Fancy Prompt (Purple-Pink)
+ 6) 💎  Create Fancy Prompt (Shades of Blue)
  7) 🌐  Install Hostname Discovery (Linux only)
  8) 🐹  Install Go
  9) ☢️  Install Rust
