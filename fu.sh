@@ -1101,6 +1101,7 @@ create_fancy_prompt() {
     source "$target" 2>/dev/null || true
     source "$rc_file" 2>/dev/null || true
     echo -e "${GREEN}  ✓ Fancy prompt (Purple-Pink) installed${NC}"
+    echo -e "${DIM}  Run \`source $rc_file\` or open a new terminal to see the prompt${NC}"
 }
 
 remove_fancy_prompt() {
@@ -1137,6 +1138,7 @@ create_fancy_prompt_blue() {
     source "$target" 2>/dev/null || true
     source "$rc_file" 2>/dev/null || true
     echo -e "${GREEN}  ✓ Fancy prompt (Shades of Blue) installed${NC}"
+    echo -e "${DIM}  Run \`source $rc_file\` or open a new terminal to see the prompt${NC}"
 }
 
 remove_fancy_prompt_blue() {

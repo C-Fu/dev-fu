@@ -626,6 +626,7 @@ function Install-FancyPrompt {
 
     . $target
     Write-Host "${GREEN}  ✓ Fancy prompt (Purple-Pink) installed${NC}"
+    Write-Host "${DIM}  Run `. $PROFILE` or open a new terminal to see the prompt${NC}"
 }
 
 # Fancy Prompt Remove
@@ -680,6 +681,7 @@ function Install-FancyPromptBlue {
 
     . $target
     Write-Host "${GREEN}  ✓ Blue fancy prompt installed${NC}"
+    Write-Host "${DIM}  Run `. $PROFILE` or open a new terminal to see the prompt${NC}"
 }
 
 function Remove-FancyPromptBlue {
