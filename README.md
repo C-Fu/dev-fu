@@ -99,6 +99,11 @@ cd dev-fu
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
+```powershell
+# Windows (PowerShell) — bypasses execution policy
+irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
+```
+
 ## Usage
 
 Run `./fu.sh` and select options from the interactive menu:
