@@ -544,12 +544,16 @@ install_avahi() {
     fi
 
     if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
-        echo -e "${CYAN}  Installing systemd-resolved...${NC}"
-        local resolved_pkg="systemd-resolved"
-        if ! apt-cache show systemd-resolved >/dev/null 2>&1; then
-            resolved_pkg="systemd"
+        echo -e "${CYAN}  Setting up systemd-resolved...${NC}"
+        if [ -x /usr/lib/systemd/systemd-resolved ] || [ -x /lib/systemd/systemd-resolved ]; then
+            echo -e "${DIM}  systemd-resolved binary already present — enabling${NC}"
+        else
+            local resolved_pkg="systemd-resolved"
+            if ! apt-cache show systemd-resolved >/dev/null 2>&1; then
+                resolved_pkg="systemd"
+            fi
+            pkg_install "$resolved_pkg" || { echo -e "${RED}  ✗ systemd-resolved install failed${NC}"; return 1; }
         fi
-        pkg_install "$resolved_pkg" || { echo -e "${RED}  ✗ systemd-resolved install failed${NC}"; return 1; }
         echo -e "${CYAN}  Enabling systemd-resolved...${NC}"
         _maybe_sudo systemctl enable --now systemd-resolved || { echo -e "${YELLOW}  ⚠ Could not enable systemd-resolved${NC}"; }
     fi
