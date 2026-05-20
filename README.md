@@ -3,7 +3,7 @@
 **One command to bootstrap a complete (kinda) developer machine, anywhere.**
 
 ```bash
-# Linux / macOS / WSL2
+# Linux / macOS / WSL2 (bash, zsh, ash, sh — just needs bash installed)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
@@ -93,9 +93,10 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 # Option 1: Clone and run
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
-./fu.sh
+bash fu.sh
 
 # Option 2: Run directly from remote (no clone needed)
+# Works from any shell (sh, ash, zsh, fish) — just needs bash installed
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
