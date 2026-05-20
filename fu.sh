@@ -559,7 +559,7 @@ install_avahi() {
     fi
 
     echo -e "${CYAN}  Swapping DNS to systemd-resolved...${NC}"
-    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || { echo -e "${YELLOW}  ⚠ DNS symlink failed${NC}"; }
+    _maybe_sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || { echo -e "${YELLOW}  ⚠ DNS symlink failed${NC}"; }
 
     echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
@@ -2090,23 +2090,23 @@ install_php_laravel() {
     case "$pkg_manager" in
         apt)
             echo -e "${CYAN}  Installing PHP via apt...${NC}"
-            sudo apt-get update
-            sudo apt-get install -y php-cli php-xml php-mbstring php-curl php-json php-composer
+            _maybe_sudo apt-get update
+            _maybe_sudo apt-get install -y php-cli php-xml php-mbstring php-curl php-json php-composer
             ;;
         apk)
             echo -e "${CYAN}  Installing PHP via apk...${NC}"
-            sudo apk update
-            sudo apk add php-cli php-xml php-mbstring php-curl php-json composer
+            _maybe_sudo apk update
+            _maybe_sudo apk add php-cli php-xml php-mbstring php-curl php-json composer
             ;;
         brew)
             echo -e "${CYAN}  Installing PHP via Homebrew...${NC}"
             brew install php
             ;;
         dnf)
-            sudo dnf install -y php php-cli php-xml php-mbstring
+            _maybe_sudo dnf install -y php php-cli php-xml php-mbstring
             ;;
         pacman)
-            sudo pacman -S --noconfirm php
+            _maybe_sudo pacman -S --noconfirm php
             ;;
         *)
             echo -e "  ${RED}${EMOJI_CROSS} Unsupported package manager: $pkg_manager${NC}"
@@ -2141,20 +2141,20 @@ uninstall_php_laravel() {
     local pkg_manager=$(get_pkg_manager)
     case "$pkg_manager" in
         apt)
-            sudo apt-get remove -y php-cli php-xml php-mbstring php-curl php-json php-common 2>/dev/null || true
-            sudo apt-get autoremove -y
+            _maybe_sudo apt-get remove -y php-cli php-xml php-mbstring php-curl php-json php-common 2>/dev/null || true
+            _maybe_sudo apt-get autoremove -y
             ;;
         apk)
-            sudo apk del php-cli php-xml php-mbstring php-curl php-json composer 2>/dev/null || true
+            _maybe_sudo apk del php-cli php-xml php-mbstring php-curl php-json composer 2>/dev/null || true
             ;;
         brew)
             brew uninstall php
             ;;
         dnf)
-            sudo dnf remove -y php php-cli php-xml php-mbstring
+            _maybe_sudo dnf remove -y php php-cli php-xml php-mbstring
             ;;
         pacman)
-            sudo pacman -R --noconfirm php
+            _maybe_sudo pacman -R --noconfirm php
             ;;
     esac
 
