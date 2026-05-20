@@ -65,12 +65,14 @@ $MENU_LABELS = @(
     "Install Yarn"
     "Disable Mouse Reporting in Terminal"
     "Install PHP + Laravel"
+    "Install Tailscale"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_GSD)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-OpenCode")
-$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-OpenCode")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+$EMOJI_TAILSCALE = "🔒"
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_TAILSCALE, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-Tailscale", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-Tailscale", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -1159,6 +1161,54 @@ function Enable-MouseReporting {
         }
     }
     Write-Host "${GREEN}  ✓ Mouse reporting re-enabled${NC}"
+}
+
+# Tailscale Install
+function Install-Tailscale {
+    Write-Host "${CYAN}${EMOJI_TAILSCALE}  ${BOLD}Install Tailscale${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Mesh VPN — connect devices across networks${NC}"
+    Write-Host ""
+
+    if (Get-Command tailscale -ErrorAction SilentlyContinue) {
+        $ver = tailscale version 2>$null | Select-Object -First 1
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Tailscale already installed: $ver"
+        return
+    }
+
+    if (-not $Script:BATCH_MODE) {
+        Write-Host "${BYELLOW}  -> This will install Tailscale${NC}"
+        $confirm = Read-Host "  Proceed? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    Write-Host "${CYAN}  Installing Tailscale...${NC}"
+    try {
+        winget install Tailscale.Tailscale --accept-package-agreements --accept-source-agreements -ErrorAction Stop
+    } catch {
+        Write-Host "${RED}  Tailscale install failed${NC}"
+        return
+    }
+
+    Write-Host "${GREEN}  ✓ Tailscale installed${NC}"
+    Write-Host "${DIM}  Run 'tailscale up' to connect${NC}"
+}
+
+# Tailscale Remove
+function Remove-Tailscale {
+    Write-Host "${RED}➜ Remove Tailscale${NC}"
+    if (-not $Script:BATCH_MODE) {
+        $confirm = Read-Host "  Remove Tailscale? (y/n)"
+        if ($confirm -notin @('y','Y')) { Write-Host "${DIM}  Cancelled.${NC}"; return }
+    }
+
+    try {
+        winget uninstall Tailscale.Tailscale -ErrorAction Stop
+    } catch {
+        Write-Host "${RED}  Tailscale removal failed${NC}"
+        return
+    }
+
+    Write-Host "${GREEN}  ✓ Tailscale removed${NC}"
 }
 
 # OpenCode + GSD Install

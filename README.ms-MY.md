@@ -119,7 +119,8 @@ Jalankan `./fu.sh` dan pilih pilihan dari menu interaktif:
 13)  Install Yarn
 14)  Disable Mouse Reporting in Terminal
 15)  Install PHP + Laravel
-16)  Install OpenCode + GSD (Rokicool) + OpenChamber
+16)  Install Tailscale
+17)  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
 - **Multi-select:** Masukkan nombor yang dipisahkan koma atau ruang (contoh `7,8 9` untuk pasang Go, Rust dan Python bersama)  

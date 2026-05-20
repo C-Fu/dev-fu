@@ -85,6 +85,7 @@ EMOJI_PHP="🐘"
 EMOJI_MOUSE="🐁"
 EMOJI_COMPARE="🔄"
 EMOJI_PROMPT_BLUE="💎"
+EMOJI_TAILSCALE="🔒"
 
 MENU_LABELS=(
     "Status Check"
@@ -102,12 +103,13 @@ MENU_LABELS=(
     "Install Yarn"
     "Disable Mouse Reporting in Terminal"
     "Install PHP + Laravel"
+    "Install Tailscale"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_PROMPT_BLUE" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_GSD")
-MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "create_fancy_prompt_blue" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_opencode_gsd")
-MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_fancy_prompt_blue" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_opencode")
-MENU_SINGLE_SELECT=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_PROMPT_BLUE" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_TAILSCALE" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "create_fancy_prompt_blue" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_tailscale" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_fancy_prompt_blue" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_tailscale" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -1218,6 +1220,14 @@ status_check() {
     else
         printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "GSD"
     fi
+
+    if command -v tailscale >/dev/null 2>&1; then
+        local ts_ver
+        ts_ver=$(tailscale version 2>/dev/null | head -1)
+        printf "  ${GREEN}${EMOJI_CHECK}${NC} %-12s : ${GREEN}%s${NC}\n" "Tailscale" "${ts_ver:-installed}"
+    else
+        printf "  ${RED}${EMOJI_CROSS}${NC} %-12s : ${RED}NOT installed${NC}\n" "Tailscale"
+    fi
     
     echo
     echo -e "${GREEN}  ✓ Status check complete${NC}"
@@ -1324,6 +1334,12 @@ status_check_compare() {
     local oc_latest=""
     command -v npm >/dev/null 2>&1 && oc_latest=$(npm view @openchamber/web version 2>/dev/null)
     _scc_row "OpenChamber" "$oc_local" "$oc_latest"
+
+    local ts_local=""
+    ts_local=$(_scc_local tailscale version)
+    local ts_latest=""
+    ts_latest=$(_scc_gh tailscale/tailscale)
+    _scc_row "Tailscale"  "$ts_local"                       "$ts_latest"
 
     local gsd_local=""
     gsd_local=$(npm list -g gsd-opencode 2>/dev/null | grep -oE 'gsd-opencode@[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -1746,6 +1762,16 @@ upgrade_all() {
         upgraded=1
     fi
 
+    if command -v tailscale >/dev/null 2>&1; then
+        echo -e "${CYAN}  Upgrading Tailscale...${NC}"
+        if [ "$DETECTED_OS" = "macos" ]; then
+            brew upgrade tailscale || echo -e "${YELLOW}  Tailscale upgrade failed${NC}"
+        elif [ "$DETECTED_OS" = "linux" ]; then
+            curl -fsSL https://tailscale.com/install.sh | sh || echo -e "${YELLOW}  Tailscale upgrade failed${NC}"
+        fi
+        upgraded=1
+    fi
+
     if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading OpenCode...${NC}"
         npm upgrade -g opencode-ai || echo -e "${YELLOW}  OpenCode upgrade failed${NC}"
@@ -1773,7 +1799,69 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🚀 Option 16: OpenCode + GSD
+# 🔒 Option 16: Install Tailscale
+# ──────────────
+install_tailscale() {
+    echo -e "${CYAN}${EMOJI_TAILSCALE}  ${BOLD}Install Tailscale${NC}"
+    echo -e "${DIM}   Mesh VPN — connect devices across networks${NC}"
+    echo
+
+    if command -v tailscale >/dev/null 2>&1; then
+        echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Tailscale already installed: $(tailscale version 2>/dev/null | head -1)"
+        return 0
+    fi
+
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        echo -e "${BYELLOW}  → This will install Tailscale${NC}"
+        read -rp "  Proceed? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    echo -e "${CYAN}  Installing Tailscale...${NC}"
+
+    if [ "$DETECTED_OS" = "macos" ]; then
+        brew install tailscale || { echo -e "${RED}  ✗ Tailscale install failed${NC}"; return 1; }
+    elif [ "$DETECTED_OS" = "linux" ]; then
+        curl -fsSL https://tailscale.com/install.sh | sh || { echo -e "${RED}  ✗ Tailscale install failed${NC}"; return 1; }
+    else
+        echo -e "${YELLOW}  ⚠ Automatic install not supported on this OS.${NC}"
+        echo -e "${DIM}    Visit https://tailscale.com/download to install manually.${NC}"
+        return 1
+    fi
+
+    echo -e "${GREEN}  ✓ Tailscale installed${NC}"
+    echo -e "${DIM}  Run \`tailscale up\` to connect, or \`tailscale login\` to authenticate${NC}"
+}
+
+remove_tailscale() {
+    echo -e "${RED}➜ Remove Tailscale${NC}"
+    if [[ "$BATCH_MODE" != "1" ]]; then
+        read -rp "  Remove Tailscale? (y/n): " confirm
+        [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    if [ "$DETECTED_OS" = "macos" ]; then
+        brew uninstall tailscale || { echo -e "${RED}  ✗ Tailscale removal failed${NC}"; return 1; }
+    elif [ "$DETECTED_OS" = "linux" ]; then
+        local pm="$(get_pkg_manager)"
+        case "$pm" in
+            apt)  sudo apt-get remove -y tailscale ;;
+            dnf)  sudo dnf remove -y tailscale ;;
+            pacman) sudo pacman -Rns --noconfirm tailscale ;;
+            apk)  sudo apk del tailscale ;;
+            zypper) sudo zypper remove -y tailscale ;;
+            *) echo -e "${YELLOW}  ⚠ Uninstall not supported for $pm${NC}"; return 1 ;;
+        esac
+    else
+        echo -e "${YELLOW}  ⚠ Manual removal required on this OS${NC}"
+        return 1
+    fi
+
+    echo -e "${GREEN}  ✓ Tailscale removed${NC}"
+}
+
+# ──────────────
+# 🚀 Option 17: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
@@ -1943,7 +2031,7 @@ install_opencode_gsd() {
 }
 
 # ──────────────
-# 🗑️ Option 16a: Remove OpenCode
+# 🗑️ Option 17a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode + GSD + OpenChamber${NC}"
@@ -2116,7 +2204,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-16) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-17) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2124,7 +2212,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-16) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-17) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2132,7 +2220,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-6]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-7]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -2141,12 +2229,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-16)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-17)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-16)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-17)${NC}"
         fi
         return 1
     fi
