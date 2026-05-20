@@ -244,25 +244,33 @@ pkg_update() {
     local pm
     pm="$(get_pkg_manager)"
     case "$pm" in
-        apt)  sudo apt-get update ;;
-        apk)  sudo apk update ;;
-        dnf)  sudo dnf check-update || true ;;
-        pacman) sudo pacman -Sy ;;
-        zypper) sudo zypper refresh ;;
+        apt)  _maybe_sudo apt-get update ;;
+        apk)  _maybe_sudo apk update ;;
+        dnf)  _maybe_sudo dnf check-update || true ;;
+        pacman) _maybe_sudo pacman -Sy ;;
+        zypper) _maybe_sudo zypper refresh ;;
         brew) brew update ;;
         *) echo -e "${YELLOW}⚠ No update command for $pm${NC}" >&2 ;;
     esac
+}
+
+_maybe_sudo() {
+    if [ "$(id -u)" -eq 0 ] || ! command -v sudo >/dev/null 2>&1; then
+        "$@"
+    else
+        sudo "$@"
+    fi
 }
 
 pkg_install() {
     local pm
     pm="$(get_pkg_manager)"
     case "$pm" in
-        apt)  sudo apt-get install -y "$@" ;;
-        apk)  sudo apk add "$@" ;;
-        dnf)  sudo dnf install -y "$@" ;;
-        pacman) sudo pacman -S --noconfirm "$@" ;;
-        zypper) sudo zypper install -y "$@" ;;
+        apt)  _maybe_sudo apt-get install -y "$@" ;;
+        apk)  _maybe_sudo apk add "$@" ;;
+        dnf)  _maybe_sudo dnf install -y "$@" ;;
+        pacman) _maybe_sudo pacman -S --noconfirm "$@" ;;
+        zypper) _maybe_sudo zypper install -y "$@" ;;
         brew) brew install "$@" ;;
         *) die "Unsupported package manager: $pm" 1 ;;
     esac
@@ -272,11 +280,11 @@ pkg_remove() {
     local pm
     pm="$(get_pkg_manager)"
     case "$pm" in
-        apt)  sudo apt-get remove -y "$@" ;;
-        apk)  sudo apk del "$@" ;;
-        dnf)  sudo dnf remove -y "$@" ;;
-        pacman) sudo pacman -R --noconfirm "$@" ;;
-        zypper) sudo zypper remove -y "$@" ;;
+        apt)  _maybe_sudo apt-get remove -y "$@" ;;
+        apk)  _maybe_sudo apk del "$@" ;;
+        dnf)  _maybe_sudo dnf remove -y "$@" ;;
+        pacman) _maybe_sudo pacman -R --noconfirm "$@" ;;
+        zypper) _maybe_sudo zypper remove -y "$@" ;;
         brew) brew uninstall "$@" || true ;;
         *) die "Unsupported package manager: $pm" 1 ;;
     esac
@@ -286,11 +294,11 @@ pkg_purge() {
     local pm
     pm="$(get_pkg_manager)"
     case "$pm" in
-        apt)  sudo apt-get purge -y "$@" ;;
-        apk)  sudo apk del --purge "$@" ;;
-        dnf)  sudo dnf remove -y "$@" ;;
-        pacman) sudo pacman -Rns --noconfirm "$@" ;;
-        zypper) sudo zypper remove -y "$@" ;;
+        apt)  _maybe_sudo apt-get purge -y "$@" ;;
+        apk)  _maybe_sudo apk del --purge "$@" ;;
+        dnf)  _maybe_sudo dnf remove -y "$@" ;;
+        pacman) _maybe_sudo pacman -Rns --noconfirm "$@" ;;
+        zypper) _maybe_sudo zypper remove -y "$@" ;;
         brew) brew uninstall --force "$@" || true ;;
         *) die "Unsupported package manager: $pm" 1 ;;
     esac
@@ -300,11 +308,11 @@ pkg_autoremove() {
     local pm
     pm="$(get_pkg_manager)"
     case "$pm" in
-        apt)  sudo apt-get autoremove -y ;;
-        apk)  sudo apk autoremove ;;
-        dnf)  sudo dnf autoremove -y ;;
-        pacman) sudo pacman -Sc --noconfirm || true ;;
-        zypper) sudo zypper clean || true ;;
+        apt)  _maybe_sudo apt-get autoremove -y ;;
+        apk)  _maybe_sudo apk autoremove ;;
+        dnf)  _maybe_sudo dnf autoremove -y ;;
+        pacman) _maybe_sudo pacman -Sc --noconfirm || true ;;
+        zypper) _maybe_sudo zypper clean || true ;;
         brew) brew cleanup || true ;;
         *) true ;;
     esac
@@ -320,13 +328,18 @@ ensure_sudo() {
     if [ "$DETECTED_ENV" = "termux" ]; then
         return 0
     fi
+    if [ "$(id -u)" -eq 0 ]; then
+        return 0
+    fi
     if ! command -v sudo >/dev/null 2>&1; then
-        die "sudo is required but not available. Run from a user with sudo privileges." 1
+        echo -e "${RED}  ✗ sudo is required but not available. Install sudo or run as root.${NC}"
+        return 1
     fi
     if ! sudo -n true 2>/dev/null; then
         echo -e "${YELLOW}🔒 This script requires sudo privileges for system package installation.${NC}"
         if ! sudo -v; then
-            die "sudo access is required. Please run with a user that has sudo privileges." 1
+            echo -e "${RED}  ✗ sudo access is required. Please run with a user that has sudo privileges.${NC}"
+            return 1
         fi
     fi
 }
@@ -434,7 +447,7 @@ install_docker() {
     
     echo -e "${CYAN}  Downloading Docker install script...${NC}"
     retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || { echo -e "${RED}  ✗ Docker download failed${NC}"; return 1; }
-    sudo sh /tmp/get-docker.sh || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
+    _maybe_sudo sh /tmp/get-docker.sh || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
     rm -f /tmp/get-docker.sh
     
     echo -e "${GREEN}  ✓ Docker installed successfully${NC}"
@@ -463,8 +476,8 @@ remove_docker() {
     
     echo -e "${CYAN}  Removing Docker...${NC}"
     pkg_purge docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
-    sudo rm -rf /var/lib/docker /etc/docker
-    sudo rm -f /etc/apt/sources.list.d/docker.list
+    _maybe_sudo rm -rf /var/lib/docker /etc/docker
+    _maybe_sudo rm -f /etc/apt/sources.list.d/docker.list
     pkg_update || true
     
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
@@ -497,8 +510,8 @@ install_avahi() {
             echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Avahi Daemon is running"
         else
             echo -e "  ${YELLOW}${EMOJI_ARROW}${NC} Avahi Daemon is not running - starting..."
-            sudo systemctl enable avahi-daemon
-            sudo systemctl start avahi-daemon
+            _maybe_sudo systemctl enable avahi-daemon
+            _maybe_sudo systemctl start avahi-daemon
         fi
     else
         already_done=0
@@ -526,8 +539,8 @@ install_avahi() {
         echo -e "${CYAN}  Installing Avahi Daemon...${NC}"
         pkg_update || { echo -e "${RED}  ✗ Package update failed${NC}"; return 1; }
         pkg_install avahi-daemon avahi-utils || { echo -e "${RED}  ✗ Avahi install failed${NC}"; return 1; }
-        sudo systemctl enable avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not enable avahi-daemon${NC}"; }
-        sudo systemctl start avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not start avahi-daemon${NC}"; }
+        _maybe_sudo systemctl enable avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not enable avahi-daemon${NC}"; }
+        _maybe_sudo systemctl start avahi-daemon || { echo -e "${YELLOW}  ⚠ Could not start avahi-daemon${NC}"; }
     fi
 
     if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
@@ -538,7 +551,7 @@ install_avahi() {
         fi
         pkg_install "$resolved_pkg" || { echo -e "${RED}  ✗ systemd-resolved install failed${NC}"; return 1; }
         echo -e "${CYAN}  Enabling systemd-resolved...${NC}"
-        sudo systemctl enable --now systemd-resolved || { echo -e "${YELLOW}  ⚠ Could not enable systemd-resolved${NC}"; }
+        _maybe_sudo systemctl enable --now systemd-resolved || { echo -e "${YELLOW}  ⚠ Could not enable systemd-resolved${NC}"; }
     fi
 
     echo -e "${CYAN}  Swapping DNS to systemd-resolved...${NC}"
@@ -572,18 +585,18 @@ remove_avahi() {
 
     echo -e "${CYAN}  Restoring default DNS...${NC}"
     if [ -L /etc/resolv.conf ]; then
-        sudo rm -f /etc/resolv.conf
+        _maybe_sudo rm -f /etc/resolv.conf
         echo -e "${CYAN}  Restoring /etc/resolv.conf...${NC}"
-        sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf && echo "nameserver 8.8.4.4" >> /etc/resolv.conf'
+        _maybe_sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf && echo "nameserver 8.8.4.4" >> /etc/resolv.conf'
     fi
 
     echo -e "${CYAN}  Stopping systemd-resolved...${NC}"
-    sudo systemctl stop systemd-resolved 2>/dev/null || true
-    sudo systemctl disable systemd-resolved 2>/dev/null || true
+    _maybe_sudo systemctl stop systemd-resolved 2>/dev/null || true
+    _maybe_sudo systemctl disable systemd-resolved 2>/dev/null || true
 
     echo -e "${CYAN}  Removing Avahi Daemon...${NC}"
-    sudo systemctl stop avahi-daemon 2>/dev/null || true
-    sudo systemctl disable avahi-daemon 2>/dev/null || true
+    _maybe_sudo systemctl stop avahi-daemon 2>/dev/null || true
+    _maybe_sudo systemctl disable avahi-daemon 2>/dev/null || true
     pkg_purge avahi-daemon avahi-utils || true
     pkg_autoremove || true
 
@@ -1670,11 +1683,11 @@ upgrade_all() {
             echo -e "${CYAN}  Upgrading Docker...${NC}"
             local pm="$(get_pkg_manager)"
             case "$pm" in
-                apt)  sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin ;;
-                apk)  sudo apk upgrade docker ;;
-                dnf)  sudo dnf upgrade -y docker-ce docker-ce-cli containerd.io docker-compose-plugin ;;
-                pacman) sudo pacman -Syu --noconfirm docker ;;
-                zypper) sudo zypper update -y docker ;;
+                apt)  _maybe_sudo apt-get update && _maybe_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin ;;
+                apk)  _maybe_sudo apk upgrade docker ;;
+                dnf)  _maybe_sudo dnf upgrade -y docker-ce docker-ce-cli containerd.io docker-compose-plugin ;;
+                pacman) _maybe_sudo pacman -Syu --noconfirm docker ;;
+                zypper) _maybe_sudo zypper update -y docker ;;
                 brew) brew upgrade docker ;;
                 *) echo -e "${YELLOW}  Docker upgrade skipped — no supported package manager${NC}" ;;
             esac
@@ -1742,11 +1755,11 @@ upgrade_all() {
             pkg_update >/dev/null 2>&1 || true
             local pm="$(get_pkg_manager)"
             case "$pm" in
-                apt)  sudo apt-get install -y python3 python3-pip python3-venv ;;
-                apk)  sudo apk upgrade python3 py3-pip ;;
-                dnf)  sudo dnf upgrade -y python3 python3-pip ;;
-                pacman) sudo pacman -Syu --noconfirm python python-pip ;;
-                zypper) sudo zypper update -y python3 python3-pip ;;
+                apt)  _maybe_sudo apt-get install -y python3 python3-pip python3-venv ;;
+                apk)  _maybe_sudo apk upgrade python3 py3-pip ;;
+                dnf)  _maybe_sudo dnf upgrade -y python3 python3-pip ;;
+                pacman) _maybe_sudo pacman -Syu --noconfirm python python-pip ;;
+                zypper) _maybe_sudo zypper update -y python3 python3-pip ;;
                 brew) brew upgrade python ;;
             esac
         fi
@@ -1845,11 +1858,11 @@ remove_tailscale() {
     elif [ "$DETECTED_OS" = "linux" ]; then
         local pm="$(get_pkg_manager)"
         case "$pm" in
-            apt)  sudo apt-get remove -y tailscale ;;
-            dnf)  sudo dnf remove -y tailscale ;;
-            pacman) sudo pacman -Rns --noconfirm tailscale ;;
-            apk)  sudo apk del tailscale ;;
-            zypper) sudo zypper remove -y tailscale ;;
+            apt)  _maybe_sudo apt-get remove -y tailscale ;;
+            dnf)  _maybe_sudo dnf remove -y tailscale ;;
+            pacman) _maybe_sudo pacman -Rns --noconfirm tailscale ;;
+            apk)  _maybe_sudo apk del tailscale ;;
+            zypper) _maybe_sudo zypper remove -y tailscale ;;
             *) echo -e "${YELLOW}  ⚠ Uninstall not supported for $pm${NC}"; return 1 ;;
         esac
     else
@@ -1973,10 +1986,10 @@ install_opencode_gsd() {
             case "$pm" in
                 apt)
                     if ! grep -q 'buster-backports' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null; then
-                        echo "deb http://deb.debian.org/debian buster-backports main" | sudo tee /etc/apt/sources.list.d/backports.list >/dev/null 2>&1
+                        echo "deb http://deb.debian.org/debian buster-backports main" | _maybe_sudo tee /etc/apt/sources.list.d/backports.list >/dev/null 2>&1
                         pkg_update >/dev/null 2>&1 || true
                     fi
-                    sudo apt-get -t buster-backports install -y g++-10 >/dev/null 2>&1 || true
+                    _maybe_sudo apt-get -t buster-backports install -y g++-10 >/dev/null 2>&1 || true
                     if command -v g++-10 >/dev/null 2>&1; then
                         export CXX=g++-10 CC=gcc-10
                         echo -e "${GREEN}  ✓ Using g++-10 from backports${NC}"
@@ -1984,7 +1997,7 @@ install_opencode_gsd() {
                     fi
                     ;;
                 dnf)
-                    sudo dnf install -y gcc-toolset-10-gcc-c++ >/dev/null 2>&1 || true
+                    _maybe_sudo dnf install -y gcc-toolset-10-gcc-c++ >/dev/null 2>&1 || true
                     if rpm -q gcc-toolset-10-gcc-c++ >/dev/null 2>&1; then
                         export CXX=g++-10 CC=gcc-10
                         gcc_ok=1
