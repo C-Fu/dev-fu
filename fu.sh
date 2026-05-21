@@ -1295,6 +1295,31 @@ status_check_compare() {
                         "https://raw.githubusercontent.com/moby/moby/refs/heads/master/VERSION" 2>/dev/null \
                         | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
                     ;;
+                rust-lang/rust)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://static.rust-lang.org/dist/channel-rust-stable.toml" 2>/dev/null \
+                        | grep '^version =' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                oven-sh/bun)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://raw.githubusercontent.com/oven-sh/bun/refs/heads/main/package.json" 2>/dev/null \
+                        | grep '"version"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                php/php-src)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://raw.githubusercontent.com/php/php-src/refs/heads/master/main/php_version.h" 2>/dev/null \
+                        | grep 'PHP_VERSION "' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                composer/composer)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://getcomposer.org/download/" 2>/dev/null \
+                        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+                    ;;
+                tailscale/tailscale)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://pkgs.tailscale.com/stable/?mode=json" 2>/dev/null \
+                        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+                    ;;
             esac
         fi
         if [ -z "$tag" ]; then
@@ -1343,21 +1368,20 @@ status_check_compare() {
         local local_ver="" lat="${latest:---}"
 
         if [[ "$latest" == GH-* ]]; then
-            local gh_code="${latest%%:*}"
-            lat="${RED}${gh_code}${NC}"
+            lat="\033[31m${latest%%:*}\033[0m"
         fi
 
         if [[ -z "$local_raw" ]]; then
-            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed" "${lat}"
-            if [[ "$latest" == GH-* ]]; then echo -e "${DIM}(GitHub API unavailable)${NC}"; else echo -e "${DIM}—${NC}"; fi
+            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed"
+            if [[ "$latest" == GH-* ]]; then echo -e "${lat} ${DIM}(rate limited)${NC}"; else echo -e "${lat} ${DIM}—${NC}"; fi
             return
         fi
 
         local_ver=$(_scc_ver "$local_raw")
-        printf "  %-13s %-22s %-16s " "$name" "$local_ver" "${lat}"
+        printf "  %-13s %-22s %-16s " "$name" "$local_ver"
 
         if [[ "$latest" == GH-* ]]; then
-            echo -e "${DIM}(GitHub API unavailable)${NC}"
+            echo -e "${lat} ${DIM}(rate limited)${NC}"
         elif [[ -z "$latest" ]]; then
             echo -e "${DIM}?${NC}"
         elif [[ -z "$local_ver" ]]; then
