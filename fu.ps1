@@ -46,12 +46,13 @@ $EMOJI_RUST = "☢️"
 $EMOJI_PYTHON = "🐍"
 $EMOJI_NODE = "📦"
 $EMOJI_BUN = "🥟"
-$EMOJI_BUN = "🥟"
+$EMOJI_COMPARE = "🔄"
 $EMOJI_SPARKLE = "⚡"
 $EMOJI_MOUSE = "🐁"
 
 $MENU_LABELS = @(
     "Status Check"
+    "Compare With Latest"
     "Upgrade All Tools"
     "Set GitHub Token"
     "Install Docker"
@@ -71,10 +72,10 @@ $MENU_LABELS = @(
 )
 $EMOJI_TOKEN = "🔑"
 $EMOJI_TAILSCALE = "🔒"
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_TOKEN, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_TAILSCALE, $EMOJI_GSD)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Set-GitHubToken", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-Tailscale", "Install-OpenCode")
-$MENU_REMOVE_FN = @("", "", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-Tailscale", "Remove-OpenCode")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_COMPARE, $EMOJI_UPGRADE, $EMOJI_TOKEN, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_TAILSCALE, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Get-StatusCompare", "Upgrade-All", "Set-GitHubToken", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-Tailscale", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-Tailscale", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -784,16 +785,19 @@ function Get-StatusCheck {
     Write-Host ""
 
     $tools = @(
-        @{Name = "Docker"; Cmd = "docker"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Go"; Cmd = "go"; Args = "version"; VersionCmd = $true},
-        @{Name = "Rustc"; Cmd = "rustc"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Cargo"; Cmd = "cargo"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Bun"; Cmd = "bun"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Node.js"; Cmd = "node"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Python"; Cmd = "python"; Args = "--version"; VersionCmd = $true},
-        @{Name = "PHP"; Cmd = "php"; Args = "--version"; VersionCmd = $true},
-        @{Name = "Yarn"; Cmd = "yarn"; Args = "--version"; VersionCmd = $true},
-        @{Name = "uv"; Cmd = "uv"; Args = "--version"; VersionCmd = $true}
+        @{Name = "Docker"; Cmd = "docker"; Args = "--version"},
+        @{Name = "Go"; Cmd = "go"; Args = "version"},
+        @{Name = "Rustc"; Cmd = "rustc"; Args = "--version"},
+        @{Name = "Cargo"; Cmd = "cargo"; Args = "--version"},
+        @{Name = "Bun"; Cmd = "bun"; Args = "--version"},
+        @{Name = "Node.js"; Cmd = "node"; Args = "--version"},
+        @{Name = "Python"; Cmd = "python"; Args = "--version"},
+        @{Name = "pip"; Cmd = "pip"; Args = "--version"},
+        @{Name = "pipx"; Cmd = "pipx"; Args = "--version"},
+        @{Name = "uv"; Cmd = "uv"; Args = "--version"},
+        @{Name = "PHP"; Cmd = "php"; Args = "--version"},
+        @{Name = "Yarn"; Cmd = "yarn"; Args = "--version"},
+        @{Name = "Composer"; Cmd = "composer"; Args = "--version"}
     )
 
     foreach ($tool in $tools) {
@@ -844,8 +848,231 @@ function Get-StatusCheck {
         Write-Host "  ${RED}${EMOJI_CROSS}${NC} OpenChamber  : ${RED}NOT installed${NC}"
     }
 
+    # Check Tailscale
+    if (Get-Command tailscale -ErrorAction SilentlyContinue) {
+        $tsVer = tailscale version 2>$null | Select-Object -First 1
+        Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Tailscale    : ${GREEN}$tsVer${NC}"
+    } else {
+        Write-Host "  ${RED}${EMOJI_CROSS}${NC} Tailscale    : ${RED}NOT installed${NC}"
+    }
+
     Write-Host ""
     Write-Host "${GREEN}  ✓ Status check complete${NC}"
+}
+
+function Get-StatusCompare {
+    Write-Host "${CYAN}${EMOJI_COMPARE}  ${BOLD}Compare Local vs Latest Versions${NC}"
+    Write-Host "${DIM}   Fetching latest versions online...${NC}"
+    Write-Host ""
+
+    function Get-GhLatest($repo) {
+        $headers = @{}
+        if (Test-Path $_GITHUB_TOKEN_FILE) {
+            $tok = (Get-Content $_GITHUB_TOKEN_FILE -Raw 2>$null).Trim()
+            if ($tok) { $headers["Authorization"] = "token $tok" }
+        }
+
+        $tag = $null
+        try {
+            $resp = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -Headers $headers -TimeoutSec 10 -ErrorAction Stop
+            $tag = $resp.tag_name
+        } catch {}
+
+        if (-not $tag) {
+            try {
+                $tags = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/tags?per_page=1" -Headers $headers -TimeoutSec 10 -ErrorAction Stop
+                if ($tags -is [array]) { $tag = $tags[0].name } else { $tag = $tags.name }
+            } catch {}
+        }
+
+        if (-not $tag) {
+            switch ($repo) {
+                "nvm-sh/nvm" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/nvm-sh/nvm/refs/heads/master/package.json" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = $r.version
+                    } catch {}
+                }
+                "astral-sh/uv" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://pypi.org/pypi/uv/json" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = $r.info.version
+                    } catch {}
+                }
+                "anomalyco/opencode" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://registry.npmjs.org/opencode-ai/latest" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = $r.version
+                    } catch {}
+                }
+                "rokicool/gsd-opencode" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://registry.npmjs.org/gsd-opencode/latest" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = $r.version
+                    } catch {}
+                }
+                "moby/moby" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/moby/moby/refs/heads/master/VERSION" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = [regex]::Match($r, '\d+\.\d+\.\d+').Value
+                    } catch {}
+                }
+                "rust-lang/rust" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://static.rust-lang.org/dist/channel-rust-stable.toml" -TimeoutSec 10 -ErrorAction Stop
+                        $m = [regex]::Match($r, 'version\s*=\s*"(\d+\.\d+\.\d+)"')
+                        if ($m.Success) { $tag = $m.Groups[1].Value }
+                    } catch {}
+                }
+                "oven-sh/bun" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/oven-sh/bun/refs/heads/main/package.json" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = $r.version
+                    } catch {}
+                }
+                "php/php-src" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/php/php-src/refs/heads/master/main/php_version.h" -TimeoutSec 10 -ErrorAction Stop
+                        $m = [regex]::Match($r, 'PHP_VERSION\s+"(\d+\.\d+\.\d+)"')
+                        if ($m.Success) { $tag = $m.Groups[1].Value }
+                    } catch {}
+                }
+                "composer/composer" {
+                    try {
+                        $r = Invoke-WebRequest -Uri "https://getcomposer.org/download/" -TimeoutSec 10 -UseBasicParsing -ErrorAction Stop
+                        $tag = [regex]::Match($r.Content, '\d+\.\d+\.\d+').Value
+                    } catch {}
+                }
+                "tailscale/tailscale" {
+                    try {
+                        $r = Invoke-RestMethod -Uri "https://pkgs.tailscale.com/stable/?mode=json" -TimeoutSec 10 -ErrorAction Stop
+                        $tag = [regex]::Match(($r | ConvertTo-Json -Compress), '\d+\.\d+\.\d+').Value
+                    } catch {}
+                }
+            }
+        }
+
+        if ($tag) {
+            $tag = $tag -replace '^v', '' -replace '^docker-v', '' -replace '^bun-v', '' -replace '^php-', ''
+            return $tag
+        }
+        return "GH-ERR:$repo"
+    }
+
+    function Get-LocalVer($cmd, $flag) {
+        if (Get-Command $cmd -ErrorAction SilentlyContinue) {
+            try {
+                $result = & $cmd $flag 2>$null
+                if ($result) { return ($result -split "`n")[0] }
+            } catch {}
+        }
+        return ""
+    }
+
+    function Get-VerNum($raw) {
+        if ([string]::IsNullOrEmpty($raw)) { return "" }
+        $m = [regex]::Match($raw, '\d+\.\d+(\.\d+)?([._-]?[a-zA-Z0-9]+)*')
+        if ($m.Success) { return $m.Value }
+        return ""
+    }
+
+    function Show-CompareRow($name, $localRaw, $latest) {
+        $localVer = Get-VerNum $localRaw
+        $lat = $latest
+        $isGhErr = $latest -match '^GH-ERR:'
+        if ($isGhErr) { $lat = "GH-ERR" }
+
+        $namePad = $name.PadRight(13)
+
+        if ($isGhErr) {
+            $localDisplay = if ($localVer) { $localVer } else { "not installed" }
+            Write-Host ("  {0} {1,-22} " -f $namePad, $localDisplay) -NoNewline
+            Write-Host "${DIM}${lat} (rate limited)${NC}"
+        } elseif ([string]::IsNullOrEmpty($localRaw)) {
+            Write-Host ("  {0} {1,-22} {2,-16} " -f $namePad, "not installed", $lat) -NoNewline
+            Write-Host "${DIM}—${NC}"
+        } elseif ([string]::IsNullOrEmpty($latest)) {
+            Write-Host ("  {0} {1,-22} {2,-16} " -f $namePad, $localVer, "—") -NoNewline
+            Write-Host "${DIM}?${NC}"
+        } elseif ([string]::IsNullOrEmpty($localVer)) {
+            Write-Host ("  {0} {1,-22} {2,-16} " -f $namePad, "?", $lat) -NoNewline
+            Write-Host "${DIM}?${NC}"
+        } elseif ($localVer -eq $latest) {
+            Write-Host ("  {0} {1,-22} {2,-16} " -f $namePad, $localVer, $lat) -NoNewline
+            Write-Host "${GREEN}✓ up to date${NC}"
+        } else {
+            Write-Host ("  {0} {1,-22} {2,-16} " -f $namePad, $localVer, $lat) -NoNewline
+            Write-Host "${YELLOW}⬆ update available${NC}"
+        }
+    }
+
+    Write-Host "  ${BOLD}Tool           Installed              Latest           Status${NC}"
+    Write-Host "  $('─' * 70)"
+
+    Show-CompareRow "Docker"   (Get-LocalVer docker "--version")       (Get-GhLatest "moby/moby")
+
+    $goLatest = ""
+    try {
+        $goResp = Invoke-RestMethod -Uri "https://go.dev/dl/?mode=json" -TimeoutSec 5 -ErrorAction Stop
+        $goLatest = $goResp[0].version -replace '^go', ''
+    } catch {}
+    Show-CompareRow "Go"       (Get-LocalVer go "version")              $goLatest
+
+    Show-CompareRow "Rust"     (Get-LocalVer rustc "--version")        (Get-GhLatest "rust-lang/rust")
+    Show-CompareRow "Bun"      (Get-LocalVer bun "--version")          (Get-GhLatest "oven-sh/bun")
+
+    $nvmLocal = ""
+    if (Get-Command nvm -ErrorAction SilentlyContinue) {
+        $nvmLocal = "nvm $(nvm version 2>$null)"
+    }
+    Show-CompareRow "NVM"      $nvmLocal                                (Get-GhLatest "nvm-sh/nvm")
+
+    $nodeLatest = ""
+    try {
+        $nodeResp = Invoke-RestMethod -Uri "https://nodejs.org/dist/index.json" -TimeoutSec 5 -ErrorAction Stop
+        $nodeLatest = $nodeResp[0].version -replace '^v', ''
+    } catch {}
+    Show-CompareRow "Node.js"  (Get-LocalVer node "--version")          $nodeLatest
+    Show-CompareRow "npx"      (Get-LocalVer npx "--version")           ""
+
+    $pyLatest = ""
+    try {
+        $pyResp = Invoke-RestMethod -Uri "https://endoflife.date/api/python.json" -TimeoutSec 5 -ErrorAction Stop
+        $pyLatest = $pyResp[0].latest
+    } catch {}
+    Show-CompareRow "Python"   (Get-LocalVer python "--version")        $pyLatest
+    Show-CompareRow "uv"       (Get-LocalVer uv "--version")            (Get-GhLatest "astral-sh/uv")
+
+    $yarnLatest = ""
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        $yarnLatest = npm view yarn version 2>$null
+    }
+    Show-CompareRow "Yarn"     (Get-LocalVer yarn "--version")          $yarnLatest
+    Show-CompareRow "PHP"      (Get-LocalVer php "--version")          (Get-GhLatest "php/php-src")
+    Show-CompareRow "Composer" (Get-LocalVer composer "--version")      (Get-GhLatest "composer/composer")
+    Show-CompareRow "Tailscale" (Get-LocalVer tailscale "version")      (Get-GhLatest "tailscale/tailscale")
+    Show-CompareRow "OpenCode"  (Get-LocalVer opencode "--version")     (Get-GhLatest "anomalyco/opencode")
+
+    $ocLocal = Get-LocalVer openchamber "--version"
+    if ([string]::IsNullOrEmpty($ocLocal) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
+        $npmList = npm list -g @openchamber/web 2>$null
+        if ($npmList -match "openchamber") { $ocLocal = "npm global" }
+    }
+    $ocLatest = ""
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        $ocLatest = npm view @openchamber/web version 2>$null
+    }
+    Show-CompareRow "OpenChamber" $ocLocal $ocLatest
+
+    $gsdLocal = ""
+    if (Get-Command gsd-opencode -ErrorAction SilentlyContinue) {
+        $gsdLocal = gsd-opencode --version 2>$null | Select-Object -First 1
+    }
+    Show-CompareRow "GSD"      $gsdLocal                                (Get-GhLatest "rokicool/gsd-opencode")
+
+    Write-Host "  $('─' * 70)"
+    Write-Host ""
+    Write-Host "${GREEN}  ✓ Comparison complete${NC}"
 }
 
 function Install-Go {
@@ -1130,7 +1357,7 @@ function Install-Yarn {
     }
 
     if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-        Write-Host "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 9)${NC}"
+        Write-Host "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 12)${NC}"
         return
     }
 
@@ -1428,8 +1655,27 @@ function Upgrade-All {
         $upgraded = $true
     }
 
+    if (Get-Command tailscale -ErrorAction SilentlyContinue) {
+        Write-Host "${CYAN}  Upgrading Tailscale...${NC}"
+        try {
+            winget upgrade Tailscale.Tailscale --accept-source-agreements --accept-package-agreements -ErrorAction Stop
+        } catch {
+            Write-Host "${YELLOW}  Tailscale upgrade failed${NC}"
+        }
+        $upgraded = $true
+    }
+
+    if (Get-Command gsd-opencode -ErrorAction SilentlyContinue) {
+        Write-Host "${CYAN}  Upgrading GSD...${NC}"
+        npx gsd-opencode@latest 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "${YELLOW}  GSD upgrade failed${NC}"
+        }
+        $upgraded = $true
+    }
+
     if (-not $upgraded) {
-        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (options 6-11).${NC}"
+        Write-Host "  ${YELLOW}${EMOJI_ARROW} No installed tools found to upgrade. Install tools first (options 5+).${NC}"
     } else {
         Write-Host ""
         Write-Host "${GREEN}  ✓ Upgrade complete${NC}"
@@ -1539,21 +1785,21 @@ function Parse-Input {
     $Script:RemoveIndices = @()
 
     if ([string]::IsNullOrWhiteSpace($RawInput)) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-18) or 'q' to quit.${NC}"
         return $false
     }
 
     $tokens = $RawInput -split '[,\s]+' | Where-Object { $_ -ne '' }
 
     if ($tokens.Count -eq 0) {
-        Write-Host "${YELLOW}No selection made. Enter numbers (1-14) or 'q' to quit.${NC}"
+        Write-Host "${YELLOW}No selection made. Enter numbers (1-18) or 'q' to quit.${NC}"
         return $false
     }
 
     $candidates = @()
     $errors = @()
     foreach ($token in $tokens) {
-        if ($token -match '^-?[1-9]$' -or $token -match '^-?1[0-4]$') {
+        if ($token -match '^-?[1-9]$' -or $token -match '^-?1[0-8]$') {
             $candidates += $token
         } else {
             $errors += $token
@@ -1562,10 +1808,10 @@ function Parse-Input {
 
     if ($errors.Count -gt 0) {
         if ($errors.Count -eq 1) {
-            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-14)${NC}"
+            Write-Host "${RED}Invalid: '$($errors[0])' is not a valid option (1-18)${NC}"
         } else {
             $errorStr = ($errors | ForEach-Object { "'$_'" }) -join ', '
-            Write-Host "${RED}Invalid: $errorStr are not valid options (1-14)${NC}"
+            Write-Host "${RED}Invalid: $errorStr are not valid options (1-18)${NC}"
         }
         return $false
     }
@@ -1682,9 +1928,9 @@ while ($true) {
     } else {
         if (Parse-Input $choice) {
             if (Show-ConfirmationScreen) {
-                if ($Script:InstallIndices -contains 4) {
+                if ($Script:InstallIndices -contains 7) {
                     Write-Host "${YELLOW}Hostname Discovery is not available on Windows${NC}"
-                    $Script:InstallIndices = @($Script:InstallIndices | Where-Object { $_ -ne 4 })
+                    $Script:InstallIndices = @($Script:InstallIndices | Where-Object { $_ -ne 7 })
                 }
                 $Script:BATCH_MODE = $true
                 foreach ($idx in $Script:InstallIndices) {
