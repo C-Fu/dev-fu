@@ -1368,27 +1368,32 @@ status_check_compare() {
         local local_ver="" lat="${latest:---}"
 
         if [[ "$latest" == GH-* ]]; then
-            lat="\033[31m${latest%%:*}\033[0m"
+            lat="${latest%%:*}"
         fi
 
         if [[ -z "$local_raw" ]]; then
-            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed"
-            if [[ "$latest" == GH-* ]]; then echo -e "${lat} ${DIM}(rate limited)${NC}"; else echo -e "${lat} ${DIM}—${NC}"; fi
-            return
+            local_ver=""
+        else
+            local_ver=$(_scc_ver "$local_raw")
         fi
 
-        local_ver=$(_scc_ver "$local_raw")
-        printf "  %-13s %-22s %-16s " "$name" "$local_ver"
-
         if [[ "$latest" == GH-* ]]; then
-            echo -e "${lat} ${DIM}(rate limited)${NC}"
+            printf "  %-13s \033[2m%-22s\033[0m " "$name" "${local_ver:-not installed}"
+            echo -e "${RED}${lat}${NC} ${DIM}(rate limited)${NC}"
+        elif [[ -z "$local_raw" ]]; then
+            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed" "$lat"
+            echo -e "${DIM}—${NC}"
         elif [[ -z "$latest" ]]; then
+            printf "  %-13s %-22s %-16s " "$name" "$local_ver" "—"
             echo -e "${DIM}?${NC}"
         elif [[ -z "$local_ver" ]]; then
+            printf "  %-13s %-22s %-16s " "$name" "?" "$lat"
             echo -e "${DIM}?${NC}"
         elif [[ "$local_ver" == "$latest" ]]; then
+            printf "  %-13s %-22s %-16s " "$name" "$local_ver" "$lat"
             echo -e "${GREEN}✓ up to date${NC}"
         else
+            printf "  %-13s %-22s %-16s " "$name" "$local_ver" "$lat"
             echo -e "${YELLOW}⬆ update available${NC}"
         fi
     }
