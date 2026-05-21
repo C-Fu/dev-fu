@@ -1479,21 +1479,24 @@ status_check_compare() {
     _scc_row "Rust"     "$(_scc_local rustc --version)"    "$(_scc_gh rust-lang/rust)"
     _scc_row "Bun"      "$(_scc_local bun --version)"      "$(_scc_gh oven-sh/bun)"
 
-    if ! _is_musl; then
-        local nvm_local=""
+    local nvm_local=""
+    if _is_musl; then
+        nvm_local="N/A (Alpine)"
+    else
         [[ -s "$HOME/.nvm/nvm.sh" ]] && nvm_local="nvm $(source "$HOME/.nvm/nvm.sh" 2>/dev/null && nvm --version)"
-        _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
     fi
+    _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
 
     _scc_row "Node.js"  "$(_scc_local node --version)"     "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"v\([^"]*\)".*/\1/')"
+    _scc_row "npx"      "$(_scc_local npx --version)"      ""
     _scc_row "Python"   "$(_scc_local python3 --version)"  "$(curl -fsSL --max-time 5 'https://endoflife.date/api/python.json' 2>/dev/null | grep -o '"latest":"[^"]*"' | head -1 | sed 's/"latest":"//;s/"//')"
     _scc_row "uv"       "$(_scc_local uv --version)"       "$(_scc_gh astral-sh/uv)"
-    _scc_row "PHP"      "$(_scc_local php -v)"             "$(_scc_gh php/php-src)"
 
     local yarn_latest=""
     command -v npm >/dev/null 2>&1 && yarn_latest=$(npm view yarn version 2>/dev/null)
     _scc_row "Yarn"     "$(_scc_local yarn --version)"     "$yarn_latest"
 
+    _scc_row "PHP"      "$(_scc_local php -v)"             "$(_scc_gh php/php-src)"
     _scc_row "Composer" "$(_scc_local composer --version)" "$(_scc_gh composer/composer)"
 
     local ts_local=""
