@@ -8,8 +8,8 @@ bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com
 ```
 
 ```sh
-# Alpine / BusyBox / ash / sh (no process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# Alpine / BusyBox / ash / sh (installs bash first if missing)
+{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -106,8 +106,8 @@ bash fu.sh
 # Works from any shell (sh, ash, zsh, fish) — just needs bash installed
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 
-# Option 3: Alpine / BusyBox / ash (no process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# Option 3: Alpine / BusyBox / ash (auto-installs bash if missing)
+{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell

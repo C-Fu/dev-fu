@@ -8,8 +8,8 @@ bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com
 ```
 
 ```sh
-# Alpine / BusyBox / ash / sh (tiada process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# Alpine / BusyBox / ash / sh (pasang bash dulu jika tiada)
+{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -106,8 +106,8 @@ bash fu.sh
 # Berfungsi dari mana-mana shell (sh, ash, zsh, fish) — hanya perlukan bash
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 
-# Option 3: Alpine / BusyBox / ash (tiada process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# Option 3: Alpine / BusyBox / ash (auto-pasang bash jika tiada)
+{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
