@@ -1420,6 +1420,13 @@ status_check_compare() {
     _scc_row "Yarn"     "$(_scc_local yarn --version)"     "$yarn_latest"
 
     _scc_row "Composer" "$(_scc_local composer --version)" "$(_scc_gh composer/composer)"
+
+    local ts_local=""
+    ts_local=$(_scc_local tailscale version)
+    local ts_latest=""
+    ts_latest=$(_scc_gh tailscale/tailscale)
+    _scc_row "Tailscale"  "$ts_local"                       "$ts_latest"
+
     _scc_row "OpenCode" "$(_scc_local opencode --version)" "$(_scc_gh anomalyco/opencode)"
 
     local oc_local=""
@@ -1428,12 +1435,6 @@ status_check_compare() {
     local oc_latest=""
     command -v npm >/dev/null 2>&1 && oc_latest=$(npm view @openchamber/web version 2>/dev/null)
     _scc_row "OpenChamber" "$oc_local" "$oc_latest"
-
-    local ts_local=""
-    ts_local=$(_scc_local tailscale version)
-    local ts_latest=""
-    ts_latest=$(_scc_gh tailscale/tailscale)
-    _scc_row "Tailscale"  "$ts_local"                       "$ts_latest"
 
     local gsd_local=""
     gsd_local=$(npm list -g gsd-opencode 2>/dev/null | grep -oE 'gsd-opencode@[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
