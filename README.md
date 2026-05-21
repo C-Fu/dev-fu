@@ -202,6 +202,29 @@ Run `./fu.sh` and select options from the interactive menu:
 
 Single-select options (Hostname Discovery, OpenCode+GSD) must be used alone.
 
+## Non-Interactive (CLI) Mode
+
+Pass option numbers as arguments to run without the interactive menu:
+
+```bash
+# Upgrade all tools
+bash fu.sh u
+
+# Install Docker and Python, remove Go
+bash fu.sh 5 11 -9
+
+# One-liner from remote
+bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh) 5 11 -9
+```
+
+```powershell
+# Windows: Upgrade all tools
+.\fu.ps1 u
+
+# Install Docker and Python, remove Go
+.\fu.ps1 5 11 -9
+```
+
 ## Platform-Specific Notes
 
 ### Linux

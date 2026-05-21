@@ -203,6 +203,29 @@ Jalankan `./fu.sh` dan pilih pilihan dari menu interaktif:
 
 Pilihan yang perlu dipilih sendiri sahaja (Hostname Discovery, OpenCode+GSD) mesti digunakan bersendirian.
 
+## Mod Tidak Interaktif (CLI)
+
+Lepas nombor pilihan sebagai argumen untuk jalankan tanpa menu interaktif:
+
+```bash
+# Tatar semua alat
+bash fu.sh u
+
+# Pasang Docker dan Python, keluarkan Go
+bash fu.sh 5 11 -9
+
+# Satu baris dari jauh
+bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh) 5 11 -9
+```
+
+```powershell
+# Windows: Tatar semua alat
+.\fu.ps1 u
+
+# Pasang Docker dan Python, keluarkan Go
+.\fu.ps1 5 11 -9
+```
+
 ## Nota Mengikut Platform
 
 ### Linux

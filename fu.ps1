@@ -1911,7 +1911,30 @@ function Show-ConfirmationScreen {
     return $true
 }
 
-# Main loop
+# CLI mode: run non-interactively if args passed
+# Usage: .\fu.ps1 3 5 -9   (upgrade all, install docker, remove go)
+if ($args.Count -gt 0) {
+    $Script:BATCH_MODE = $true
+    $cliInput = $args -join " "
+
+    if ($cliInput -eq "u" -or $cliInput -eq "U") {
+        Upgrade-All
+        exit 0
+    }
+
+    if (Parse-Input $cliInput) {
+        foreach ($idx in $Script:InstallIndices) {
+            if ($idx -eq 7) { continue }
+            & $MENU_INSTALL_FN[$idx]
+        }
+        foreach ($idx in $Script:RemoveIndices) {
+            & $MENU_REMOVE_FN[$idx]
+        }
+    }
+    exit 0
+}
+
+# Main loop (interactive)
 while ($true) {
     Show-PreflightStatus
     Show-Menu

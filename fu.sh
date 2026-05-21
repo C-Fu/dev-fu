@@ -2566,8 +2566,36 @@ show_confirmation_screen() {
     return 0
 }
 
+# ──────────────────
+# CLI mode: run non-interactively if args passed
+# Usage: bash fu.sh 3 5 -9   (upgrade all, install docker, remove go)
+# ──────────────────
+run_cli_mode() {
+    local cli_input="$*"
+
+    if [[ "$cli_input" == "u" || "$cli_input" == "U" ]]; then
+        upgrade_all
+        exit 0
+    fi
+
+    if parse_input "$cli_input"; then
+        for idx in "${PARSE_INSTALL_IDX[@]}"; do
+            "${MENU_INSTALL_FN[$idx]}"
+        done
+        for idx in "${PARSE_REMOVE_IDX[@]}"; do
+            "${MENU_REMOVE_FN[$idx]}"
+        done
+    fi
+    exit 0
+}
+
+if [[ $# -gt 0 ]]; then
+    BATCH_MODE=1
+    run_cli_mode "$@"
+fi
+
 # ─────────────────────────────────────────────
-# Main loop
+# Main loop (interactive)
 # ─────────────────────────────────────────────
 while true; do
     clear
