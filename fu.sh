@@ -1258,19 +1258,49 @@ status_check_compare() {
     [[ -s "$HOME/.nvm/nvm.sh" ]] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
 
     _scc_gh() {
+        local repo="$1"
         local tag
-        tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+        tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null \
             | grep '"tag_name"' | head -1 \
             | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         if [ -z "$tag" ]; then
-            tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$1/tags?per_page=1" 2>/dev/null \
+            tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$repo/tags?per_page=1" 2>/dev/null \
                 | grep '"name"' | head -1 \
                 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         fi
         if [ -z "$tag" ]; then
+            case "$repo" in
+                nvm-sh/nvm)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://raw.githubusercontent.com/nvm-sh/nvm/refs/heads/master/package.json" 2>/dev/null \
+                        | grep '"version"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                astral-sh/uv)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://pypi.org/pypi/uv/json" 2>/dev/null \
+                        | grep -oE '"version":"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                anomalyco/opencode)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://registry.npmjs.org/opencode-ai/latest" 2>/dev/null \
+                        | grep -oE '"version":"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                rokicool/gsd-opencode)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://registry.npmjs.org/gsd-opencode/latest" 2>/dev/null \
+                        | grep -oE '"version":"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+                moby/moby)
+                    tag=$(curl -fsSL --connect-timeout 5 --max-time 10 \
+                        "https://raw.githubusercontent.com/moby/moby/refs/heads/master/VERSION" 2>/dev/null \
+                        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    ;;
+            esac
+        fi
+        if [ -z "$tag" ]; then
             local gh_err
-            gh_err=$(curl -sL --connect-timeout 5 --max-time 10 -w "%{http_code}" -o /dev/null "https://api.github.com/repos/$1/releases/latest" 2>/dev/null)
-            echo "GH-${gh_err:-ERR}:$1"
+            gh_err=$(curl -sL --connect-timeout 5 --max-time 10 -w "%{http_code}" -o /dev/null "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null)
+            echo "GH-${gh_err:-ERR}:$repo"
             return
         fi
         tag="${tag#v}"
