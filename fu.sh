@@ -502,9 +502,16 @@ install_docker() {
     fi
     
     echo -e "${CYAN}  Downloading Docker install script...${NC}"
-    retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || { echo -e "${RED}  ✗ Docker download failed${NC}"; return 1; }
-    _maybe_sudo sh /tmp/get-docker.sh || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
-    rm -f /tmp/get-docker.sh
+
+    if command -v apk >/dev/null 2>&1; then
+        pkg_install docker docker-cli-compose || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
+        _maybe_sudo rc-update add docker boot 2>/dev/null || true
+        _maybe_sudo service docker start 2>/dev/null || true
+    else
+        retry_network 3 5 "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh" || { echo -e "${RED}  ✗ Docker download failed${NC}"; return 1; }
+        _maybe_sudo sh /tmp/get-docker.sh || { echo -e "${RED}  ✗ Docker install failed${NC}"; return 1; }
+        rm -f /tmp/get-docker.sh
+    fi
     
     echo -e "${GREEN}  ✓ Docker installed successfully${NC}"
 }
@@ -531,7 +538,11 @@ remove_docker() {
     fi
     
     echo -e "${CYAN}  Removing Docker...${NC}"
-    pkg_purge docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
+    if command -v apk >/dev/null 2>&1; then
+        pkg_purge docker docker-cli-compose || true
+    else
+        pkg_purge docker.io docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || true
+    fi
     _maybe_sudo rm -rf /var/lib/docker /etc/docker
     _maybe_sudo rm -f /etc/apt/sources.list.d/docker.list
     pkg_update || true
