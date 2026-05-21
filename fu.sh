@@ -1691,7 +1691,10 @@ install_nvm_node() {
 
     if ! command -v node >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Node.js LTS...${NC}"
-        nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
+        if command -v apk >/dev/null 2>&1; then
+            pkg_install python3 make g++ || true
+        fi
+        nvm install --lts || nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
     fi
 
     echo -e "${GREEN}  ✓ NVM + Node LTS installed successfully${NC}"
