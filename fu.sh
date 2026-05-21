@@ -1479,9 +1479,11 @@ status_check_compare() {
     _scc_row "Rust"     "$(_scc_local rustc --version)"    "$(_scc_gh rust-lang/rust)"
     _scc_row "Bun"      "$(_scc_local bun --version)"      "$(_scc_gh oven-sh/bun)"
 
-    local nvm_local=""
-    [[ -s "$HOME/.nvm/nvm.sh" ]] && nvm_local="nvm $(source "$HOME/.nvm/nvm.sh" 2>/dev/null && nvm --version)"
-    _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
+    if ! _is_musl; then
+        local nvm_local=""
+        [[ -s "$HOME/.nvm/nvm.sh" ]] && nvm_local="nvm $(source "$HOME/.nvm/nvm.sh" 2>/dev/null && nvm --version)"
+        _scc_row "NVM"      "$nvm_local"                       "$(_scc_gh nvm-sh/nvm)"
+    fi
 
     _scc_row "Node.js"  "$(_scc_local node --version)"     "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"v\([^"]*\)".*/\1/')"
     _scc_row "Python"   "$(_scc_local python3 --version)"  "$(curl -fsSL --max-time 5 'https://endoflife.date/api/python.json' 2>/dev/null | grep -o '"latest":"[^"]*"' | head -1 | sed 's/"latest":"//;s/"//')"
@@ -1662,10 +1664,38 @@ remove_python() {
     echo -e "${GREEN}  ✓ Python + Pip + UV + Pipx removed${NC}"
 }
 
+_is_musl() {
+    command -v apk >/dev/null 2>&1
+}
+
 install_nvm_node() {
     echo -e "${CYAN}${EMOJI_NODE}  ${BOLD}Install NVM + Node LTS${NC}"
-    echo -e "${DIM}   Node Version Manager with latest LTS${NC}"
+
+    if _is_musl; then
+        echo -e "${DIM}   Node.js LTS (native Alpine package — NVM skipped on musl)${NC}"
+    else
+        echo -e "${DIM}   Node Version Manager with latest LTS${NC}"
+    fi
     echo
+
+    if _is_musl; then
+        if command -v node >/dev/null 2>&1; then
+            echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Node.js already installed: $(node --version)"
+            return 0
+        fi
+
+        echo -e "${BYELLOW}  → This will install: nodejs + npm (Alpine native)${NC}"
+        if [[ "$BATCH_MODE" != "1" ]]; then
+            read -rp "  Proceed? (y/n): " confirm
+            [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+        fi
+
+        echo -e "${CYAN}  Installing Node.js via apk...${NC}"
+        pkg_install nodejs npm || { echo -e "${RED}  ✗ Node.js install failed${NC}"; return 1; }
+
+        echo -e "${GREEN}  ✓ Node.js $(node --version) installed successfully${NC}"
+        return 0
+    fi
 
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
 
@@ -1691,10 +1721,7 @@ install_nvm_node() {
 
     if ! command -v node >/dev/null 2>&1; then
         echo -e "${CYAN}  Installing Node.js LTS...${NC}"
-        if command -v apk >/dev/null 2>&1; then
-            pkg_install python3 make g++ || true
-        fi
-        nvm install --lts || nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
+        nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
     fi
 
     echo -e "${GREEN}  ✓ NVM + Node LTS installed successfully${NC}"
@@ -1705,6 +1732,12 @@ remove_nvm_node() {
     if [[ "$BATCH_MODE" != "1" ]]; then
         read -rp "  Remove NVM and Node.js? (y/n): " confirm
         [[ $confirm != [yY] ]] && echo -e "${DIM}  Cancelled.${NC}" && return
+    fi
+
+    if _is_musl; then
+        pkg_purge nodejs npm || true
+        echo -e "${GREEN}  ✓ Node.js removed${NC}"
+        return
     fi
 
     if command -v nvm >/dev/null 2>&1; then
@@ -1760,7 +1793,7 @@ install_yarn() {
     fi
 
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
-    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 10)${NC}"; return; }
+    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install Node LTS first (option 12)${NC}"; return; }
 
     echo -e "${BYELLOW}  → This will install: Yarn${NC}"
     if [[ "$BATCH_MODE" != "1" ]]; then
@@ -1859,7 +1892,13 @@ upgrade_all() {
         upgraded=1
     fi
 
-    if [ -s "$HOME/.nvm/nvm.sh" ]; then
+    if _is_musl; then
+        if command -v node >/dev/null 2>&1; then
+            echo -e "${CYAN}  Upgrading Node.js...${NC}"
+            _maybe_sudo apk upgrade nodejs npm 2>/dev/null || echo -e "${YELLOW}  Node.js upgrade failed${NC}"
+            upgraded=1
+        fi
+    elif [ -s "$HOME/.nvm/nvm.sh" ]; then
         . "$HOME/.nvm/nvm.sh" 2>/dev/null || true
         if command -v nvm >/dev/null 2>&1; then
             echo -e "${CYAN}  Upgrading NVM...${NC}"
@@ -2074,23 +2113,24 @@ install_opencode_gsd() {
         return
     fi
 
-    if ! command -v nvm >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
-        echo -e "${YELLOW}  → NVM + Node required — installing first...${NC}"
-        if ! command -v nvm >/dev/null 2>&1; then
-            echo -e "${CYAN}  Installing NVM...${NC}"
-            retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || { echo -e "${RED}  ✗ NVM download failed${NC}"; return 1; }
-            bash /tmp/nvm-install.sh || { echo -e "${RED}  ✗ NVM install failed${NC}"; return 1; }
-            rm -f /tmp/nvm-install.sh
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-        fi
-        if ! command -v node >/dev/null 2>&1; then
-            echo -e "${CYAN}  Installing Node.js LTS...${NC}"
+    if ! command -v node >/dev/null 2>&1; then
+        echo -e "${YELLOW}  → Node.js required — installing first...${NC}"
+        if _is_musl; then
+            pkg_install nodejs npm || { echo -e "${RED}  ✗ Node.js install failed${NC}"; return 1; }
+        else
+            if ! command -v nvm >/dev/null 2>&1; then
+                echo -e "${CYAN}  Installing NVM...${NC}"
+                retry_network 3 5 "curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh -o /tmp/nvm-install.sh" || { echo -e "${RED}  ✗ NVM download failed${NC}"; return 1; }
+                bash /tmp/nvm-install.sh || { echo -e "${RED}  ✗ NVM install failed${NC}"; return 1; }
+                rm -f /tmp/nvm-install.sh
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            fi
             nvm install --lts || { echo -e "${RED}  ✗ Node LTS install failed${NC}"; return 1; }
         fi
     fi
 
-    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install NVM + Node LTS first (option 10)${NC}"; return; }
+    command -v npm >/dev/null 2>&1 || { echo -e "  ${RED}${EMOJI_CROSS} npm missing - install Node LTS first (option 12)${NC}"; return; }
 
     if [[ "$BATCH_MODE" != "1" ]]; then
         echo -e "${BYELLOW}  → This will install the components marked above${NC}"
