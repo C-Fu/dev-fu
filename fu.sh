@@ -1259,9 +1259,14 @@ status_check_compare() {
 
     _scc_gh() {
         local tag
-        tag=$(curl -fsSL --max-time 5 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+        tag=$(curl -fsSL --max-time 10 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
             | grep '"tag_name"' | head -1 \
             | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        if [ -z "$tag" ]; then
+            tag=$(curl -fsSL --max-time 10 "https://api.github.com/repos/$1/tags?per_page=1" 2>/dev/null \
+                | grep '"name"' | head -1 \
+                | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        fi
         tag="${tag#v}"
         tag="${tag#docker-v}"
         tag="${tag#bun-v}"
