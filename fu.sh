@@ -1259,13 +1259,19 @@ status_check_compare() {
 
     _scc_gh() {
         local tag
-        tag=$(curl -fsSL --max-time 10 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+        tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
             | grep '"tag_name"' | head -1 \
             | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         if [ -z "$tag" ]; then
-            tag=$(curl -fsSL --max-time 10 "https://api.github.com/repos/$1/tags?per_page=1" 2>/dev/null \
+            tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$1/tags?per_page=1" 2>/dev/null \
                 | grep '"name"' | head -1 \
                 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        fi
+        if [ -z "$tag" ]; then
+            local gh_err
+            gh_err=$(curl -sL --connect-timeout 5 --max-time 10 -w "%{http_code}" -o /dev/null "https://api.github.com/repos/$1/releases/latest" 2>/dev/null)
+            echo "GH-${gh_err:-ERR}:$1"
+            return
         fi
         tag="${tag#v}"
         tag="${tag#docker-v}"
@@ -1306,16 +1312,23 @@ status_check_compare() {
         local name="$1" local_raw="$2" latest="$3"
         local local_ver="" lat="${latest:---}"
 
+        if [[ "$latest" == GH-* ]]; then
+            local gh_code="${latest%%:*}"
+            lat="${RED}${gh_code}${NC}"
+        fi
+
         if [[ -z "$local_raw" ]]; then
-            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed" "$lat"
-            echo -e "${DIM}—${NC}"
+            printf "  %-13s \033[2m%-22s\033[0m %-16s " "$name" "not installed" "${lat}"
+            if [[ "$latest" == GH-* ]]; then echo -e "${DIM}(GitHub API unavailable)${NC}"; else echo -e "${DIM}—${NC}"; fi
             return
         fi
 
         local_ver=$(_scc_ver "$local_raw")
-        printf "  %-13s %-22s %-16s " "$name" "$local_ver" "$lat"
+        printf "  %-13s %-22s %-16s " "$name" "$local_ver" "${lat}"
 
-        if [[ -z "$latest" ]]; then
+        if [[ "$latest" == GH-* ]]; then
+            echo -e "${DIM}(GitHub API unavailable)${NC}"
+        elif [[ -z "$latest" ]]; then
             echo -e "${DIM}?${NC}"
         elif [[ -z "$local_ver" ]]; then
             echo -e "${DIM}?${NC}"
