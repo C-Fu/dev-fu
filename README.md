@@ -233,6 +233,11 @@ All package managers supported. The script auto-detects your package manager.
 
 Option 7 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
 
+### Alpine / BusyBox
+
+- Option 12 (NVM + Node LTS) installs Node.js directly via `apk add nodejs npm` instead of NVM. Alpine's musl libc is incompatible with NVM's prebuilt Node binaries, and compiling from source often fails due to missing build dependencies.
+- Option 5 (Docker) uses `apk add docker docker-cli-compose` since Docker's official install script does not support Alpine.
+
 ### macOS
 
 - Requires Homebrew: `brew install bash`

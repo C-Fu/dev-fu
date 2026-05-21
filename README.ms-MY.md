@@ -234,6 +234,11 @@ Semua pengurus pakej disokong. Skrip mengesan pengurus pakej anda secara automat
 
 Pilihan 7 (Hostname Discovery) memasang `avahi-daemon` untuk mDNS/NSS dan `systemd-resolved` untuk resolusi DNS, kemudian membuat pautan simbolik `/etc/resolv.conf` ke stub systemd-resolved. Pilihan ini adalah untuk Linux sahaja dan tidak tersedia pada macOS, Windows atau WSL.
 
+### Alpine / BusyBox
+
+- Pilihan 12 (NVM + Node LTS) memasang Node.js terus melalui `apk add nodejs npm` dan bukannya NVM. Perpustakaan musl libc pada Alpine tidak serasi dengan binari Node pra-binaan NVM, dan kompilasi dari sumber sering gagal kerana kekurangan kebergantungan binaan.
+- Pilihan 5 (Docker) menggunakan `apk add docker docker-cli-compose` kerana skrip pemasangan rasmi Docker tidak menyokong Alpine.
+
 ### macOS
 
 - Memerlukan Homebrew: `brew install bash`  
