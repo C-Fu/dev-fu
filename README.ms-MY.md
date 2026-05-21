@@ -18,6 +18,61 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
 ```
 
+## Skrinshot
+
+```
+://─────────────── System Info ────────────────║
+│ Architecture: x86_64
+│ OS: alpine
+│ Package Mgr: apk
+│ Shell: bash
+│ WAN IP: 115.134.7.89
+│ LAN IP: 192.168.0.144
+│ Hostname: alpine-test
+│ User: root (0:0)
+▉════════════════by═C-Fu════════════════
+
+
+        ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗
+ ██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║
+ ╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║
+ ██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║
+ ╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝
+    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝ 
+
+://─────────────────────────────║
+│ Environment Setup Utility
+▉══════════════════════════
+
+│ 1)  🔍  Status Check
+│ 2)  🔄  Compare With Latest
+│ 3)  ⬆️  Upgrade All Tools
+│ 4)  🔑  Set GitHub Token
+│ 5)  🐳  Install Docker
+│ 6)  ✨  Create Fancy Prompt (Purple-Pink)
+│ 7)  💎  Create Fancy Prompt (Shades of Blue)
+│ 8)  🌐  Install Hostname Discovery (Linux only)
+│ 9)  🐹  Install Go
+│ 10) ☢️  Install Rust
+│ 11) 🐍  Install Python + Pip + UV + Pipx
+│ 12) 📦  Install NVM + Node LTS
+│ 13) 🥟  Install Bun
+│ 14) ⚡  Install Yarn
+│ 15) 🐁  Disable Mouse Reporting in Terminal
+│ 16) 🐘  Install PHP + Laravel
+│ 17) 🔒  Install Tailscale
+│ 18) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
+
+  Enter your selected options, split by commas or spaces (1,2 3 4)
+  Enter -N to remove (e.g. -3 removes Docker)
+
+://─────────────────────────║
+│  Press u to upgrade all
+│  Press q to quit
+▉══════════════════
+▸ Choice: 
+```
+
 ## Mengapa dev-fu
 
 - **Tiada kebergantungan** - Hanya Bash 4+ dan PowerShell 5.1+. Tiada Python, tiada Node, tiada rangka kerja diperlukan untuk menjalankan skrip itu sendiri. Semua yang dipasang diambil dari sumber rasmi.
