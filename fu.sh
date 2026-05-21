@@ -86,11 +86,13 @@ EMOJI_MOUSE="🐁"
 EMOJI_COMPARE="🔄"
 EMOJI_PROMPT_BLUE="💎"
 EMOJI_TAILSCALE="🔒"
+EMOJI_TOKEN="🔑"
 
 MENU_LABELS=(
     "Status Check"
     "Compare With Latest"
     "Upgrade All Tools"
+    "Set GitHub Token"
     "Install Docker"
     "Create Fancy Prompt (Purple-Pink)"
     "Create Fancy Prompt (Shades of Blue)"
@@ -106,10 +108,10 @@ MENU_LABELS=(
     "Install Tailscale"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
-MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_PROMPT_BLUE" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_TAILSCALE" "$EMOJI_GSD")
-MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "install_docker" "create_fancy_prompt" "create_fancy_prompt_blue" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_tailscale" "install_opencode_gsd")
-MENU_REMOVE_FN=("" "" "" "remove_docker" "remove_fancy_prompt" "remove_fancy_prompt_blue" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_tailscale" "remove_opencode")
-MENU_SINGLE_SELECT=(0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1)
+MENU_EMOJIS=("$EMOJI_STATUS" "$EMOJI_COMPARE" "$EMOJI_UPGRADE" "$EMOJI_TOKEN" "$EMOJI_DOCKER" "$EMOJI_PROMPT" "$EMOJI_PROMPT_BLUE" "$EMOJI_NETWORK" "$EMOJI_GO" "$EMOJI_RUST" "$EMOJI_PYTHON" "$EMOJI_NODE" "$EMOJI_BUN" "$EMOJI_SPARKLE" "$EMOJI_MOUSE" "$EMOJI_PHP" "$EMOJI_TAILSCALE" "$EMOJI_GSD")
+MENU_INSTALL_FN=("status_check" "status_check_compare" "upgrade_all" "set_github_token" "install_docker" "create_fancy_prompt" "create_fancy_prompt_blue" "install_avahi" "install_go" "install_rust" "install_python" "install_nvm_node" "install_bun" "install_yarn" "disable_mouse_reporting" "install_php_laravel" "install_tailscale" "install_opencode_gsd")
+MENU_REMOVE_FN=("" "" "" "" "remove_docker" "remove_fancy_prompt" "remove_fancy_prompt_blue" "remove_avahi" "remove_go" "remove_rust" "remove_python" "remove_nvm_node" "remove_bun" "remove_yarn" "enable_mouse_reporting" "uninstall_php_laravel" "remove_tailscale" "remove_opencode")
+MENU_SINGLE_SELECT=(0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1)
 BATCH_MODE=0
 
 # ──────────────
@@ -424,7 +426,61 @@ install_uv() {
 }
 
 # ──────────────
-# 🐳 Option 4: Install Docker
+# 🔑 Option 4: Set GitHub Token
+# ──────────────
+_GITHUB_TOKEN_FILE="$HOME/.config/dev-fu/github-token"
+
+_github_token_header() {
+    if [ -f "$_GITHUB_TOKEN_FILE" ]; then
+        local tok
+        tok=$(cat "$_GITHUB_TOKEN_FILE" 2>/dev/null)
+        [ -n "$tok" ] && echo "-H 'Authorization: token $tok'"
+    fi
+}
+
+set_github_token() {
+    echo -e "${CYAN}${EMOJI_TOKEN}  ${BOLD}Set GitHub Personal Access Token${NC}"
+    echo -e "${DIM}   Increases GitHub API rate limit from 60 to 5,000 requests/hr${NC}"
+    echo
+
+    if [ -f "$_GITHUB_TOKEN_FILE" ]; then
+        local cur
+        cur=$(cat "$_GITHUB_TOKEN_FILE" 2>/dev/null)
+        if [ -n "$cur" ]; then
+            echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Token already set (${cur:0:4}****${cur: -4})"
+        fi
+    fi
+
+    echo -e "${BOLD}  How to create a GitHub Personal Access Token:${NC}"
+    echo -e "  1. Go to ${CYAN}https://github.com/settings/tokens${NC}"
+    echo -e "  2. Click ${BOLD}Generate new token${NC} (classic)"
+    echo -e "  3. Give it a name (e.g. 'dev-fu')"
+    echo -e "  4. Select scopes: ${DIM}public_repo${NC} is enough for version checks"
+    echo -e "  5. Click ${BOLD}Generate token${NC}"
+    echo -e "  6. Copy the token (starts with ghp_)"
+    echo
+
+    read -rp "  Paste your token (or press Enter to cancel): " token
+    if [ -z "$token" ]; then
+        echo -e "${DIM}  Cancelled.${NC}"
+        return
+    fi
+
+    mkdir -p "$(dirname "$_GITHUB_TOKEN_FILE")"
+    echo "$token" > "$_GITHUB_TOKEN_FILE"
+    chmod 600 "$_GITHUB_TOKEN_FILE"
+
+    local test_result
+    test_result=$(curl -sL -H "Authorization: token $token" "https://api.github.com/rate_limit" 2>/dev/null | grep '"remaining"' | head -1 | grep -oE '[0-9]+')
+    if [ -n "$test_result" ]; then
+        echo -e "${GREEN}  ✓ Token saved — API rate limit: $test_result requests remaining${NC}"
+    else
+        echo -e "${YELLOW}  ⚠ Token saved but verification failed — check if the token is valid${NC}"
+    fi
+}
+
+# ──────────────
+# 🐳 Option 5: Install Docker
 # ──────────────
 install_docker() {
     echo -e "${BLUE}${EMOJI_DOCKER}  ${BOLD}Install Docker${NC}"
@@ -453,7 +509,7 @@ install_docker() {
     echo -e "${GREEN}  ✓ Docker installed successfully${NC}"
 }
 
-# 🗑️ Option 4a: Remove Docker
+# 🗑️ Option 5a: Remove Docker
 # ──────────────
 remove_docker() {
     echo -e "${RED}🗑️  ${BOLD}Remove Docker${NC}"
@@ -483,7 +539,7 @@ remove_docker() {
     echo -e "${GREEN}  ✓ Docker removed successfully${NC}"
 }
 
-# 🌐 Option 7: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
+# 🌐 Option 8: Install Linux Hostname Discovery (avahi-daemon + systemd-resolved)
 # ──────────────
 install_avahi() {
     echo -e "${CYAN}🌐  ${BOLD}Install Linux Hostname Discovery${NC}"
@@ -564,7 +620,7 @@ install_avahi() {
     echo -e "${GREEN}  ✓ Hostname discovery installed and configured${NC}"
 }
 
-# 🗑️ Option 7a: Remove Hostname Discovery (Avahi + systemd-resolved)
+# 🗑️ Option 8a: Remove Hostname Discovery (Avahi + systemd-resolved)
 # ──────────────
 remove_avahi() {
     echo -e "${RED}🗑️  ${BOLD}Remove Hostname Discovery${NC}"
@@ -608,7 +664,7 @@ remove_avahi() {
 }
 
 # ──────────────
-# ✨ Option 5: Fancy Prompt
+# ✨ Option 6: Fancy Prompt
 # ──────────────
 _reset_prompt() {
     local rc_file="$1"
@@ -1260,11 +1316,17 @@ status_check_compare() {
     _scc_gh() {
         local repo="$1"
         local tag
-        tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null \
+        local auth_header=""
+        if [ -f "$_GITHUB_TOKEN_FILE" ]; then
+            local _tok
+            _tok=$(cat "$_GITHUB_TOKEN_FILE" 2>/dev/null)
+            [ -n "$_tok" ] && auth_header="-H \"Authorization: token $_tok\""
+        fi
+        tag=$(eval curl -fsSL --connect-timeout 5 --max-time 10 $auth_header \"https://api.github.com/repos/$repo/releases/latest\" 2>/dev/null \
             | grep '"tag_name"' | head -1 \
             | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         if [ -z "$tag" ]; then
-            tag=$(curl -fsSL --connect-timeout 5 --max-time 10 "https://api.github.com/repos/$repo/tags?per_page=1" 2>/dev/null \
+            tag=$(eval curl -fsSL --connect-timeout 5 --max-time 10 $auth_header \"https://api.github.com/repos/$repo/tags?per_page=1\" 2>/dev/null \
                 | grep '"name"' | head -1 \
                 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
         fi
@@ -1451,7 +1513,7 @@ status_check_compare() {
 }
 
 # ──────────────
-# 🛠️ Option 8: Install Go
+# 🛠️ Option 9: Install Go
 # ──────────────
 install_go() {
     echo -e "${CYAN}${EMOJI_GO}  ${BOLD}Install Go${NC}"
@@ -1894,7 +1956,7 @@ upgrade_all() {
 }
 
 # ──────────────
-# 🔒 Option 16: Install Tailscale
+# 🔒 Option 17: Install Tailscale
 # ──────────────
 install_tailscale() {
     echo -e "${CYAN}${EMOJI_TAILSCALE}  ${BOLD}Install Tailscale${NC}"
@@ -1956,7 +2018,7 @@ remove_tailscale() {
 }
 
 # ──────────────
-# 🚀 Option 17: OpenCode + GSD
+# 🚀 Option 18: OpenCode + GSD
 # ──────────────
 install_opencode_gsd() {
     echo -e "${MAGENTA}${EMOJI_GSD}  ${BOLD}Install OpenCode + GSD (Rokicool) + OpenChamber${NC}"
@@ -2126,7 +2188,7 @@ install_opencode_gsd() {
 }
 
 # ──────────────
-# 🗑️ Option 17a: Remove OpenCode
+# 🗑️ Option 18a: Remove OpenCode
 # ──────────────
 remove_opencode() {
     echo -e "${RED}🗑️  ${BOLD}Remove OpenCode + GSD + OpenChamber${NC}"
@@ -2141,7 +2203,7 @@ remove_opencode() {
 }
 
 # ──────────────
-# 🐘 Option 15: Install PHP + Laravel
+# 🐘 Option 16: Install PHP + Laravel
 # ──────────────
 install_php_laravel() {
     echo -e "${MAGENTA}🐘  ${BOLD}Install PHP + Laravel${NC}"
@@ -2207,7 +2269,7 @@ install_php_laravel() {
 }
 
 # ──────────────
-# 🗑️ Option 15a: Uninstall PHP + Laravel
+# 🗑️ Option 16a: Uninstall PHP + Laravel
 # ──────────────
 uninstall_php_laravel() {
     echo -e "${RED}🗑️  ${BOLD}Uninstall PHP + Laravel${NC}"
@@ -2299,7 +2361,7 @@ parse_input() {
     local raw="$1"
 
     if [[ -z "$raw" || -z "${raw//[[:space:]]/}" ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-17) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-18) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2307,7 +2369,7 @@ parse_input() {
     read -ra tokens <<< "${raw//,/ }"
 
     if [[ ${#tokens[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}No selection made. Enter numbers (1-17) or 'q' to quit.${NC}"
+        echo -e "${YELLOW}No selection made. Enter numbers (1-18) or 'q' to quit.${NC}"
         return 1
     fi
 
@@ -2315,7 +2377,7 @@ parse_input() {
     local -a errors=()
     local token
     for token in "${tokens[@]}"; do
-        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-7]$ ]]; then
+        if [[ "$token" =~ ^-?[1-9]$ ]] || [[ "$token" =~ ^-?1[0-8]$ ]]; then
             candidates+=("$token")
         else
             errors+=("$token")
@@ -2324,12 +2386,12 @@ parse_input() {
 
     if [[ ${#errors[@]} -gt 0 ]]; then
         if [[ ${#errors[@]} -eq 1 ]]; then
-            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-17)${NC}"
+            echo -e "${RED}Invalid: '${errors[0]}' is not a valid option (1-18)${NC}"
         else
             local error_str
             error_str=$(printf "'%s', " "${errors[@]}")
             error_str="${error_str%, }"
-            echo -e "${RED}Invalid: ${error_str} are not valid options (1-17)${NC}"
+            echo -e "${RED}Invalid: ${error_str} are not valid options (1-18)${NC}"
         fi
         return 1
     fi

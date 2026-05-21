@@ -53,6 +53,7 @@ $EMOJI_MOUSE = "🐁"
 $MENU_LABELS = @(
     "Status Check"
     "Upgrade All Tools"
+    "Set GitHub Token"
     "Install Docker"
     "Create Fancy Prompt (Purple-Pink)"
     "Create Fancy Prompt (Shades of Blue)"
@@ -68,11 +69,12 @@ $MENU_LABELS = @(
     "Install Tailscale"
     "Install OpenCode + GSD (Rokicool) + OpenChamber"
 )
+$EMOJI_TOKEN = "🔑"
 $EMOJI_TAILSCALE = "🔒"
-$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_TAILSCALE, $EMOJI_GSD)
-$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-Tailscale", "Install-OpenCode")
-$MENU_REMOVE_FN = @("", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-Tailscale", "Remove-OpenCode")
-$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+$MENU_EMOJIS = @($EMOJI_STATUS, $EMOJI_UPGRADE, $EMOJI_TOKEN, $EMOJI_DOCKER, $EMOJI_PROMPT, $EMOJI_PROMPT_BLUE, $EMOJI_NETWORK, $EMOJI_GO, $EMOJI_RUST, $EMOJI_PYTHON, $EMOJI_NODE, $EMOJI_BUN, $EMOJI_SPARKLE, $EMOJI_MOUSE, $EMOJI_PHP, $EMOJI_TAILSCALE, $EMOJI_GSD)
+$MENU_INSTALL_FN = @("Get-StatusCheck", "Upgrade-All", "Set-GitHubToken", "Install-Docker", "Install-FancyPrompt", "Install-FancyPromptBlue", "Install-Avahi", "Install-Go", "Install-Rust", "Install-Python", "Install-NvmNode", "Install-Bun", "Install-Yarn", "Disable-MouseReporting", "Install-PHP", "Install-Tailscale", "Install-OpenCode")
+$MENU_REMOVE_FN = @("", "", "", "Remove-Docker", "Remove-FancyPrompt", "Remove-FancyPromptBlue", "Remove-Avahi", "Remove-Go", "Remove-Rust", "Remove-Python", "Remove-NvmNode", "Remove-Bun", "Remove-Yarn", "Enable-MouseReporting", "Remove-PHP", "Remove-Tailscale", "Remove-OpenCode")
+$MENU_SINGLE_SELECT = @(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 $Script:BATCH_MODE = $false
 
 # Detect OS and Architecture
@@ -113,6 +115,51 @@ function Show-PreflightStatus {
     Write-Host "${BOX_V} ${WHITE}Shell:${NC} PowerShell                               ${BOX_V}"
     Write-Host "${CYAN}$BOX_BL$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H$BOX_H${BOX_BR}${NC}"
     Write-Host ""
+}
+
+$_GITHUB_TOKEN_FILE = Join-Path $env:USERPROFILE ".config\dev-fu\github-token"
+
+function Set-GitHubToken {
+    Write-Host "`n${CYAN}${EMOJI_TOKEN}  ${BOLD}Set GitHub Personal Access Token${NC}" -ForegroundColor Cyan
+    Write-Host "${DIM}   Increases GitHub API rate limit from 60 to 5,000 requests/hr${NC}" -ForegroundColor DarkGray
+    Write-Host ""
+
+    if (Test-Path $_GITHUB_TOKEN_FILE) {
+        $cur = Get-Content $_GITHUB_TOKEN_FILE -Raw 2>$null
+        if ($cur -and $cur.Trim()) {
+            $t = $cur.Trim()
+            $masked = $t.Substring(0,4) + "****" + $t.Substring($t.Length - 4)
+            Write-Host "  ${GREEN}${EMOJI_CHECK}${NC} Token already set ($masked)" -ForegroundColor Green
+        }
+    }
+
+    Write-Host "${BOLD}  How to create a GitHub Personal Access Token:${NC}" -ForegroundColor White
+    Write-Host "  1. Go to ${CYAN}https://github.com/settings/tokens${NC}"
+    Write-Host "  2. Click ${BOLD}Generate new token${NC} (classic)"
+    Write-Host "  3. Give it a name (e.g. 'dev-fu')"
+    Write-Host "  4. Select scopes: ${DIM}public_repo${NC} is enough for version checks"
+    Write-Host "  5. Click ${BOLD}Generate token${NC}"
+    Write-Host "  6. Copy the token (starts with ghp_)"
+    Write-Host ""
+
+    $token = Read-Host "  Paste your token (or press Enter to cancel)"
+    if (-not $token) {
+        Write-Host "${DIM}  Cancelled.${NC}" -ForegroundColor DarkGray
+        return
+    }
+
+    $dir = Split-Path $_GITHUB_TOKEN_FILE
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    Set-Content -Path $_GITHUB_TOKEN_FILE -Value $token -NoNewline
+
+    try {
+        $headers = @{ Authorization = "token $token" }
+        $resp = Invoke-RestMethod -Uri "https://api.github.com/rate_limit" -Headers $headers -ErrorAction Stop
+        $remaining = $resp.rate.remaining
+        Write-Host "${GREEN}  Token saved — API rate limit: $remaining requests remaining${NC}" -ForegroundColor Green
+    } catch {
+        Write-Host "${YELLOW}  Token saved but verification failed — check if the token is valid${NC}" -ForegroundColor Yellow
+    }
 }
 
 # Docker Install

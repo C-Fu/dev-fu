@@ -113,20 +113,21 @@ Run `./fu.sh` and select options from the interactive menu:
  1) 🔍  Status Check
  2) 🔄  Compare With Latest
  3) ⬆️  Upgrade All Tools
- 4) 🐳  Install Docker
- 5) ✨  Create Fancy Prompt (Purple-Pink)
- 6) 💎  Create Fancy Prompt (Shades of Blue)
- 7) 🌐  Install Hostname Discovery (Linux only)
- 8) 🐹  Install Go
- 9) ☢️  Install Rust
-10) 🐍  Install Python + Pip + UV + Pipx
-11) 📦  Install NVM + Node LTS
-12) 🥟  Install Bun
-13) ⚡  Install Yarn
-14) 🐁  Disable Mouse Reporting in Terminal
-15) 🐘  Install PHP + Laravel
-16) 🔒  Install Tailscale
-17) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
+ 4) 🔑  Set GitHub Token
+ 5) 🐳  Install Docker
+ 6) ✨  Create Fancy Prompt (Purple-Pink)
+ 7) 💎  Create Fancy Prompt (Shades of Blue)
+ 8) 🌐  Install Hostname Discovery (Linux only)
+ 9) 🐹  Install Go
+10) ☢️  Install Rust
+11) 🐍  Install Python + Pip + UV + Pipx
+12) 📦  Install NVM + Node LTS
+13) 🥟  Install Bun
+14) ⚡  Install Yarn
+15) 🐁  Disable Mouse Reporting in Terminal
+16) 🐘  Install PHP + Laravel
+17) 🔒  Install Tailscale
+18) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
 ```
 
 - **Multi-select:** Enter comma or space-separated numbers (e.g. `7,8 9` to install Go, Rust, and Python together)
