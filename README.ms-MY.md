@@ -3,8 +3,13 @@
 **Satu sekerip untuk menyediakan mesin pembangun yang lengkap (lebih kurang), di mana-mana sahaja.**
 
 ```bash
-# Linux / macOS / WSL2 (bash, zsh, ash, sh — hanya perlukan bash)
+# Linux / macOS / WSL2 (bash, zsh)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+```sh
+# Alpine / BusyBox / ash / sh (tiada process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -40,6 +45,8 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
   <img src="https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="Bash">
   <img src="https://img.shields.io/badge/ZSH-4EAA25?style=for-the-badge&logo=zsh&logoColor=white" alt="ZSH">
   <img src="https://img.shields.io/badge/PowerShell-5391FE?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell">
+  <img src="https://img.shields.io/badge/BusyBox-293E5A?style=for-the-badge&logo=buzzfeed&logoColor=white" alt="BusyBox">
+  <img src="https://img.shields.io/badge/ash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="ash">
   <br>
   <img src="https://img.shields.io/badge/x86__64-6DB33F?style=for-the-badge&logo=amd&logoColor=white" alt="x86_64">
   <img src="https://img.shields.io/badge/ARM64-00C1DE?style=for-the-badge&logo=arm&logoColor=white" alt="ARM64">
@@ -80,7 +87,7 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 
 ## Prasyarat
 
-- Shell yang serasi POSIX (bash, zsh) - atau PowerShell 5.1+ pada Windows  
+- Shell yang serasi POSIX (bash, zsh, ash, sh) - atau PowerShell 5.1+ pada Windows  
 - curl atau wget untuk muat turun  
 - Keistimewaan sudo (untuk pemasangan pakej sistem)  
 - Sambungan Internet
@@ -98,6 +105,9 @@ bash fu.sh
 # Option 2: Run directly from remote (no clone needed)
 # Berfungsi dari mana-mana shell (sh, ash, zsh, fish) — hanya perlukan bash
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+
+# Option 3: Alpine / BusyBox / ash (tiada process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell

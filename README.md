@@ -3,8 +3,13 @@
 **One command to bootstrap a complete (kinda) developer machine, anywhere.**
 
 ```bash
-# Linux / macOS / WSL2 (bash, zsh, ash, sh — just needs bash installed)
+# Linux / macOS / WSL2 (bash, zsh)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+```sh
+# Alpine / BusyBox / ash / sh (no process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -40,6 +45,8 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
   <img src="https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="Bash">
   <img src="https://img.shields.io/badge/ZSH-4EAA25?style=for-the-badge&logo=zsh&logoColor=white" alt="ZSH">
   <img src="https://img.shields.io/badge/PowerShell-5391FE?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell">
+  <img src="https://img.shields.io/badge/BusyBox-293E5A?style=for-the-badge&logo=buzzfeed&logoColor=white" alt="BusyBox">
+  <img src="https://img.shields.io/badge/ash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="ash">
   <br>
   <img src="https://img.shields.io/badge/x86__64-6DB33F?style=for-the-badge&logo=amd&logoColor=white" alt="x86_64">
   <img src="https://img.shields.io/badge/ARM64-00C1DE?style=for-the-badge&logo=arm&logoColor=white" alt="ARM64">
@@ -80,7 +87,7 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 
 ## Prerequisites
 
-- POSIX-compatible shell (bash, zsh) — or PowerShell 5.1+ on Windows
+- POSIX-compatible shell (bash, zsh, ash, sh) — or PowerShell 5.1+ on Windows
 - curl or wget for downloads
 - sudo privileges (for system package installs)
 - Internet connection
@@ -98,6 +105,9 @@ bash fu.sh
 # Option 2: Run directly from remote (no clone needed)
 # Works from any shell (sh, ash, zsh, fish) — just needs bash installed
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+
+# Option 3: Alpine / BusyBox / ash (no process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
