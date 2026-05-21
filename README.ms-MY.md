@@ -26,9 +26,9 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 │ OS: alpine
 │ Package Mgr: apk
 │ Shell: bash
-│ WAN IP: 115.134.7.89
-│ LAN IP: 192.168.0.144
-│ Hostname: alpine-test
+│ WAN IP:
+│ LAN IP:
+│ Hostname:
 │ User: root (0:0)
 ▉════════════════by═C-Fu════════════════
 
