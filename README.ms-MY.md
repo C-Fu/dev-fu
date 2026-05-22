@@ -3,13 +3,13 @@
 **Satu sekerip untuk menyediakan mesin pembangun yang lengkap (lebih kurang), di mana-mana sahaja.**
 
 ```bash
-# Linux / macOS / WSL2 (bash, zsh)
+# bash / zsh
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
 ```sh
-# Alpine / BusyBox / ash / sh (pasang bash dulu jika tiada)
-{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# sh / ash / BusyBox (tiada process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -152,17 +152,35 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 ## Mula Pantas
 
 ```bash
-# Option 1: Clone and run
+# Option 1: Klon dan jalankan
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
 bash fu.sh
+```
 
-# Option 2: Run directly from remote (no clone needed)
-# Berfungsi dari mana-mana shell (sh, ash, zsh, fish) — hanya perlukan bash
+```bash
+# Option 2: bash (Linux / macOS / WSL2)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
 
-# Option 3: Alpine / BusyBox / ash (auto-pasang bash jika tiada)
-{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+```zsh
+# Option 2: zsh (lalai macOS)
+zsh -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
+```
+
+```sh
+# Option 2: sh / dash (lalai Debian)
+sh -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
+```
+
+```sh
+# Option 2: ash / BusyBox (lalai Alpine)
+ash -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
+```
+
+```fish
+# Option 2: fish
+bash -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
 ```
 
 ```powershell

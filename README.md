@@ -3,13 +3,13 @@
 **One command to bootstrap a complete (kinda) developer machine, anywhere.**
 
 ```bash
-# Linux / macOS / WSL2 (bash, zsh)
+# bash / zsh
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
 ```
 
 ```sh
-# Alpine / BusyBox / ash / sh (installs bash first if missing)
-{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# sh / ash / BusyBox (no process substitution)
+curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
 ```
 
 ```powershell
@@ -155,13 +155,31 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
 bash fu.sh
+```
 
-# Option 2: Run directly from remote (no clone needed)
-# Works from any shell (sh, ash, zsh, fish) — just needs bash installed
+```bash
+# Option 2: bash (Linux / macOS / WSL2)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
 
-# Option 3: Alpine / BusyBox / ash (auto-installs bash if missing)
-{ command -v bash >/dev/null || apk add bash 2>/dev/null || apt-get install -y bash 2>/dev/null; } && curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+```zsh
+# Option 2: zsh (macOS default)
+zsh -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
+```
+
+```sh
+# Option 2: sh / dash (Debian default)
+sh -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
+```
+
+```sh
+# Option 2: ash / BusyBox (Alpine default)
+ash -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
+```
+
+```fish
+# Option 2: fish
+bash -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
 ```
 
 ```powershell
