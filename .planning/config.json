@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "mode": "yolo",
+  "granularity": "coarse",
+  "parallelization": true,
+  "commit_docs": true,
+  "model_profile": "smart",
+  "project": {
+    "code": "dev-fu",
+    "title": "dev-fu / flu.sh"
+  },
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": false,
+    "auto_advance": false
+  },
+  "sub_repos": []
+}
