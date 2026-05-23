@@ -424,6 +424,8 @@ _tui_fallback_prompt() {
       ;;
   esac
 
+  _fb_selection=$(printf '%s' "$_fb_selection" | awk '{print $1 + 0}')
+
   # Check for zero (0-based selection is internal, but input is 1-based)
   if [ "$_fb_selection" -eq 0 ]; then
     printf 'Invalid selection\n'
@@ -658,6 +660,10 @@ tui_select() {
   done
   unset _ts_arg _ts_safe
 
+  if [ "$_ts_count" -eq 0 ]; then
+    return 1
+  fi
+
   _ts_cursor=1
   _ts_scroll=1
   _ts_show_help=false
@@ -747,6 +753,7 @@ tui_select() {
         ;;
       "$TUI_KEY_ESC"|"$TUI_KEY_Q")
         tui_restore
+        TUI_RESULT=''
         unset _ts_max_scroll _ts_bottom _ts_target _ts_go_digits _ts_error_msg
         return 1
         ;;
