@@ -31,13 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Script displays a numbered text prompt instead of TUI when TERM=dumb or no TTY is available
   4. Every screen shows a contextual help footer listing available keybindings
   5. Terminal state is fully restored on every exit path including Ctrl-C and signals (INT, TERM, HUP, QUIT) — verified working on bash, dash, and busybox sh
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
-**UI hint**: yes
+- [ ] 01-01-PLAN.md — Terminal primitives, signal handling, shell-aware input system, and fallback prompt
+- [ ] 01-02-PLAN.md — Single-select menu widget with navigation, rendering, and number jump
 
 ### Phase 2: Interactive Widgets
 **Goal**: Users can interact with checklists, radio lists, text inputs, and confirmation dialogs using consistent keyboard patterns, all built on the Phase 1 TUI engine
@@ -129,7 +127,7 @@ Phases execute in numeric order. With parallelization enabled:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TUI Engine Core | 0/? | Not started | - |
+| 1. TUI Engine Core | 0/2 | Planned | - |
 | 2. Interactive Widgets | 0/? | Not started | - |
 | 3. Menu System | 0/? | Not started | - |
 | 4. Module Architecture | 0/? | Not started | - |
