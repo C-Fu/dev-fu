@@ -11,10 +11,10 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 
 Phase: 1 of 6 (TUI Engine Core)
 Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-05-23 — Roadmap created
+Status: Context gathered
+Last activity: 2026-05-23 — Phase 1 context gathered
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - (Roadmap): 7 research phases consolidated to 6 with coarse granularity — Terminal Primitives + Menu Widget merged into Phase 1
+- (Phase 1 context): tui.sh — single file, source+function API, shell-aware hybrid input, full-screen box rendering, auto-detect Unicode, configurable key timeout
 
 ### Pending Todos
 
@@ -63,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-23
-Stopped at: Roadmap created, phases defined, ready for Phase 1 planning
-Resume file: None
+Stopped at: Phase 1 context gathered, ready for planning
+Resume file: .planning/phases/01-tui-engine-core/01-CONTEXT.md
