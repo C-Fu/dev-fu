@@ -672,7 +672,145 @@ tui_select() {
 
   tui_init
 
-  # Main event loop — implemented in task 2
-  tui_restore
-  return 1
+  while :; do
+    _tui_render_select
+    key=$(_tui_read_key)
+
+    if [ "$key" != "$TUI_KEY_NUMBER" ] && [ -n "$_ts_go_digits" ]; then
+      _ts_target=$(printf '%s' "$_ts_go_digits" | awk '{print $1 + 0}')
+      if [ "$_ts_target" -ge 1 ] && [ "$_ts_target" -le "$_ts_count" ]; then
+        _ts_cursor=$_ts_target
+        _ts_scroll=$((_ts_target - _ts_page_size / 2))
+        [ "$_ts_scroll" -lt 1 ] && _ts_scroll=1
+        _ts_max_scroll=$((_ts_count - _ts_page_size + 1))
+        [ "$_ts_max_scroll" -lt 1 ] && _ts_max_scroll=1
+        [ "$_ts_scroll" -gt "$_ts_max_scroll" ] && _ts_scroll=$_ts_max_scroll
+      else
+        _ts_error_msg="Item $_ts_target not found"
+      fi
+      _ts_go_digits=''
+    fi
+
+    case "$key" in
+      "$TUI_KEY_UP")
+        if [ "$_ts_cursor" -gt 1 ]; then
+          _ts_cursor=$((_ts_cursor - 1))
+          if [ "$_ts_cursor" -lt "$_ts_scroll" ]; then
+            _ts_scroll=$((_ts_scroll - 1))
+          fi
+        fi
+        _ts_error_msg=''
+        ;;
+      "$TUI_KEY_DOWN")
+        if [ "$_ts_cursor" -lt "$_ts_count" ]; then
+          _ts_cursor=$((_ts_cursor + 1))
+          _ts_bottom=$((_ts_scroll + _ts_page_size - 1))
+          if [ "$_ts_cursor" -gt "$_ts_bottom" ]; then
+            _ts_scroll=$((_ts_scroll + 1))
+          fi
+        fi
+        _ts_error_msg=''
+        ;;
+      "$TUI_KEY_PGUP")
+        _ts_scroll=$((_ts_scroll - _ts_page_size))
+        [ "$_ts_scroll" -lt 1 ] && _ts_scroll=1
+        _ts_cursor=$_ts_scroll
+        _ts_error_msg=''
+        ;;
+      "$TUI_KEY_PGDN")
+        _ts_scroll=$((_ts_scroll + _ts_page_size))
+        _ts_max_scroll=$((_ts_count - _ts_page_size + 1))
+        [ "$_ts_max_scroll" -lt 1 ] && _ts_max_scroll=1
+        [ "$_ts_scroll" -gt "$_ts_max_scroll" ] && _ts_scroll=$_ts_max_scroll
+        _ts_bottom=$((_ts_scroll + _ts_page_size - 1))
+        [ "$_ts_bottom" -gt "$_ts_count" ] && _ts_bottom=$_ts_count
+        _ts_cursor=$_ts_bottom
+        _ts_error_msg=''
+        ;;
+      "$TUI_KEY_HOME")
+        _ts_cursor=1; _ts_scroll=1; _ts_error_msg=''
+        ;;
+      "$TUI_KEY_END")
+        _ts_cursor=$_ts_count
+        _ts_max_scroll=$((_ts_count - _ts_page_size + 1))
+        [ "$_ts_max_scroll" -lt 1 ] && _ts_max_scroll=1
+        _ts_scroll=$_ts_max_scroll
+        _ts_error_msg=''
+        ;;
+      "$TUI_KEY_ENTER")
+        tui_restore
+        _ts_idx=$((_ts_cursor - 1))
+        TUI_RESULT=$_ts_idx
+        printf '%d\n' "$_ts_idx"
+        unset _ts_idx _ts_max_scroll _ts_bottom _ts_target _ts_go_digits _ts_error_msg
+        return 0
+        ;;
+      "$TUI_KEY_ESC"|"$TUI_KEY_Q")
+        tui_restore
+        unset _ts_max_scroll _ts_bottom _ts_target _ts_go_digits _ts_error_msg
+        return 1
+        ;;
+      "$TUI_KEY_HELP")
+        if [ "$_ts_show_help" = "true" ]; then
+          _ts_show_help=false
+        else
+          _ts_show_help=true
+        fi
+        ;;
+      "$TUI_KEY_NUMBER")
+        _ts_go_digits="${_ts_go_digits}${_tui_digit_char}"
+        _ts_error_msg=''
+        _ts_target=$(printf '%s' "$_ts_go_digits" | awk '{print $1 + 0}')
+        if [ "$_ts_target" -ge 1 ] && [ "$_ts_target" -le "$_ts_count" ]; then
+          _ts_next=$((_ts_target * 10))
+          if [ "$_ts_next" -gt "$_ts_count" ]; then
+            _ts_cursor=$_ts_target
+            _ts_scroll=$((_ts_target - _ts_page_size / 2))
+            [ "$_ts_scroll" -lt 1 ] && _ts_scroll=1
+            _ts_max_scroll=$((_ts_count - _ts_page_size + 1))
+            [ "$_ts_max_scroll" -lt 1 ] && _ts_max_scroll=1
+            [ "$_ts_scroll" -gt "$_ts_max_scroll" ] && _ts_scroll=$_ts_max_scroll
+            _ts_go_digits=''
+          fi
+        elif [ "$_ts_target" -gt "$_ts_count" ]; then
+          _ts_error_msg="Item $_ts_target not found"
+          _ts_go_digits=''
+        fi
+        ;;
+    esac
+  done
 }
+
+# ---------------------------------------------------------------------------
+# Demo / standalone execution (only when run directly, not sourced)
+# ---------------------------------------------------------------------------
+
+case "${0##*/}" in
+  tui.sh)
+    if [ "${1:-}" = "--demo" ]; then
+      shift
+      if [ $# -eq 0 ]; then
+        set -- "Core utilities" "Network tools" "Development tools" \
+               "Documentation" "Extra packages" "Security tools" \
+               "System monitoring" "Database clients" "Cloud CLI tools" \
+               "Container tools" "Version control" "Build tools" \
+               "Text editors" "Terminal utilities" "File managers" \
+               "Media codecs" "Graphics tools" "Office suite" \
+               "Virtualization" "Backup utilities" "DNS tools" \
+               "VPN clients" "SSH tools" "Python packages" "Node.js global"
+      fi
+      tui_select "TUI Engine Demo" "Select an item to test the widget:" "$@"
+      _demo_rc=$?
+      if [ $_demo_rc -eq 0 ]; then
+        printf 'Selected index: %s (TUI_RESULT=%s)\n' "$TUI_RESULT" "$TUI_RESULT"
+      else
+        printf 'Cancelled\n'
+      fi
+      exit $_demo_rc
+    fi
+    if [ $# -gt 0 ]; then
+      tui_select "$@"
+      exit $?
+    fi
+    ;;
+esac
