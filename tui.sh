@@ -445,3 +445,234 @@ _tui_fallback_prompt() {
   unset _fb_title _fb_subtitle _fb_count _fb_i _fb_item _fb_selection _fb_idx
   return 0
 }
+
+# ---------------------------------------------------------------------------
+# Section 10: Box drawing helper
+# ---------------------------------------------------------------------------
+
+_tui_draw_box() {
+  _db_x=$1; _db_y=$2; _db_w=$3; _db_h=$4; _db_title=$5
+  _db_inner=$((_db_w - 2))
+  _db_r=$_db_y
+
+  move_cursor "$_db_r" "$_db_x"
+  printf '%s' "$TUI_BOX_TL"
+  _db_i=1; while [ "$_db_i" -le "$_db_inner" ]; do printf '%s' "$TUI_BOX_H"; _db_i=$((_db_i + 1)); done
+  printf '%s' "$TUI_BOX_TR"
+  _db_r=$((_db_r + 1))
+
+  move_cursor "$_db_r" "$_db_x"
+  printf '%s' "$TUI_BOX_V"
+  if [ -n "$_db_title" ]; then
+    _db_pad=$((_db_inner - ${#_db_title}))
+    _db_pl=$((_db_pad / 2)); _db_pr=$((_db_pad - _db_pl))
+    _db_j=0; while [ "$_db_j" -lt "$_db_pl" ]; do printf ' '; _db_j=$((_db_j + 1)); done
+    printf '%s%s%s' "$TUI_BOLD" "$_db_title" "$TUI_RESET"
+    _db_j=0; while [ "$_db_j" -lt "$_db_pr" ]; do printf ' '; _db_j=$((_db_j + 1)); done
+  else
+    _db_j=0; while [ "$_db_j" -lt "$_db_inner" ]; do printf ' '; _db_j=$((_db_j + 1)); done
+  fi
+  printf '%s' "$TUI_BOX_V"
+  _db_r=$((_db_r + 1))
+
+  move_cursor "$_db_r" "$_db_x"
+  printf '%s' "$TUI_BOX_V"
+  _db_i=1; while [ "$_db_i" -le "$_db_inner" ]; do printf '%s' "$TUI_BOX_H"; _db_i=$((_db_i + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _db_r=$((_db_r + 1))
+
+  _db_body=$((_db_h - 4))
+  _db_b=1
+  while [ "$_db_b" -le "$_db_body" ]; do
+    move_cursor "$_db_r" "$_db_x"
+    printf '%s' "$TUI_BOX_V"
+    _db_j=0; while [ "$_db_j" -lt "$_db_inner" ]; do printf ' '; _db_j=$((_db_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _db_r=$((_db_r + 1))
+    _db_b=$((_db_b + 1))
+  done
+
+  move_cursor "$_db_r" "$_db_x"
+  printf '%s' "$TUI_BOX_BL"
+  _db_i=1; while [ "$_db_i" -le "$_db_inner" ]; do printf '%s' "$TUI_BOX_H"; _db_i=$((_db_i + 1)); done
+  printf '%s' "$TUI_BOX_BR"
+
+  unset _db_x _db_y _db_w _db_h _db_title _db_inner _db_r _db_i _db_j _db_pad _db_pl _db_pr _db_body _db_b
+}
+
+# ---------------------------------------------------------------------------
+# Section 11: Rendering function for tui_select
+# ---------------------------------------------------------------------------
+
+# shellcheck disable=SC2034
+_tui_render_select() {
+  clear_screen
+  _rs_rows=$(tput lines 2>/dev/null || printf '24')
+  _rs_cols=$(tput cols 2>/dev/null || printf '80')
+  _rs_box_w=$((_rs_cols - 4))
+  [ "$_rs_box_w" -lt 40 ] && _rs_box_w=40
+  _rs_inner=$((_rs_box_w - 2))
+  _rs_x=2
+  _rs_r=1
+
+  move_cursor "$_rs_r" "$_rs_x"
+  printf '%s' "$TUI_BOX_TL"
+  _rs_i=1; while [ "$_rs_i" -le "$_rs_inner" ]; do printf '%s' "$TUI_BOX_H"; _rs_i=$((_rs_i + 1)); done
+  printf '%s' "$TUI_BOX_TR"
+  _rs_r=$((_rs_r + 1))
+
+  move_cursor "$_rs_r" "$_rs_x"
+  printf '%s' "$TUI_BOX_V"
+  _rs_tlen=${#_ts_title}
+  if [ "$_rs_tlen" -gt "$_rs_inner" ]; then _rs_tlen=$_rs_inner; fi
+  _rs_tshow=$(printf '%s' "$_ts_title" | awk -v L="$_rs_tlen" '{print substr($0,1,L)}')
+  _rs_pad=$((_rs_inner - ${#_rs_tshow}))
+  _rs_pl=$((_rs_pad / 2)); _rs_pr=$((_rs_pad - _rs_pl))
+  _rs_j=0; while [ "$_rs_j" -lt "$_rs_pl" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+  printf '%s%s%s' "$TUI_BOLD" "$_rs_tshow" "$TUI_RESET"
+  _rs_j=0; while [ "$_rs_j" -lt "$_rs_pr" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rs_r=$((_rs_r + 1))
+
+  if [ -n "$_ts_subtitle" ]; then
+    move_cursor "$_rs_r" "$_rs_x"
+    printf '%s' "$TUI_BOX_V"
+    _rs_slen=${#_ts_subtitle}
+    if [ "$_rs_slen" -gt "$_rs_inner" ]; then _rs_slen=$_rs_inner; fi
+    _rsshow=$(printf '%s' "$_ts_subtitle" | awk -v L="$_rs_slen" '{print substr($0,1,L)}')
+    _rs_spad=$((_rs_inner - ${#_rsshow}))
+    _rs_spl=$((_rs_spad / 2)); _rs_spr=$((_rs_spad - _rs_spl))
+    _rs_j=0; while [ "$_rs_j" -lt "$_rs_spl" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+    printf '%s%s%s' "$TUI_DIM" "$_rsshow" "$TUI_RESET"
+    _rs_j=0; while [ "$_rs_j" -lt "$_rs_spr" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rs_r=$((_rs_r + 1))
+  fi
+
+  move_cursor "$_rs_r" "$_rs_x"
+  printf '%s' "$TUI_BOX_V"
+  _rs_i=1; while [ "$_rs_i" -le "$_rs_inner" ]; do printf '%s' "$TUI_BOX_H"; _rs_i=$((_rs_i + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rs_r=$((_rs_r + 1))
+
+  _rs_status_row=$((_rs_rows - 3))
+  _rs_bottom_row=$((_rs_rows - 2))
+  _rs_footer_row=$((_rs_rows - 1))
+  _ts_page_size=$((_rs_status_row - _rs_r + 1))
+  [ "$_ts_page_size" -lt 1 ] && _ts_page_size=1
+
+  if [ "$_ts_scroll" -gt 1 ]; then
+    move_cursor "$_rs_r" $((_rs_x + _rs_box_w - 9))
+    printf '%s%smore%s' "$TUI_DIM" '↑' "$TUI_RESET"
+  fi
+
+  _rs_end=$((_ts_scroll + _ts_page_size - 1))
+  [ "$_rs_end" -gt "$_ts_count" ] && _rs_end=$_ts_count
+  _rs_maxlab=$((_rs_inner - 6))
+  [ "$_rs_maxlab" -lt 5 ] && _rs_maxlab=5
+  _rs_i=$_ts_scroll
+  while [ "$_rs_i" -le "$_rs_end" ]; do
+    # shellcheck disable=SC2086
+    eval "_rs_lab=\$_ts_label_$_rs_i"
+    # shellcheck disable=SC2154
+    _rs_trunc=$(printf '%s' "$_rs_lab" | awk -v L="$_rs_maxlab" '{print substr($0,1,L)}')
+    move_cursor "$_rs_r" "$_rs_x"
+    printf '%s' "$TUI_BOX_V"
+    if [ "$_rs_i" -eq "$_ts_cursor" ]; then
+      printf '%s%3d) %s' "$TUI_REV" "$_rs_i" "$_rs_trunc"
+      _rs_used=$((5 + ${#_rs_trunc}))
+      _rs_fill=$((_rs_inner - _rs_used))
+      [ "$_rs_fill" -gt 0 ] && _rs_j=0 && while [ "$_rs_j" -lt "$_rs_fill" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+      printf '%s' "$TUI_RESET"
+    else
+      printf '%3d) %s' "$_rs_i" "$_rs_trunc"
+      _rs_used=$((5 + ${#_rs_trunc}))
+      _rs_fill=$((_rs_inner - _rs_used))
+      [ "$_rs_fill" -gt 0 ] && _rs_j=0 && while [ "$_rs_j" -lt "$_rs_fill" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+    fi
+    printf '%s' "$TUI_BOX_V"
+    _rs_r=$((_rs_r + 1))
+    _rs_i=$((_rs_i + 1))
+  done
+
+  while [ "$_rs_r" -le "$_rs_status_row" ]; do
+    move_cursor "$_rs_r" "$_rs_x"
+    printf '%s' "$TUI_BOX_V"
+    _rs_j=0; while [ "$_rs_j" -lt "$_rs_inner" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rs_r=$((_rs_r + 1))
+  done
+
+  if [ "$_rs_end" -lt "$_ts_count" ]; then
+    _rs_drow=$((_rs_r - 1))
+    move_cursor "$_rs_drow" $((_rs_x + _rs_box_w - 9))
+    printf '%s%smore%s' "$TUI_DIM" '↓' "$TUI_RESET"
+  fi
+
+  move_cursor "$_rs_status_row" "$_rs_x"
+  printf '%s' "$TUI_BOX_V"
+  _rs_j=0; while [ "$_rs_j" -lt "$_rs_inner" ]; do printf ' '; _rs_j=$((_rs_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  move_cursor "$_rs_status_row" $((_rs_x + 2))
+  if [ -n "$_ts_go_digits" ]; then
+    printf '%sGo to: %s_%s' "$TUI_BOLD" "$_ts_go_digits" "$TUI_RESET"
+  elif [ -n "$_ts_error_msg" ]; then
+    printf '%s%s%s' "$TUI_RED" "$_ts_error_msg" "$TUI_RESET"
+  else
+    printf 'Item %d of %d' "$_ts_cursor" "$_ts_count"
+  fi
+
+  move_cursor "$_rs_bottom_row" "$_rs_x"
+  printf '%s' "$TUI_BOX_BL"
+  _rs_i=1; while [ "$_rs_i" -le "$_rs_inner" ]; do printf '%s' "$TUI_BOX_H"; _rs_i=$((_rs_i + 1)); done
+  printf '%s' "$TUI_BOX_BR"
+
+  move_cursor "$_rs_footer_row" "$_rs_x"
+  if [ "$_ts_show_help" = "true" ]; then
+    _rs_ft='Up/Dn Move  Enter Select  Esc/q Cancel  PgUp/PgDn Page  Home/End  j/k Vi  ? Help  0-9 Jump'
+  else
+    _rs_ft='Up/Dn Move  Enter Select  Esc Cancel  ? Keys'
+  fi
+  printf '%s%s%s' "$TUI_DIM" "$_rs_ft" "$TUI_RESET"
+
+  printf '%s[?25l' "$ESC"
+
+  unset _rs_rows _rs_cols _rs_box_w _rs_inner _rs_x _rs_r _rs_i _rs_j
+  unset _rs_tlen _rs_tshow _rs_pad _rs_pl _rs_pr _rs_slen _rsshow _rs_spad _rs_spl _rs_spr
+  unset _rs_status_row _rs_bottom_row _rs_footer_row _rs_end _rs_maxlab _rs_lab _rs_trunc
+  unset _rs_used _rs_fill _rs_drow _rs_ft
+}
+
+# ---------------------------------------------------------------------------
+# Section 12: tui_select() function
+# ---------------------------------------------------------------------------
+
+tui_select() {
+  _ts_title=$1; _ts_subtitle=$2; shift 2
+
+  _ts_count=0
+  for _ts_arg in "$@"; do
+    _ts_count=$((_ts_count + 1))
+    _ts_safe=$(printf '%s' "$_ts_arg" | sed "s/'/'\\\\''/g")
+    eval "_ts_label_$_ts_count='$_ts_safe'"
+  done
+  unset _ts_arg _ts_safe
+
+  _ts_cursor=1
+  _ts_scroll=1
+  _ts_show_help=false
+  _ts_go_digits=''
+  _ts_error_msg=''
+  _ts_page_size=1
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    _tui_fallback_prompt "$_ts_title" "$_ts_subtitle" "$@"
+    return $?
+  fi
+
+  tui_init
+
+  # Main event loop — implemented in task 2
+  tui_restore
+  return 1
+}
