@@ -117,6 +117,7 @@ tui_restore() {
     stty "$_tui_saved_stty" 2>/dev/null || true
   fi
   printf '%s[?25h' "$ESC"
+  clear_screen
   trap - INT TERM HUP QUIT
   _tui_saved_stty=''
 }
@@ -174,203 +175,138 @@ TUI_KEY_UNKNOWN="unknown"
 # Section 8: Shell-aware key reading
 # ---------------------------------------------------------------------------
 
-# Read a single raw byte from /dev/tty.
+# Read a single raw byte from /dev/tty into _tui_rb_byte.
 # Uses read -rsn1 on bash/zsh (no process spawn), dd on POSIX shells.
-# Prints the byte to stdout. Returns 0 on success, 1 on failure (EOF).
+# Returns 0 on success, 1 on failure (EOF).
+# IMPORTANT: Caller must NOT wrap in $() — use _tui_rb_byte directly.
 _tui_read_byte() {
   _tui_rb_byte=''
   if [ "$_tui_has_read_n" = "true" ]; then
-    # shellcheck disable=SC3045  # -s is bash/zsh only; guarded by _tui_has_read_n check
+    # shellcheck disable=SC3045
     IFS= read -rsn1 _tui_rb_byte 2>/dev/null </dev/tty || true
   else
     _tui_rb_byte=$(dd bs=1 count=1 2>/dev/null </dev/tty || true)
   fi
-  if [ -z "$_tui_rb_byte" ]; then
-    unset _tui_rb_byte
-    return 1
-  fi
-  printf '%s' "$_tui_rb_byte"
-  unset _tui_rb_byte
-  return 0
+  [ -n "$_tui_rb_byte" ]
 }
 
 # High-level key reader with escape sequence parsing.
-# Returns a symbolic key name string via stdout.
-# Sets _tui_digit_char when returning TUI_KEY_NUMBER.
+# Sets _tui_rk_result to the symbolic key name.
+# Sets _tui_rk_digit when result is TUI_KEY_NUMBER.
+# IMPORTANT: Caller must NOT wrap in $() — use _tui_rk_result directly.
+# shellcheck disable=SC2034
 _tui_read_key() {
-  _tui_rk_byte=$(_tui_read_byte) || { printf '%s' "$TUI_KEY_UNKNOWN"; return; }
+  _tui_read_byte || { _tui_rk_result="$TUI_KEY_UNKNOWN"; return; }
 
-  _tui_rk_nl=$(printf '\n')
+  _tui_rk_nl='
+'
   _tui_rk_cr=$(printf '\r')
   _tui_rk_esc=$(printf '\033')
   _tui_rk_tab=$(printf '\t')
-  _tui_rk_bs=$(printf '\010')    # 0x08 BS
-  _tui_rk_del=$(printf '\177')   # 0x7f DEL
+  _tui_rk_bs=$(printf '\010')
+  _tui_rk_del=$(printf '\177')
 
-  # Simple single-character keys
-  case "$_tui_rk_byte" in
-    "$_tui_rk_nl" | "$_tui_rk_cr")
-      printf '%s' "$TUI_KEY_ENTER"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+  case "$_tui_rb_byte" in
+    "$_tui_rk_nl"|"$_tui_rk_cr")
+      _tui_rk_result="$TUI_KEY_ENTER"
       ;;
     ' ')
-      printf '%s' "$TUI_KEY_SPACE"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_SPACE"
       ;;
     "$_tui_rk_tab")
-      printf '%s' "$TUI_KEY_TAB"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_TAB"
       ;;
-    "$_tui_rk_del" | "$_tui_rk_bs")
-      printf '%s' "$TUI_KEY_BACKSPACE"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+    "$_tui_rk_del"|"$_tui_rk_bs")
+      _tui_rk_result="$TUI_KEY_BACKSPACE"
       ;;
-    'q' | 'Q')
-      printf '%s' "$TUI_KEY_Q"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+    'q'|'Q')
+      _tui_rk_result="$TUI_KEY_Q"
       ;;
     '?')
-      printf '%s' "$TUI_KEY_HELP"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_HELP"
       ;;
     'j')
-      printf '%s' "$TUI_KEY_DOWN"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_DOWN"
       ;;
     'k')
-      printf '%s' "$TUI_KEY_UP"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_UP"
       ;;
     'G')
-      printf '%s' "$TUI_KEY_END"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_END"
       ;;
     'g')
-      printf '%s' "$TUI_KEY_HOME"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_result="$TUI_KEY_HOME"
       ;;
     [0-9])
-      _tui_digit_char="$_tui_rk_byte"
-      printf '%s' "$TUI_KEY_NUMBER"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      return
+      _tui_rk_digit="$_tui_rb_byte"
+      _tui_rk_result="$TUI_KEY_NUMBER"
       ;;
-  esac
+    "$_tui_rk_esc")
+      _tui_key_timeout=${TUI_KEY_TIMEOUT:-10}
+      stty min 0 time "$_tui_key_timeout" 2>/dev/null || true
 
-  # Escape sequence parsing
-  if [ "$_tui_rk_byte" = "$_tui_rk_esc" ]; then
-    _tui_key_timeout=${TUI_KEY_TIMEOUT:-10}  # deciseconds, default 100ms
-    stty min 0 time "$_tui_key_timeout" 2>/dev/null || true
+      _tui_read_byte || _tui_rb_byte=''
+      _tui_rk_c1="$_tui_rb_byte"
 
-    _tui_rk_c1=$(_tui_read_byte) || _tui_rk_c1=''
-
-    if [ -z "$_tui_rk_c1" ]; then
-      # Bare Esc keypress — no continuation byte within timeout
-      stty min 1 time 0 2>/dev/null || true
-      printf '%s' "$TUI_KEY_ESC"
-      unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-      unset _tui_key_timeout _tui_rk_c1
-      return
-    fi
-
-    if [ "$_tui_rk_c1" = '[' ] || [ "$_tui_rk_c1" = 'O' ]; then
-      _tui_rk_c2=$(_tui_read_byte) || _tui_rk_c2=''
-      if [ -z "$_tui_rk_c2" ]; then
+      if [ -z "$_tui_rk_c1" ]; then
         stty min 1 time 0 2>/dev/null || true
-        printf '%s' "$TUI_KEY_UNKNOWN"
-        unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
+        _tui_rk_result="$TUI_KEY_ESC"
+        unset _tui_key_timeout _tui_rk_c1
+        return
+      fi
+
+      if [ "$_tui_rk_c1" = '[' ] || [ "$_tui_rk_c1" = 'O' ]; then
+        _tui_read_byte || _tui_rb_byte=''
+        _tui_rk_c2="$_tui_rb_byte"
+
+        if [ -z "$_tui_rk_c2" ]; then
+          stty min 1 time 0 2>/dev/null || true
+          _tui_rk_result="$TUI_KEY_UNKNOWN"
+          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
+          return
+        fi
+
+        case "$_tui_rk_c2" in
+          A) _tui_rk_result="$TUI_KEY_UP" ;;
+          B) _tui_rk_result="$TUI_KEY_DOWN" ;;
+          C) _tui_rk_result="$TUI_KEY_RIGHT" ;;
+          D) _tui_rk_result="$TUI_KEY_LEFT" ;;
+          H) _tui_rk_result="$TUI_KEY_HOME" ;;
+          F) _tui_rk_result="$TUI_KEY_END" ;;
+          1|4|5|6)
+            _tui_read_byte || _tui_rb_byte=''
+            _tui_rk_c3="$_tui_rb_byte"
+            stty min 1 time 0 2>/dev/null || true
+            if [ "$_tui_rk_c3" = '~' ]; then
+              case "$_tui_rk_c2" in
+                5) _tui_rk_result="$TUI_KEY_PGUP" ;;
+                6) _tui_rk_result="$TUI_KEY_PGDN" ;;
+                1) _tui_rk_result="$TUI_KEY_HOME" ;;
+                4) _tui_rk_result="$TUI_KEY_END" ;;
+                *) _tui_rk_result="$TUI_KEY_UNKNOWN" ;;
+              esac
+            else
+              _tui_rk_result="$TUI_KEY_UNKNOWN"
+            fi
+            unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2 _tui_rk_c3
+            return
+            ;;
+        esac
+        stty min 1 time 0 2>/dev/null || true
         unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
         return
       fi
 
-      # Parse based on second continuation byte
-      case "$_tui_rk_c2" in
-        A)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_UP"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        B)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_DOWN"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        C)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_RIGHT"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        D)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_LEFT"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        H)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_HOME"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        F)
-          stty min 1 time 0 2>/dev/null || true
-          printf '%s' "$TUI_KEY_END"
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
-          return
-          ;;
-        1 | 4 | 5 | 6)
-          # 3-byte sequences: ESC [ N ~
-          # 1~ = home, 4~ = end, 5~ = pgup, 6~ = pgdn
-          _tui_rk_c3=$(_tui_read_byte) || _tui_rk_c3=''
-          stty min 1 time 0 2>/dev/null || true
-          if [ "$_tui_rk_c3" = '~' ]; then
-            case "$_tui_rk_c2" in
-              5) printf '%s' "$TUI_KEY_PGUP" ;;
-              6) printf '%s' "$TUI_KEY_PGDN" ;;
-              1) printf '%s' "$TUI_KEY_HOME" ;;
-              4) printf '%s' "$TUI_KEY_END" ;;
-              *)  printf '%s' "$TUI_KEY_UNKNOWN" ;;
-            esac
-          else
-            printf '%s' "$TUI_KEY_UNKNOWN"
-          fi
-          unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-          unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2 _tui_rk_c3
-          return
-          ;;
-      esac
-    fi
-
-    # Unrecognized escape sequence — discard and return unknown
-    stty min 1 time 0 2>/dev/null || true
-    printf '%s' "$TUI_KEY_UNKNOWN"
-    unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
-    unset _tui_key_timeout _tui_rk_c1
-    return
-  fi
-
-  # Any other single byte not matched above
-  printf '%s' "$TUI_KEY_UNKNOWN"
-  unset _tui_rk_byte _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
+      stty min 1 time 0 2>/dev/null || true
+      _tui_rk_result="$TUI_KEY_UNKNOWN"
+      unset _tui_key_timeout _tui_rk_c1
+      return
+      ;;
+    *)
+      _tui_rk_result="$TUI_KEY_UNKNOWN"
+      ;;
+  esac
+  unset _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
 }
 
 # ---------------------------------------------------------------------------
@@ -680,7 +616,9 @@ tui_select() {
 
   while :; do
     _tui_render_select
-    key=$(_tui_read_key)
+    # shellcheck disable=SC2034
+    _tui_read_key
+    key="$_tui_rk_result"
 
     if [ "$key" != "$TUI_KEY_NUMBER" ] && [ -n "$_ts_go_digits" ]; then
       _ts_target=$(printf '%s' "$_ts_go_digits" | awk '{print $1 + 0}')
@@ -765,7 +703,7 @@ tui_select() {
         fi
         ;;
       "$TUI_KEY_NUMBER")
-        _ts_go_digits="${_ts_go_digits}${_tui_digit_char}"
+        _ts_go_digits="${_ts_go_digits}${_tui_rk_digit}"
         _ts_error_msg=''
         _ts_target=$(printf '%s' "$_ts_go_digits" | awk '{print $1 + 0}')
         if [ "$_ts_target" -ge 1 ] && [ "$_ts_target" -le "$_ts_count" ]; then
