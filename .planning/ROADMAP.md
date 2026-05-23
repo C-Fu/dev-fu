@@ -12,7 +12,7 @@ Build a zero-dependency, curl-pipe-bash TUI menu system that fetches and execute
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget
+- [x] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget (completed 2026-05-23)
 - [ ] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract
 - [ ] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs
 - [ ] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts
@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Terminal primitives, signal handling, shell-aware input system, and fallback prompt
-- [ ] 01-02-PLAN.md — Single-select menu widget with navigation, rendering, and number jump
+- [x] 01-01-PLAN.md — Terminal primitives, signal handling, shell-aware input system, and fallback prompt
+- [x] 01-02-PLAN.md — Single-select menu widget with navigation, rendering, and number jump
 
 ### Phase 2: Interactive Widgets
 **Goal**: Users can interact with checklists, radio lists, text inputs, and confirmation dialogs using consistent keyboard patterns, all built on the Phase 1 TUI engine
@@ -127,7 +127,7 @@ Phases execute in numeric order. With parallelization enabled:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. TUI Engine Core | 0/2 | Planned | - |
+| 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
 | 2. Interactive Widgets | 0/? | Not started | - |
 | 3. Menu System | 0/? | Not started | - |
 | 4. Module Architecture | 0/? | Not started | - |

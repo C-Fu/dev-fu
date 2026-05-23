@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 1 — TUI Engine Core
+**Current focus:** Phase 1 complete — ready for Phase 2
 
 ## Current Position
 
-Phase: 1 of 6 (TUI Engine Core)
-Plan: 0 of ? in current phase
-Status: Context gathered
-Last activity: 2026-05-23 — Phase 1 context gathered
+Phase: 1 of 6 (TUI Engine Core) — COMPLETE
+Plan: 2/2 in current phase
+Status: Phase 1 complete
+Last activity: 2026-05-23 — Phase 1 executed and verified
 
-Progress: [█░░░░░░░░░] 5%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 2
+- Average duration: 6 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1. TUI Engine Core | 2 | 12 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: (none)
-- Trend: N/A
+- Last 5 plans: 01-01 (4min), 01-02 (8min)
+- Trend: On track
 
 *Updated after each plan completion*
 
@@ -45,9 +45,13 @@ Recent decisions affecting current work:
 - (Roadmap): 7 research phases consolidated to 6 with coarse granularity — Terminal Primitives + Menu Widget merged into Phase 1
 - (Phase 1 context): tui.sh — single file, source+function API, shell-aware hybrid input, full-screen box rendering, auto-detect Unicode, configurable key timeout
 
+- (Phase 1 execution): Refactored key reading from stdout/$() to globals — $() subshell was killing _tui_digit_char for number jump and stripping newline bytes for Enter key
+- (Phase 1 execution): Added clear_screen to tui_restore() — cursor was left at wrong position after exit
+- (Phase 1 execution): Guarded empty item list in tui_select(), fixed octal crash on leading zeros in fallback prompt
+
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
@@ -64,5 +68,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-23
-Stopped at: Phase 1 context gathered, ready for planning
-Resume file: .planning/phases/01-tui-engine-core/01-CONTEXT.md
+Stopped at: Phase 1 complete, ready for Phase 2
+Resume file: .planning/phases/02-interactive-widgets/ (next phase)
