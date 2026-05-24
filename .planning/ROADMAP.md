@@ -62,11 +62,11 @@ Plans:
   1. User can navigate up to 3 levels of nested submenus (Main → Category → Sub-option) and return to the parent menu with Esc or Left arrow
   2. User sees a breadcrumb trail showing current position (e.g., Main > Dev Tools > Python) at every menu level
   3. Menu definitions use a pipe-delimited DSL parseable with awk in POSIX sh — loading and navigating a 50-item definition works correctly with no external dependencies
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Menu DSL parser with pipe-delimited awk parsing and tree query functions (flu_menu_load, flu_menu_get_children, flu_menu_is_leaf, flu_menu_get_breadcrumb, flu_menu_get_action)
+- [ ] 03-02-PLAN.md — Navigation engine with custom TUI renderer, 3-level submenu event loop, breadcrumb display, Left arrow back-navigation, and numbered fallback mode
 **UI hint**: yes
 
 ### Phase 4: Module Architecture
