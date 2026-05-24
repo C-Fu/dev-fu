@@ -1775,6 +1775,289 @@ tui_yesno() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 15: tui_text_input() — Freeform text input widget
+# ---------------------------------------------------------------------------
+
+# tui_text_input title prompt [default_value]
+# Full-screen centered modal text entry widget with inline line editing.
+# Backspace, Delete, Left/Right arrows, Home/End, reverse-video block cursor.
+# ENTER confirms (accepts empty input), Esc cancels.
+# Returns typed string via stdout and TUI_RESULT.
+# Returns 0 on Enter, 1 on Esc.
+tui_text_input() {
+  _ti_title=$1; _ti_prompt=$2
+  _ti_value="${3:-}"
+  _ti_cursor=${#_ti_value}
+  _ti_show_help=false
+  _ti_maxlen=256
+
+  # Cursor movement helpers
+  _ti_cursor_left() {
+    if [ "$_ti_cursor" -gt 0 ]; then
+      _ti_cursor=$((_ti_cursor - 1))
+    fi
+  }
+
+  _ti_cursor_right() {
+    _ti_max_pos=${#_ti_value}
+    if [ "$_ti_cursor" -lt "$_ti_max_pos" ]; then
+      _ti_cursor=$((_ti_cursor + 1))
+    fi
+  }
+
+  # Insert character at cursor position
+  _ti_insert_char() {
+    _ti_ch=$1
+    if [ "$_ti_cursor" -eq 0 ]; then
+      _ti_value="${_ti_ch}${_ti_value}"
+    elif [ "$_ti_cursor" -ge "${#_ti_value}" ]; then
+      _ti_value="${_ti_value}${_ti_ch}"
+    else
+      _ti_left=$(printf '%s' "$_ti_value" | awk -v P="$_ti_cursor" '{print substr($0,1,P)}')
+      _ti_right=$(printf '%s' "$_ti_value" | awk -v P=$((_ti_cursor + 1)) '{print substr($0,P)}')
+      _ti_value="${_ti_left}${_ti_ch}${_ti_right}"
+    fi
+    _ti_cursor=$((_ti_cursor + 1))
+  }
+
+  # Delete character at cursor (forward delete)
+  _ti_delete_char() {
+    if [ "$_ti_cursor" -lt "${#_ti_value}" ]; then
+      _ti_left=$(printf '%s' "$_ti_value" | awk -v P="$_ti_cursor" '{print substr($0,1,P)}')
+      _ti_right=$(printf '%s' "$_ti_value" | awk -v P=$((_ti_cursor + 2)) '{print substr($0,P)}')
+      _ti_value="${_ti_left}${_ti_right}"
+    fi
+  }
+
+  # Backspace: delete character before cursor
+  _ti_backspace_char() {
+    if [ "$_ti_cursor" -gt 0 ]; then
+      _ti_cursor=$((_ti_cursor - 1))
+      _ti_left=$(printf '%s' "$_ti_value" | awk -v P="$_ti_cursor" '{print substr($0,1,P)}')
+      _ti_right=$(printf '%s' "$_ti_value" | awk -v P=$((_ti_cursor + 2)) '{print substr($0,P)}')
+      _ti_value="${_ti_left}${_ti_right}"
+    fi
+  }
+
+  # Fallback: simple read prompt when no TTY
+  _ti_fallback() {
+    printf '\n'
+    printf '  %s\n' "$_ti_title"
+    printf '  %s\n' "$_ti_prompt"
+    if [ -n "$_ti_value" ]; then
+      printf '  Default: %s\n' "$_ti_value"
+    fi
+    printf '  > '
+    _ti_rc=0
+    IFS= read -r _ti_input </dev/tty 2>/dev/null || { IFS= read -r _ti_input; _ti_rc=$?; }
+    if [ "$_ti_rc" -ne 0 ] || { [ -z "$_ti_input" ] && [ -n "$_ti_value" ]; }; then
+      _ti_input="$_ti_value"
+    fi
+    printf '%s\n' "$_ti_input"
+    TUI_RESULT="$_ti_input"
+    return 0
+  }
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    _ti_fallback
+    return 0
+  fi
+
+  # Full-screen rendering
+  _ti_render() {
+    clear_screen
+    _ti_rows=$(tput lines 2>/dev/null || printf '24')
+    _ti_cols=$(tput cols 2>/dev/null || printf '80')
+
+    _ti_box_w=60
+    [ "$_ti_box_w" -gt "$_ti_cols" ] && _ti_box_w=$((_ti_cols - 4))
+    _ti_box_h=7
+    _ti_x=$(( (_ti_cols - _ti_box_w) / 2 ))
+    _ti_y=$(( (_ti_rows - _ti_box_h) / 2 ))
+    [ "$_ti_x" -lt 1 ] && _ti_x=1
+    [ "$_ti_y" -lt 1 ] && _ti_y=1
+
+    _tui_draw_box "$_ti_x" "$_ti_y" "$_ti_box_w" "$_ti_box_h" "$_ti_title"
+
+    _ti_inner=$((_ti_box_w - 2))
+
+    # Prompt label (first body row: y+3)
+    _ti_prompt_row=$((_ti_y + 3))
+    _ti_prompt_display=$(printf '%s' "$_ti_prompt" | awk -v L="$_ti_inner" '{print substr($0,1,L)}')
+    _ti_prompt_pad=$(( (_ti_inner - ${#_ti_prompt_display}) / 2 ))
+    [ "$_ti_prompt_pad" -lt 0 ] && _ti_prompt_pad=0
+    move_cursor "$_ti_prompt_row" $((_ti_x + 1 + _ti_prompt_pad))
+    printf '%s' "$_ti_prompt_display"
+
+    # Input field (third body row: y+5)
+    _ti_input_row=$((_ti_y + 5))
+    _ti_input_width=$((_ti_inner - 4))
+    [ "$_ti_input_width" -lt 10 ] && _ti_input_width=10
+
+    move_cursor "$_ti_input_row" "$_ti_x"
+    printf '%s ' "$TUI_BOX_V"
+
+    # Truncate value to fit input width, show visible portion around cursor
+    _ti_val_len=${#_ti_value}
+    _ti_input_start=0
+    if [ "$_ti_val_len" -gt "$_ti_input_width" ]; then
+      _ti_input_start=$((_ti_cursor - _ti_input_width / 2))
+      [ "$_ti_input_start" -lt 0 ] && _ti_input_start=0
+      _ti_max_start=$((_ti_val_len - _ti_input_width))
+      [ "$_ti_input_start" -gt "$_ti_max_start" ] && _ti_input_start=$_ti_max_start
+    fi
+
+    _ti_visible=$(printf '%s' "$_ti_value" | awk -v S=$((_ti_input_start + 1)) -v L="$_ti_input_width" '{print substr($0,S,L)}')
+    _ti_vis_len=${#_ti_visible}
+    _ti_cursor_vis=$((_ti_cursor - _ti_input_start))
+
+    # Render each character of visible portion
+    _ti_j=0; _ti_rendered=0
+    while [ "$_ti_j" -lt "$_ti_vis_len" ]; do
+      _ti_ch=$(printf '%s' "$_ti_visible" | awk -v P=$((_ti_j + 1)) '{print substr($0,P,1)}')
+      if [ "$_ti_j" -eq "$_ti_cursor_vis" ] && [ "$_ti_cursor" -lt "$_ti_val_len" ]; then
+        printf '%s%s%s' "$TUI_REV" "$_ti_ch" "$TUI_RESET"
+      else
+        printf '%s' "$_ti_ch"
+      fi
+      _ti_j=$((_ti_j + 1))
+      _ti_rendered=$((_ti_rendered + 1))
+    done
+
+    # If cursor is past all visible chars, show inverse block cursor (space)
+    if [ "$_ti_cursor" -ge "$_ti_val_len" ]; then
+      printf '%s %s' "$TUI_REV" "$TUI_RESET"
+      _ti_rendered=$((_ti_rendered + 1))
+    fi
+
+    # Fill remaining space in input field
+    _ti_fill=$((_ti_input_width - _ti_rendered))
+    _ti_k=0
+    while [ "$_ti_k" -lt "$_ti_fill" ]; do
+      printf ' '
+      _ti_k=$((_ti_k + 1))
+    done
+
+    printf ' %s' "$TUI_BOX_V"
+
+    # Footer on bottom border row
+    _ti_footer_row=$((_ti_y + _ti_box_h - 1))
+    move_cursor "$_ti_footer_row" "$_ti_x"
+    if [ "$_ti_show_help" = "true" ]; then
+      _ti_ft='Enter=Confirm  Esc=Cancel  Backspace  ←→ Cursor  Home/End  Delete  ? Less'
+    else
+      _ti_ft='Enter=Confirm  Esc=Cancel  Backspace  ←→ Cursor  ? Keys'
+    fi
+    printf '%s%s%s' "$TUI_DIM" "$_ti_ft" "$TUI_RESET"
+
+    printf '%s[?25l' "$ESC"
+  }
+
+  tui_init
+
+  while :; do
+    _ti_render
+
+    # Read raw character byte (not _tui_read_key — avoids jinx key conflicts)
+    _tui_read_char || continue
+    _ti_byte="$_tui_rc_char"
+
+    case "$_ti_byte" in
+      "$(printf '\r')"|"$(printf '\n')")
+        # Enter — confirm
+        tui_restore
+        TUI_RESULT="$_ti_value"
+        printf '%s\n' "$_ti_value"
+        unset _ti_title _ti_prompt _ti_value _ti_cursor _ti_show_help _ti_maxlen
+        unset _ti_byte _ti_input
+        return 0
+        ;;
+      "$(printf '\033')")
+        # Escape — could be plain Esc or start of escape sequence
+        _ti_key_timeout=${TUI_KEY_TIMEOUT:-10}
+        stty min 0 time "$_ti_key_timeout" 2>/dev/null || true
+        if _tui_read_char; then
+          _ti_seq1="$_tui_rc_char"
+          if [ "$_ti_seq1" = '[' ] || [ "$_ti_seq1" = 'O' ]; then
+            if _tui_read_char; then
+              _ti_seq2="$_tui_rc_char"
+              stty min 1 time 0 2>/dev/null || true
+              case "$_ti_seq2" in
+                C) _ti_cursor_right ;;     # Right arrow
+                D) _ti_cursor_left ;;      # Left arrow
+                H) _ti_cursor=0 ;;         # Home
+                F) _ti_cursor=${#_ti_value} ;;  # End
+                A|B) ;;                    # Up/Down — ignore in text input
+                3)
+                  # Delete key: \033[3~
+                  _tui_read_char || true
+                  if [ "$_tui_rc_char" = '~' ]; then
+                    _ti_delete_char
+                  fi
+                  ;;
+                1|4)
+                  # Home (\033[1~) or End (\033[4~)
+                  _tui_read_char || true
+                  if [ "$_tui_rc_char" = '~' ]; then
+                    case "$_ti_seq2" in
+                      1) _ti_cursor=0 ;;
+                      4) _ti_cursor=${#_ti_value} ;;
+                    esac
+                  fi
+                  ;;
+              esac
+            else
+              stty min 1 time 0 2>/dev/null || true
+            fi
+          else
+            stty min 1 time 0 2>/dev/null || true
+            # Non-[/O after Esc: treat as printable if ASCII
+            _ti_ord=$(printf '%d' "'$_ti_seq1" 2>/dev/null || true)
+            if [ -n "$_ti_ord" ] && [ "$_ti_ord" -ge 32 ] && [ "$_ti_ord" -le 126 ]; then
+              if [ "${#_ti_value}" -lt "$_ti_maxlen" ]; then
+                _ti_insert_char "$_ti_seq1"
+              fi
+            fi
+          fi
+        else
+          stty min 1 time 0 2>/dev/null || true
+          # Timeout: plain Esc — cancel
+          tui_restore
+          TUI_RESULT=''
+          unset _ti_title _ti_prompt _ti_value _ti_cursor _ti_show_help _ti_maxlen
+          unset _ti_byte _ti_input _ti_key_timeout _ti_seq1 _ti_seq2 _ti_ord
+          return 1
+        fi
+        unset _ti_key_timeout _ti_seq1 _ti_seq2 _ti_ord
+        ;;
+      "$(printf '\010')"|"$(printf '\177')")
+        # Backspace (BS or DEL)
+        _ti_backspace_char
+        ;;
+      "$(printf '\t')"|"$(printf '\004')")
+        # Tab / Ctrl+D: ignore
+        ;;
+      '?')
+        if [ "$_ti_show_help" = "true" ]; then
+          _ti_show_help=false
+        else
+          _ti_show_help=true
+        fi
+        ;;
+      *)
+        # Check for printable ASCII (0x20-0x7E)
+        _ti_ord=$(printf '%d' "'$_ti_byte" 2>/dev/null || true)
+        if [ -n "$_ti_ord" ] && [ "$_ti_ord" -ge 32 ] && [ "$_ti_ord" -le 126 ]; then
+          if [ "${#_ti_value}" -lt "$_ti_maxlen" ]; then
+            _ti_insert_char "$_ti_byte"
+          fi
+        fi
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
 # Demo / standalone execution (only when run directly, not sourced)
 # ---------------------------------------------------------------------------
 
@@ -1837,6 +2120,17 @@ case "${0##*/}" in
       _demo_rc=$?
       if [ $_demo_rc -eq 0 ]; then
         printf 'Result: %s\n' "$TUI_RESULT"
+      else
+        printf 'Cancelled\n'
+      fi
+      exit $_demo_rc
+    fi
+    if [ "${1:-}" = "--demo-text-input" ]; then
+      shift
+      tui_text_input "Text Input Demo" "Enter your name:" "${1:-}"
+      _demo_rc=$?
+      if [ $_demo_rc -eq 0 ]; then
+        printf 'You entered: %s\n' "$TUI_RESULT"
       else
         printf 'Cancelled\n'
       fi
