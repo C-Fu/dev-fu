@@ -186,7 +186,9 @@ _tui_read_byte() {
 # IMPORTANT: Caller must NOT wrap in $() — use _tui_rk_result directly.
 # shellcheck disable=SC2034
 _tui_read_key() {
-  _tui_read_byte || { _tui_rk_result="$TUI_KEY_UNKNOWN"; return; }
+  _tui_rk_result="$TUI_KEY_UNKNOWN"
+  _tui_read_byte || return
+  _tui_rk_digit=''
 
   _tui_rk_nl='
 '
@@ -314,7 +316,17 @@ _tui_read_key() {
       return
       ;;
     *)
-      _tui_rk_result="$TUI_KEY_UNKNOWN"
+      # Numeric byte comparison catches Enter/Esc/BS regardless of shell quirks
+      _tui_rb_dec=$(printf '%s' "$_tui_rb_byte" | od -A n -t d1 2>/dev/null | awk '{print $1}')
+      case "${_tui_rb_dec:-}" in
+        10|13)  _tui_rk_result="$TUI_KEY_ENTER" ;;
+        27)    _tui_rk_result="$TUI_KEY_ESC" ;;
+        127|8) _tui_rk_result="$TUI_KEY_BACKSPACE" ;;
+        9)     _tui_rk_result="$TUI_KEY_TAB" ;;
+        32)    _tui_rk_result="$TUI_KEY_SPACE" ;;
+        *)     _tui_rk_result="$TUI_KEY_UNKNOWN" ;;
+      esac
+      unset _tui_rb_dec
       ;;
   esac
   unset _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
