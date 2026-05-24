@@ -79,11 +79,12 @@ Plans:
   3. Modules execute in isolated subshells receiving platform context (FLU_OS, FLU_DISTRO, FLU_PKG_MGR, etc.) via environment variables
   4. Before module execution, the user is prompted for variable parameters via inline prompts (radio, text, yes/no) — e.g., choosing global vs local install scope
   5. Module results display to the user with clear success/failure status and actionable recovery hints on failure
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — Module Fetch Engine & Metadata Parser (Wave 1)
+- [ ] 04-02-PLAN.md — Module Execution & Parameter Prompts (Wave 2)
+- [ ] 04-03-PLAN.md — Result Display & Error Reporting (Wave 3)
 
 ### Phase 5: Integration & Orchestrator
 **Goal**: flu.sh is a complete, working single-file script that wires TUI, menus, and modules together — deployable via curl-pipe-bash and coexisting with fu.sh on a dedicated development branch
