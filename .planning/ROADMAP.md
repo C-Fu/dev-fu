@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget (completed 2026-05-23)
 - [x] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract (completed 2026-05-24)
 - [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
-- [ ] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts
+- [x] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts (completed 2026-05-24)
 - [ ] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch
 - [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell
 
@@ -84,7 +84,7 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md — Module Fetch Engine & Metadata Parser (Wave 1)
 - [x] 04-02-PLAN.md — Module Execution & Parameter Prompts (Wave 2)
-- [ ] 04-03-PLAN.md — Result Display & Error Reporting (Wave 3)
+- [x] 04-03-PLAN.md — Result Display & Error Reporting (Wave 3)
 
 ### Phase 5: Integration & Orchestrator
 **Goal**: flu.sh is a complete, working single-file script that wires TUI, menus, and modules together — deployable via curl-pipe-bash and coexisting with fu.sh on a dedicated development branch
@@ -132,6 +132,6 @@ Phases execute in numeric order. With parallelization enabled:
 | 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
 | 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
-| 4. Module Architecture | 2/3 | In Progress|  |
+| 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
 | 5. Integration & Orchestrator | 0/? | Not started | - |
 | 6. PowerShell Port | 0/? | Not started | - |
