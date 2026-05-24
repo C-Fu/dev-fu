@@ -39,7 +39,7 @@ fi
 # Prints the full URL to stdout. Returns 0 on success.
 flu_module_resolve_url() {
   _fmr_action="$1"
-  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/main/modules/}"
+  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/}"
   printf '%s%s.sh\n' "$_fmr_base" "$_fmr_action"
   unset _fmr_action _fmr_base
   return 0

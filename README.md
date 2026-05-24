@@ -9,7 +9,7 @@ bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com
 
 ```bash
 # flu.sh — modular TUI (bash / zsh / sh / dash / ash / busybox)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
 ```
 
 ```sh
@@ -92,12 +92,12 @@ cd dev-fu
 
 ```bash
 # Option 2: curl-pipe-bash (any POSIX shell)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
 ```
 
 ```sh
 # Option 2: BusyBox / dash / ash (no process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Menu Structure
