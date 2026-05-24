@@ -425,6 +425,76 @@ _tui_fallback_prompt() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 9a: Checklist fallback prompt
+# ---------------------------------------------------------------------------
+
+# _tui_checklist_fallback
+# Uses _tc_* globals set by tui_checklist() for items and checked state.
+# Prints newline-separated 0-based indexes to stdout.
+# Sets TUI_RESULT to count of selected items.
+# Returns 0 on selection, 1 on cancel/invalid.
+_tui_checklist_fallback() {
+  printf '\n'
+  printf '  %s\n' "$_tc_title"
+  if [ -n "$_tc_subtitle" ]; then
+    printf '  %s\n' "$_tc_subtitle"
+  fi
+  printf '  ---\n'
+
+  _fbc_i=1
+  while [ "$_fbc_i" -le "$_tc_count" ]; do
+    # shellcheck disable=SC2086
+    eval "_fbc_label=\$_tc_label_$_fbc_i"
+    # shellcheck disable=SC2086
+    eval "_fbc_checked=\$_tc_checked_$_fbc_i"
+    # shellcheck disable=SC2154
+    if [ "$_fbc_checked" -eq 1 ]; then
+      # shellcheck disable=SC2154
+      printf '%3d) [x] %s\n' "$_fbc_i" "$_fbc_label"
+    else
+      # shellcheck disable=SC2154
+      printf '%3d) [ ] %s\n' "$_fbc_i" "$_fbc_label"
+    fi
+    _fbc_i=$((_fbc_i + 1))
+  done
+
+  printf '\n'
+  printf 'Enter numbers separated by spaces (or empty to cancel): '
+
+  _fbc_selection=''
+  IFS= read -r _fbc_selection </dev/tty 2>/dev/null || read -r _fbc_selection
+
+  if [ -z "$_fbc_selection" ]; then
+    unset _fbc_i _fbc_label _fbc_checked _fbc_selection
+    return 1
+  fi
+
+  _fbc_count=0
+  for _fbc_num in $_fbc_selection; do
+    case "$_fbc_num" in
+      *[!0-9]*) continue ;;
+      '') continue ;;
+    esac
+    _fbc_num=$((_fbc_num + 0))
+    if [ "$_fbc_num" -ge 1 ] && [ "$_fbc_num" -le "$_tc_count" ]; then
+      _fbc_idx=$((_fbc_num - 1))
+      printf '%d\n' "$_fbc_idx"
+      _fbc_count=$((_fbc_count + 1))
+    fi
+  done
+
+  if [ "$_fbc_count" -eq 0 ]; then
+    printf 'No valid selections\n'
+    unset _fbc_i _fbc_label _fbc_checked _fbc_selection _fbc_num _fbc_idx _fbc_count
+    return 1
+  fi
+
+  TUI_RESULT=$_fbc_count
+  unset _fbc_i _fbc_label _fbc_checked _fbc_selection _fbc_num _fbc_idx _fbc_count
+  return 0
+}
+
+# ---------------------------------------------------------------------------
 # Section 10: Box drawing helper
 # ---------------------------------------------------------------------------
 
@@ -622,6 +692,157 @@ _tui_render_select() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 11a: Rendering function for tui_checklist
+# ---------------------------------------------------------------------------
+
+# shellcheck disable=SC2034,SC2154
+_tui_render_checklist() {
+  clear_screen
+  _rsc_rows=$(tput lines 2>/dev/null || printf '24')
+  _rsc_cols=$(tput cols 2>/dev/null || printf '80')
+  _rsc_box_w=$((_rsc_cols - 4))
+  [ "$_rsc_box_w" -lt 40 ] && _rsc_box_w=40
+  _rsc_inner=$((_rsc_box_w - 2))
+  _rsc_x=2
+  _rsc_r=1
+
+  move_cursor "$_rsc_r" "$_rsc_x"
+  printf '%s' "$TUI_BOX_TL"
+  _rsc_i=1; while [ "$_rsc_i" -le "$_rsc_inner" ]; do printf '%s' "$TUI_BOX_H"; _rsc_i=$((_rsc_i + 1)); done
+  printf '%s' "$TUI_BOX_TR"
+  _rsc_r=$((_rsc_r + 1))
+
+  move_cursor "$_rsc_r" "$_rsc_x"
+  printf '%s' "$TUI_BOX_V"
+  _rsc_tlen=${#_tc_title}
+  if [ "$_rsc_tlen" -gt "$_rsc_inner" ]; then _rsc_tlen=$_rsc_inner; fi
+  _rsc_tshow=$(printf '%s' "$_tc_title" | awk -v L="$_rsc_tlen" '{print substr($0,1,L)}')
+  _rsc_pad=$((_rsc_inner - ${#_rsc_tshow}))
+  _rsc_pl=$((_rsc_pad / 2)); _rsc_pr=$((_rsc_pad - _rsc_pl))
+  _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_pl" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+  printf '%s%s%s' "$TUI_BOLD" "$_rsc_tshow" "$TUI_RESET"
+  _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_pr" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rsc_r=$((_rsc_r + 1))
+
+  if [ -n "$_tc_subtitle" ]; then
+    move_cursor "$_rsc_r" "$_rsc_x"
+    printf '%s' "$TUI_BOX_V"
+    _rsc_slen=${#_tc_subtitle}
+    if [ "$_rsc_slen" -gt "$_rsc_inner" ]; then _rsc_slen=$_rsc_inner; fi
+    _rsc_sshow=$(printf '%s' "$_tc_subtitle" | awk -v L="$_rsc_slen" '{print substr($0,1,L)}')
+    _rsc_spad=$((_rsc_inner - ${#_rsc_sshow}))
+    _rsc_spl=$((_rsc_spad / 2)); _rsc_spr=$((_rsc_spad - _rsc_spl))
+    _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_spl" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+    printf '%s%s%s' "$TUI_DIM" "$_rsc_sshow" "$TUI_RESET"
+    _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_spr" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rsc_r=$((_rsc_r + 1))
+  fi
+
+  move_cursor "$_rsc_r" "$_rsc_x"
+  printf '%s' "$TUI_BOX_V"
+  _rsc_i=1; while [ "$_rsc_i" -le "$_rsc_inner" ]; do printf '%s' "$TUI_BOX_H"; _rsc_i=$((_rsc_i + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rsc_r=$((_rsc_r + 1))
+
+  _rsc_status_row=$((_rsc_rows - 3))
+  _rsc_bottom_row=$((_rsc_rows - 2))
+  _rsc_footer_row=$((_rsc_rows - 1))
+  _tc_page_size=$((_rsc_status_row - _rsc_r + 1))
+  [ "$_tc_page_size" -lt 1 ] && _tc_page_size=1
+
+  if [ "$_tc_scroll" -gt 1 ]; then
+    move_cursor "$_rsc_r" $((_rsc_x + _rsc_box_w - 9))
+    printf '%s%smore%s' "$TUI_DIM" '↑' "$TUI_RESET"
+  fi
+
+  _rsc_end=$((_tc_scroll + _tc_page_size - 1))
+  [ "$_rsc_end" -gt "$_tc_count" ] && _rsc_end=$_tc_count
+  _rsc_maxlab=$((_rsc_inner - 9))
+  [ "$_rsc_maxlab" -lt 3 ] && _rsc_maxlab=3
+  _rsc_i=$_tc_scroll
+  while [ "$_rsc_i" -le "$_rsc_end" ]; do
+    # shellcheck disable=SC2086
+    eval "_rsc_lab=\$_tc_label_$_rsc_i"
+    # shellcheck disable=SC2086
+    eval "_rsc_checked=\$_tc_checked_$_rsc_i"
+    # shellcheck disable=SC2154
+    _rsc_trunc=$(printf '%s' "$_rsc_lab" | awk -v L="$_rsc_maxlab" '{print substr($0,1,L)}')
+    move_cursor "$_rsc_r" "$_rsc_x"
+    printf '%s' "$TUI_BOX_V"
+    if [ "$_rsc_i" -eq "$_tc_cursor" ]; then
+      if [ "$_rsc_checked" -eq 1 ]; then
+        printf '%s[x] %3d) %s' "$TUI_REV" "$_rsc_i" "$_rsc_trunc"
+      else
+        printf '%s[ ] %3d) %s' "$TUI_REV" "$_rsc_i" "$_rsc_trunc"
+      fi
+      _rsc_used=$((9 + ${#_rsc_trunc}))
+      _rsc_fill=$((_rsc_inner - _rsc_used))
+      [ "$_rsc_fill" -gt 0 ] && _rsc_j=0 && while [ "$_rsc_j" -lt "$_rsc_fill" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+      printf '%s' "$TUI_RESET"
+    else
+      if [ "$_rsc_checked" -eq 1 ]; then
+        printf '[x] %3d) %s' "$_rsc_i" "$_rsc_trunc"
+      else
+        printf '[ ] %3d) %s' "$_rsc_i" "$_rsc_trunc"
+      fi
+      _rsc_used=$((9 + ${#_rsc_trunc}))
+      _rsc_fill=$((_rsc_inner - _rsc_used))
+      [ "$_rsc_fill" -gt 0 ] && _rsc_j=0 && while [ "$_rsc_j" -lt "$_rsc_fill" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+    fi
+    printf '%s' "$TUI_BOX_V"
+    _rsc_r=$((_rsc_r + 1))
+    _rsc_i=$((_rsc_i + 1))
+  done
+
+  while [ "$_rsc_r" -le "$_rsc_status_row" ]; do
+    move_cursor "$_rsc_r" "$_rsc_x"
+    printf '%s' "$TUI_BOX_V"
+    _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_inner" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rsc_r=$((_rsc_r + 1))
+  done
+
+  if [ "$_rsc_end" -lt "$_tc_count" ]; then
+    _rsc_drow=$((_rsc_r - 1))
+    move_cursor "$_rsc_drow" $((_rsc_x + _rsc_box_w - 9))
+    printf '%s%smore%s' "$TUI_DIM" '↓' "$TUI_RESET"
+  fi
+
+  move_cursor "$_rsc_status_row" "$_rsc_x"
+  printf '%s' "$TUI_BOX_V"
+  _rsc_j=0; while [ "$_rsc_j" -lt "$_rsc_inner" ]; do printf ' '; _rsc_j=$((_rsc_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  move_cursor "$_rsc_status_row" $((_rsc_x + 2))
+  if [ -n "$_tc_error_msg" ]; then
+    printf '%s%s%s' "$TUI_RED" "$_tc_error_msg" "$TUI_RESET"
+  else
+    printf '%d of %d selected' "$_tc_selected" "$_tc_count"
+  fi
+
+  move_cursor "$_rsc_bottom_row" "$_rsc_x"
+  printf '%s' "$TUI_BOX_BL"
+  _rsc_i=1; while [ "$_rsc_i" -le "$_rsc_inner" ]; do printf '%s' "$TUI_BOX_H"; _rsc_i=$((_rsc_i + 1)); done
+  printf '%s' "$TUI_BOX_BR"
+
+  move_cursor "$_rsc_footer_row" "$_rsc_x"
+  if [ "$_tc_show_help" = "true" ]; then
+    _rsc_ft='Space=toggle  Ctrl+D=Done  Esc=Cancel  *=SelectAll  -=DeselectAll  Up/Dn Move  PgUp/PgDn Page  Home/End  j/k Vi  ? Less'
+  else
+    _rsc_ft='Space=toggle  Ctrl+D=Done  Esc=Cancel  ?=More'
+  fi
+  printf '%s%s%s' "$TUI_DIM" "$_rsc_ft" "$TUI_RESET"
+
+  printf '%s[?25l' "$ESC"
+
+  unset _rsc_rows _rsc_cols _rsc_box_w _rsc_inner _rsc_x _rsc_r _rsc_i _rsc_j
+  unset _rsc_tlen _rsc_tshow _rsc_pad _rsc_pl _rsc_pr _rsc_slen _rsc_sshow _rsc_spad _rsc_spl _rsc_spr
+  unset _rsc_status_row _rsc_bottom_row _rsc_footer_row _rsc_end _rsc_maxlab _rsc_lab _rsc_trunc
+  unset _rsc_checked _rsc_used _rsc_fill _rsc_drow _rsc_ft
+}
+
+# ---------------------------------------------------------------------------
 # Section 12: tui_select() function
 # ---------------------------------------------------------------------------
 
@@ -767,6 +988,216 @@ tui_select() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 12a: tui_checklist() — Multi-select checkbox widget
+# ---------------------------------------------------------------------------
+
+# tui_checklist title subtitle item1 item2 ... [--checked N1 N2 ...]
+# Multi-select checklist with [x]/[ ] checkboxes.
+# SPACE toggles items. Ctrl+D/Enter confirms. Esc/q cancels.
+# * = Select All, - = Deselect All
+# Prints newline-separated 0-based indexes of checked items to stdout.
+# Sets TUI_RESULT to count of selected items.
+# Returns 0 on success, 1 on cancel.
+tui_checklist() {
+  _tc_title=$1; _tc_subtitle=$2; shift 2
+
+  _tc_count=0
+  _tc_selected=0
+  _tc_parse_mode=items
+
+  for _tc_arg in "$@"; do
+    if [ "$_tc_arg" = "--checked" ]; then
+      _tc_parse_mode=checked; continue
+    fi
+    if [ "$_tc_parse_mode" = "items" ]; then
+      _tc_count=$((_tc_count + 1))
+      _tc_safe=$(printf '%s' "$_tc_arg" | sed "s/'/'\\\\''/g")
+      eval "_tc_label_$_tc_count='$_tc_safe'"
+      eval "_tc_checked_$_tc_count=0"
+    else
+      _tc_ci=$((_tc_arg + 1))
+      if [ "$_tc_ci" -ge 1 ] && [ "$_tc_ci" -le "$_tc_count" ]; then
+        eval "_tc_checked_$_tc_ci=1"
+        _tc_selected=$((_tc_selected + 1))
+      fi
+    fi
+  done
+  unset _tc_arg _tc_safe _tc_ci _tc_parse_mode
+
+  if [ "$_tc_count" -eq 0 ]; then
+    return 1
+  fi
+
+  _tc_cursor=1
+  _tc_scroll=1
+  _tc_show_help=false
+  _tc_error_msg=''
+  _tc_page_size=1
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    _tui_checklist_fallback
+    _tc_rc=$?
+    _tc_i=1
+    while [ "$_tc_i" -le "$_tc_count" ]; do
+      # shellcheck disable=SC2086
+      eval "unset _tc_label_$_tc_i"
+      # shellcheck disable=SC2086
+      eval "unset _tc_checked_$_tc_i"
+      _tc_i=$((_tc_i + 1))
+    done
+    _tc_ret=$_tc_rc
+    unset _tc_title _tc_subtitle _tc_count _tc_selected _tc_cursor _tc_scroll
+    unset _tc_show_help _tc_error_msg _tc_page_size _tc_i _tc_rc
+    # shellcheck disable=SC2086
+    return $_tc_ret
+  fi
+
+  tui_init
+
+  while :; do
+    _tui_render_checklist
+    # shellcheck disable=SC2034
+    _tui_read_key
+    key="$_tui_rk_result"
+
+    case "$key" in
+      "$TUI_KEY_SPACE")
+        # shellcheck disable=SC2086
+        eval "_tc_cur=\$_tc_checked_$_tc_cursor"
+        # shellcheck disable=SC2154
+        if [ "$_tc_cur" -eq 1 ]; then
+          # shellcheck disable=SC2086
+          eval "_tc_checked_$_tc_cursor=0"
+          _tc_selected=$((_tc_selected - 1))
+        else
+          # shellcheck disable=SC2086
+          eval "_tc_checked_$_tc_cursor=1"
+          _tc_selected=$((_tc_selected + 1))
+        fi
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_CTRL_D"|"$TUI_KEY_ENTER")
+        if [ "$_tc_selected" -eq 0 ]; then
+          _tc_error_msg="Select at least one item"
+        else
+          tui_restore
+          _tc_i=1
+          while [ "$_tc_i" -le "$_tc_count" ]; do
+            # shellcheck disable=SC2086
+            eval "_tc_chk=\$_tc_checked_$_tc_i"
+            # shellcheck disable=SC2154
+            if [ "$_tc_chk" -eq 1 ]; then
+              _tc_idx=$((_tc_i - 1))
+              printf '%d\n' "$_tc_idx"
+            fi
+            _tc_i=$((_tc_i + 1))
+          done
+          TUI_RESULT=$_tc_selected
+          _tc_i=1
+          while [ "$_tc_i" -le "$_tc_count" ]; do
+            # shellcheck disable=SC2086
+            eval "unset _tc_label_$_tc_i"
+            # shellcheck disable=SC2086
+            eval "unset _tc_checked_$_tc_i"
+            _tc_i=$((_tc_i + 1))
+          done
+          unset _tc_i _tc_chk _tc_idx _tc_cur _tc_title _tc_subtitle _tc_count
+          unset _tc_selected _tc_cursor _tc_scroll _tc_show_help _tc_error_msg _tc_page_size
+          return 0
+        fi
+        ;;
+      "$TUI_KEY_ASTERISK")
+        _tc_i=1
+        while [ "$_tc_i" -le "$_tc_count" ]; do
+          # shellcheck disable=SC2086
+          eval "_tc_checked_$_tc_i=1"
+          _tc_i=$((_tc_i + 1))
+        done
+        _tc_selected=$_tc_count
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_MINUS")
+        _tc_i=1
+        while [ "$_tc_i" -le "$_tc_count" ]; do
+          # shellcheck disable=SC2086
+          eval "_tc_checked_$_tc_i=0"
+          _tc_i=$((_tc_i + 1))
+        done
+        _tc_selected=0
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_UP")
+        if [ "$_tc_cursor" -gt 1 ]; then
+          _tc_cursor=$((_tc_cursor - 1))
+          if [ "$_tc_cursor" -lt "$_tc_scroll" ]; then
+            _tc_scroll=$((_tc_scroll - 1))
+          fi
+        fi
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_DOWN")
+        if [ "$_tc_cursor" -lt "$_tc_count" ]; then
+          _tc_cursor=$((_tc_cursor + 1))
+          _tc_bottom=$((_tc_scroll + _tc_page_size - 1))
+          if [ "$_tc_cursor" -gt "$_tc_bottom" ]; then
+            _tc_scroll=$((_tc_scroll + 1))
+          fi
+        fi
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_PGUP")
+        _tc_scroll=$((_tc_scroll - _tc_page_size))
+        [ "$_tc_scroll" -lt 1 ] && _tc_scroll=1
+        _tc_cursor=$_tc_scroll
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_PGDN")
+        _tc_scroll=$((_tc_scroll + _tc_page_size))
+        _tc_max_scroll=$((_tc_count - _tc_page_size + 1))
+        [ "$_tc_max_scroll" -lt 1 ] && _tc_max_scroll=1
+        [ "$_tc_scroll" -gt "$_tc_max_scroll" ] && _tc_scroll=$_tc_max_scroll
+        _tc_bottom=$((_tc_scroll + _tc_page_size - 1))
+        [ "$_tc_bottom" -gt "$_tc_count" ] && _tc_bottom=$_tc_count
+        _tc_cursor=$_tc_bottom
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_HOME")
+        _tc_cursor=1; _tc_scroll=1; _tc_error_msg=''
+        ;;
+      "$TUI_KEY_END")
+        _tc_cursor=$_tc_count
+        _tc_max_scroll=$((_tc_count - _tc_page_size + 1))
+        [ "$_tc_max_scroll" -lt 1 ] && _tc_max_scroll=1
+        _tc_scroll=$_tc_max_scroll
+        _tc_error_msg=''
+        ;;
+      "$TUI_KEY_ESC"|"$TUI_KEY_Q")
+        tui_restore
+        TUI_RESULT=''
+        _tc_i=1
+        while [ "$_tc_i" -le "$_tc_count" ]; do
+          # shellcheck disable=SC2086
+          eval "unset _tc_label_$_tc_i"
+          # shellcheck disable=SC2086
+          eval "unset _tc_checked_$_tc_i"
+          _tc_i=$((_tc_i + 1))
+        done
+        unset _tc_i _tc_cur _tc_title _tc_subtitle _tc_count _tc_selected _tc_cursor
+        unset _tc_scroll _tc_show_help _tc_error_msg _tc_page_size _tc_bottom _tc_max_scroll
+        return 1
+        ;;
+      "$TUI_KEY_HELP")
+        if [ "$_tc_show_help" = "true" ]; then
+          _tc_show_help=false
+        else
+          _tc_show_help=true
+        fi
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
 # Demo / standalone execution (only when run directly, not sourced)
 # ---------------------------------------------------------------------------
 
@@ -788,6 +1219,22 @@ case "${0##*/}" in
       _demo_rc=$?
       if [ $_demo_rc -eq 0 ]; then
         printf 'Selected index: %s (TUI_RESULT=%s)\n' "$TUI_RESULT" "$TUI_RESULT"
+      else
+        printf 'Cancelled\n'
+      fi
+      exit $_demo_rc
+    fi
+    if [ "${1:-}" = "--demo-checklist" ]; then
+      shift
+      if [ $# -eq 0 ]; then
+        set -- "Core utilities" "Network tools" "Development tools" \
+               "Documentation" "Extra packages" "Security tools"
+      fi
+      tui_checklist "Checklist Demo" "Space=toggle, Ctrl+D=Done, *=All, -=None" \
+        "$@" --checked 0 2
+      _demo_rc=$?
+      if [ $_demo_rc -eq 0 ]; then
+        printf 'Selected indexes:\n%s\n' "$(cat)"
       else
         printf 'Cancelled\n'
       fi
