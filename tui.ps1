@@ -774,3 +774,246 @@ function Show-TuiSelectFallback {
     Write-Host "Invalid input: not a number"
     return -1
 }
+
+# ============================================================
+# tui.ps1 — Interactive Widgets (Plan 06-02)
+#
+# Multi-select checklist, radio single-select, yes/no
+# confirmation, and freeform text input widgets.
+# All match POSIX tui.sh widget behaviors exactly.
+# ============================================================
+
+# ---------------------------------------------------------------------------
+# Section 12: Multi-Select Checklist Widget (Show-TuiChecklist)
+# ---------------------------------------------------------------------------
+
+function Show-TuiChecklist {
+    <#
+    .SYNOPSIS
+    Multi-select checklist TUI widget. PowerShell port of tui_checklist().
+
+    .PARAMETER Title
+    Box title.
+    .PARAMETER Subtitle
+    Context line below title.
+    .PARAMETER Items
+    Array of item strings.
+    .PARAMETER Checked
+    Array of 0-based indices that start pre-checked (optional).
+
+    .DESCRIPTION
+    Renders items with [x]/[ ] toggle indicators. Space toggles current item.
+    * (asterisk) selects all. - (minus) deselects all.
+    Enter confirms selection. Esc/q cancels.
+
+    Sets $Script:TUI_RESULT to space-separated string of selected 0-based indices.
+    E.g., "0 3 5" means items at indices 0, 3, and 5 are selected.
+    Sets $Script:TUI_RESULT to "" on cancel.
+
+    Matching tui_checklist() behaviors:
+      - [x] indicator for checked, [ ] for unchecked
+      - Space toggles current item
+      - * key selects ALL items (TUI_KEY_ASTERISK)
+      - - key deselects ALL items (TUI_KEY_MINUS)
+      - Reverse-video highlight on current item
+      - Scroll indicators ↑more/↓more
+      - Help footer: "↑↓ jk move  Space toggle  * all  - none  ↵ confirm  Esc/q cancel"
+    #>
+    param(
+        [string]$Title,
+        [string]$Subtitle,
+        [string[]]$Items,
+        [int[]]$Checked = @()
+    )
+
+    # Fallback mode
+    if (-not $Script:_tui_use_tui) {
+        $Script:TUI_RESULT = Show-TuiChecklistFallback -Title $Title -Subtitle $Subtitle -Items $Items -Checked $Checked
+        return
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    $itemCount = $Items.Count
+    $currentIndex = 0
+    $topIndex = 0
+
+    # Track checked state as boolean array
+    $isChecked = @(New-Object bool[] $itemCount)
+    foreach ($idx in $Checked) {
+        if ($idx -ge 0 -and $idx -lt $itemCount) { $isChecked[$idx] = $true }
+    }
+
+    $running = $true
+    $needsRedraw = $true
+
+    # Terminal dimensions
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+    $boxWidth = [Math]::Min(76, $termCols - 2)
+    if ($boxWidth -lt 30) { $boxWidth = 30 }
+    $baseVisibleRows = [Math]::Max(1, $termRows - 7)
+    $boxHeight = $baseVisibleRows + 6
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+    $innerWidth = [Math]::Max(4, $boxWidth - 6)  # account for [x] prefix
+
+    while ($running) {
+        if ($needsRedraw) {
+            Clear-TuiScreen
+            Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight -Title $Title
+
+            if ($Subtitle) {
+                Write-TuiAt -Row ($boxY + 2) -Col ($boxX + 2)
+                Write-Host $Subtitle -NoNewline
+            }
+
+            $needsScroll = $itemCount -gt $baseVisibleRows
+            $itemStartRow = $boxY + 3
+
+            # Use a local render count to avoid mutating baseVisibleRows
+            $_renderCount = $baseVisibleRows
+
+            if ($needsScroll -and $topIndex -gt 0) {
+                Write-TuiAt -Row $itemStartRow -Col ($boxX + 2)
+                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                $itemStartRow++
+                $_renderCount--
+            }
+
+            for ($i = 0; $i -lt [Math]::Min($_renderCount, $itemCount - $topIndex); $i++) {
+                $itemIdx = $topIndex + $i
+                $row = $itemStartRow + $i
+                $isCurrent = ($itemIdx -eq $currentIndex)
+
+                # Build checkbox indicator
+                $check = if ($isChecked[$itemIdx]) { '[x]' } else { '[ ]' }
+                $label = $Items[$itemIdx]
+
+                # Truncate to fit
+                $maxLabel = $innerWidth - 4  # [x] prefix
+                if ($label.Length -gt $maxLabel) {
+                    $label = $label.Substring(0, $maxLabel - 3) + '...'
+                }
+                $padded = $label + (' ' * [Math]::Max(0, $maxLabel - $label.Length))
+
+                Write-TuiAt -Row $row -Col ($boxX + 2)
+                if ($isCurrent) {
+                    Write-Host "$($Script:TUI_REV)$check $padded$($Script:TUI_RESET)" -NoNewline
+                } else {
+                    Write-Host "$check $padded" -NoNewline
+                }
+            }
+
+            if ($needsScroll -and ($topIndex + $_renderCount) -lt $itemCount) {
+                $bottomRow = $itemStartRow + $i
+                Write-TuiAt -Row $bottomRow -Col ($boxX + 2)
+                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+            }
+
+            # Footer
+            $footerRow = $boxY + $boxHeight - 2
+            $footerText = "↑↓ jk move  Space toggle  * all  - none  ↵ confirm  Esc/q cancel"
+            Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
+            Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
+
+            $needsRedraw = $false
+        }
+
+        Read-TuiKey
+        $key = $Script:_tui_rk_result
+
+        switch ($key) {
+            $Script:TUI_KEY_UP {
+                if ($currentIndex -gt 0) { $currentIndex-- }
+                if ($currentIndex -lt $topIndex) { $topIndex = $currentIndex }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_DOWN {
+                if ($currentIndex -lt $itemCount - 1) { $currentIndex++ }
+                if ($currentIndex -ge $topIndex + $baseVisibleRows) { $topIndex = $currentIndex - $baseVisibleRows + 1 }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_PGUP {
+                $currentIndex = [Math]::Max(0, $currentIndex - $baseVisibleRows)
+                $topIndex = [Math]::Max(0, $topIndex - $baseVisibleRows)
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_PGDN {
+                $currentIndex = [Math]::Min($itemCount - 1, $currentIndex + $baseVisibleRows)
+                $topIndex = [Math]::Min($itemCount - $baseVisibleRows, $topIndex + $baseVisibleRows)
+                if ($topIndex -lt 0) { $topIndex = 0 }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_HOME {
+                $currentIndex = 0; $topIndex = 0; $needsRedraw = $true
+            }
+            $Script:TUI_KEY_END {
+                $currentIndex = $itemCount - 1
+                $topIndex = [Math]::Max(0, $itemCount - $baseVisibleRows)
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_SPACE {
+                # Toggle current item
+                $isChecked[$currentIndex] = -not $isChecked[$currentIndex]
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_ASTERISK {
+                # Select All
+                for ($idx = 0; $idx -lt $itemCount; $idx++) { $isChecked[$idx] = $true }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_MINUS {
+                # Deselect All
+                for ($idx = 0; $idx -lt $itemCount; $idx++) { $isChecked[$idx] = $false }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_ENTER {
+                # Build space-separated index string
+                $selected = @()
+                for ($idx = 0; $idx -lt $itemCount; $idx++) {
+                    if ($isChecked[$idx]) { $selected += $idx.ToString() }
+                }
+                $Script:TUI_RESULT = $selected -join ' '
+                $running = $false
+            }
+            $Script:TUI_KEY_ESC {
+                $Script:TUI_RESULT = ''
+                $running = $false
+            }
+            $Script:TUI_KEY_Q {
+                $Script:TUI_RESULT = ''
+                $running = $false
+            }
+        }
+    }
+
+    Restore-Tui
+}
+
+function Show-TuiChecklistFallback {
+    param([string]$Title, [string]$Subtitle, [string[]]$Items, [int[]]$Checked)
+    Write-Host "$Title"
+    if ($Subtitle) { Write-Host $Subtitle }
+    $isChecked = @(New-Object bool[] $Items.Count)
+    foreach ($idx in $Checked) { if ($idx -ge 0 -and $idx -lt $Items.Count) { $isChecked[$idx] = $true } }
+    for ($i = 0; $i -lt $Items.Count; $i++) {
+        $mark = if ($isChecked[$i]) { '[x]' } else { '[ ]' }
+        $num = $i + 1
+        Write-Host "  $num) $mark $($Items[$i])"
+    }
+    $input = Read-Host "Enter numbers to toggle (space/comma-separated) or 0 to confirm"
+    if ($input -eq '0') {
+        $result = @()
+        for ($i = 0; $i -lt $Items.Count; $i++) { if ($isChecked[$i]) { $result += $i.ToString() } }
+        return ($result -join ' ')
+    }
+    $nums = $input -split '[ ,]+' | ForEach-Object { $n = 0; [int]::TryParse($_, [ref]$n) | Out-Null; $n }
+    foreach ($n in $nums) {
+        if ($n -ge 1 -and $n -le $Items.Count) { $isChecked[$n - 1] = -not $isChecked[$n - 1] }
+    }
+    $result = @()
+    for ($i = 0; $i -lt $Items.Count; $i++) { if ($isChecked[$i]) { $result += $i.ToString() } }
+    return ($result -join ' ')
+}
