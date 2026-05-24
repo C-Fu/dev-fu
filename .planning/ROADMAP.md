@@ -65,7 +65,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Menu DSL parser with pipe-delimited awk parsing and tree query functions (flu_menu_load, flu_menu_get_children, flu_menu_is_leaf, flu_menu_get_breadcrumb, flu_menu_get_action)
+- [x] 03-01-PLAN.md — Menu DSL parser with pipe-delimited awk parsing and tree query functions (flu_menu_load, flu_menu_get_children, flu_menu_is_leaf, flu_menu_get_breadcrumb, flu_menu_get_action)
 - [ ] 03-02-PLAN.md — Navigation engine with custom TUI renderer, 3-level submenu event loop, breadcrumb display, Left arrow back-navigation, and numbered fallback mode
 **UI hint**: yes
 
@@ -130,7 +130,7 @@ Phases execute in numeric order. With parallelization enabled:
 |-------|----------------|--------|-----------|
 | 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
 | 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
-| 3. Menu System | 0/? | Not started | - |
+| 3. Menu System | 1/2 | In Progress|  |
 | 4. Module Architecture | 0/? | Not started | - |
 | 5. Integration & Orchestrator | 0/? | Not started | - |
 | 6. PowerShell Port | 0/? | Not started | - |
