@@ -495,6 +495,9 @@ flu_menu_navigate() {
     _tui_read_key
     _fm_key="$_tui_rk_result"
 
+    # TRACE
+    printf 'key=%s path="%s" cursor=%d count=%d\n' "$_fm_key" "$_fm_path" "$_fm_cursor" "$_fm_children_count" >> "${TMPDIR:-/tmp}/menu_trace.log" 2>/dev/null || true
+
     # --- Navigation dispatch ---
     case "$_fm_key" in
       "$TUI_KEY_UP")
