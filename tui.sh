@@ -2244,6 +2244,15 @@ case "${0##*/}" in
       fi
       exit $_demo_rc
     fi
+    if [ "${1:-}" = "--demo-spinner" ]; then
+      shift
+      printf 'Spinner demo — starting spinner for 3 seconds...\n'
+      flu_spinner_start
+      sleep 3
+      flu_spinner_stop
+      printf 'Spinner stopped.\n'
+      exit 0
+    fi
     if [ $# -gt 0 ]; then
       tui_select "$@"
       exit $?
