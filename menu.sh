@@ -23,6 +23,9 @@
 #   flu_menu_is_leaf <path>         — Check if path is a leaf node (returns 0/1)
 #   flu_menu_get_breadcrumb <path>  — Convert path to "Main Menu > A > B" string
 #   flu_menu_get_action <path>      — Get action field for a full L1|L2|L3 path
+#   _flu_menu_render                — Render current menu level (internal, TUI only)
+#   flu_menu_navigate <dsl_file>    — Hierarchical menu navigation engine
+#   _flu_menu_navigate_fallback     — Non-TTY numbered prompt fallback (internal)
 
 # ---------------------------------------------------------------------------
 # Section 1: Source tui.sh if not already sourced
@@ -287,3 +290,478 @@ flu_menu_get_action() {
   unset _fm_path _fm_i _fm_line _fm_prefix
   return 1
 }
+
+# ---------------------------------------------------------------------------
+# Section 7: _flu_menu_render() — Render current menu level
+# ---------------------------------------------------------------------------
+
+# Renders the current menu level with breadcrumb as title, numbered items
+# with reverse-video highlight, scroll indicators, status row, and footer.
+# Mirrors _tui_render_select() pattern using _fm_* state and _fr_* internals.
+# shellcheck disable=SC2034,SC2154
+_flu_menu_render() {
+  clear_screen
+  _fr_rows=$(tput lines 2>/dev/null || printf '24')
+  _fr_cols=$(tput cols 2>/dev/null || printf '80')
+  _fr_box_w=$((_fr_cols - 4))
+  [ "$_fr_box_w" -lt 40 ] && _fr_box_w=40
+  _fr_inner=$((_fr_box_w - 2))
+  _fr_x=2
+  _fr_r=1
+
+  # Get breadcrumb for title
+  _fr_breadcrumb=$(flu_menu_get_breadcrumb "$_fm_path")
+
+  # === Top border with breadcrumb as title ===
+  move_cursor "$_fr_r" "$_fr_x"
+  printf '%s' "$TUI_BOX_TL"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
+  printf '%s' "$TUI_BOX_TR"
+  _fr_r=$((_fr_r + 1))
+
+  move_cursor "$_fr_r" "$_fr_x"
+  printf '%s' "$TUI_BOX_V"
+  _fr_tlen=${#_fr_breadcrumb}
+  if [ "$_fr_tlen" -gt "$_fr_inner" ]; then _fr_tlen=$_fr_inner; fi
+  _fr_tshow=$(printf '%s' "$_fr_breadcrumb" | awk -v L="$_fr_tlen" '{print substr($0,1,L)}')
+  _fr_pad=$((_fr_inner - ${#_fr_tshow}))
+  _fr_pl=$((_fr_pad / 2)); _fr_pr=$((_fr_pad - _fr_pl))
+  _fr_j=0; while [ "$_fr_j" -lt "$_fr_pl" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+  printf '%s%s%s' "$TUI_BOLD" "$_fr_tshow" "$TUI_RESET"
+  _fr_j=0; while [ "$_fr_j" -lt "$_fr_pr" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _fr_r=$((_fr_r + 1))
+
+  # === Separator row ===
+  move_cursor "$_fr_r" "$_fr_x"
+  printf '%s' "$TUI_BOX_V"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _fr_r=$((_fr_r + 1))
+
+  # === Calculate page size ===
+  _fr_status_row=$((_fr_rows - 3))
+  _fr_bottom_row=$((_fr_rows - 2))
+  _fr_footer_row=$((_fr_rows - 1))
+  _fm_page_size=$((_fr_status_row - _fr_r + 1))
+  [ "$_fm_page_size" -lt 1 ] && _fm_page_size=1
+
+  # === Scroll indicator (top) ===
+  if [ "$_fm_scroll" -gt 1 ]; then
+    move_cursor "$_fr_r" $((_fr_x + _fr_box_w - 9))
+    printf '%s%cmore%s' "$TUI_DIM" '↑' "$TUI_RESET"
+  fi
+
+  # === Render visible items ===
+  _fr_end=$((_fm_scroll + _fm_page_size - 1))
+  [ "$_fr_end" -gt "$_fm_children_count" ] && _fr_end=$_fm_children_count
+  _fr_maxlab=$((_fr_inner - 6))
+  [ "$_fr_maxlab" -lt 5 ] && _fr_maxlab=5
+  _fr_i=$_fm_scroll
+  while [ "$_fr_i" -le "$_fr_end" ]; do
+    # shellcheck disable=SC2086
+    eval "_fr_lab=\$_fm_child_$_fr_i"
+    # shellcheck disable=SC2154
+    _fr_trunc=$(printf '%s' "$_fr_lab" | awk -v L="$_fr_maxlab" '{print substr($0,1,L)}')
+    move_cursor "$_fr_r" "$_fr_x"
+    printf '%s' "$TUI_BOX_V"
+    if [ "$_fr_i" -eq "$_fm_cursor" ]; then
+      # Highlighted row: reverse video on number + label, fill rest with spaces in reverse
+      printf '%s%3d) %s' "$TUI_REV" "$_fr_i" "$_fr_trunc"
+      _fr_used=$((5 + ${#_fr_trunc}))
+      _fr_fill=$((_fr_inner - _fr_used))
+      [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+      printf '%s' "$TUI_RESET"
+    else
+      # Normal row
+      printf '%3d) %s' "$_fr_i" "$_fr_trunc"
+      _fr_used=$((5 + ${#_fr_trunc}))
+      _fr_fill=$((_fr_inner - _fr_used))
+      [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+    fi
+    printf '%s' "$TUI_BOX_V"
+    _fr_r=$((_fr_r + 1))
+    _fr_i=$((_fr_i + 1))
+  done
+
+  # === Fill remaining body rows with empty space ===
+  while [ "$_fr_r" -le "$_fr_status_row" ]; do
+    move_cursor "$_fr_r" "$_fr_x"
+    printf '%s' "$TUI_BOX_V"
+    _fr_j=0; while [ "$_fr_j" -lt "$_fr_inner" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _fr_r=$((_fr_r + 1))
+  done
+
+  # === Scroll indicator (bottom) ===
+  if [ "$_fr_end" -lt "$_fm_children_count" ]; then
+    _fr_drow=$((_fr_r - 1))
+    move_cursor "$_fr_drow" $((_fr_x + _fr_box_w - 9))
+    printf '%s%cmore%s' "$TUI_DIM" '↓' "$TUI_RESET"
+  fi
+
+  # === Status row ===
+  move_cursor "$_fr_status_row" "$_fr_x"
+  printf '%s' "$TUI_BOX_V"
+  _fr_j=0; while [ "$_fr_j" -lt "$_fr_inner" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  move_cursor "$_fr_status_row" $((_fr_x + 2))
+  if [ -n "$_fm_error_msg" ]; then
+    printf '%s%s%s' "$TUI_RED" "$_fm_error_msg" "$TUI_RESET"
+  else
+    printf 'Item %d of %d' "$_fm_cursor" "$_fm_children_count"
+  fi
+
+  # === Bottom border ===
+  move_cursor "$_fr_bottom_row" "$_fr_x"
+  printf '%s' "$TUI_BOX_BL"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
+  printf '%s' "$TUI_BOX_BR"
+
+  # === Footer row ===
+  move_cursor "$_fr_footer_row" "$_fr_x"
+  if [ "$_fm_show_help" = "true" ]; then
+    _fr_ft='Up/Dn Move  Enter Select  Esc/← Back  PgUp/PgDn Page  Home/End  j/k Vi  ? Keys'
+  else
+    _fr_ft='Up/Dn Move  Enter Select  Esc Back  ? Keys'
+  fi
+  printf '%s%s%s' "$TUI_DIM" "$_fr_ft" "$TUI_RESET"
+
+  printf '%s[?25l' "$ESC"
+
+  # Cleanup all _fr_* variables
+  unset _fr_rows _fr_cols _fr_box_w _fr_inner _fr_x _fr_r _fr_i _fr_j
+  unset _fr_tlen _fr_tshow _fr_pad _fr_pl _fr_pr
+  unset _fr_status_row _fr_bottom_row _fr_footer_row _fr_end _fr_maxlab
+  unset _fr_lab _fr_trunc _fr_used _fr_fill _fr_drow _fr_ft
+  unset _fr_breadcrumb
+}
+
+# ---------------------------------------------------------------------------
+# Section 8: flu_menu_navigate() — Hierarchical menu navigation
+# ---------------------------------------------------------------------------
+
+# flu_menu_navigate <dsl_file>
+# Navigates a 3-level hierarchical menu defined by the DSL file.
+# Uses tui.sh primitives for TUI rendering (when available) or
+# numbered fallback prompts (when TERM=dumb or no TTY).
+#
+# Returns:
+#   Exit 0: Prints "L1|L2|L3|action" to stdout, sets TUI_RESULT
+#   Exit 1: User cancelled at root level
+# shellcheck disable=SC2034,SC2154
+flu_menu_navigate() {
+  _fm_dsl_file=$1
+  flu_menu_load "$_fm_dsl_file" || return 1
+
+  _fm_path=""        # Current position: "" = root, "Dev Tools" = L1, etc.
+  _fm_cursor=1
+  _fm_scroll=1
+  _fm_show_help=false
+  _fm_error_msg=''
+  _fm_page_size=1
+
+  # --- Non-TTY fallback ---
+  if [ "$_tui_use_tui" = "false" ]; then
+    _flu_menu_navigate_fallback
+    _fm_fb_rc=$?
+    unset _fm_dsl_file _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
+    return $_fm_fb_rc
+  fi
+
+  # --- TUI navigation ---
+  tui_init
+
+  while :; do
+    # Get children for current path
+    flu_menu_get_children "$_fm_path"
+
+    if [ "$_fm_children_count" -eq 0 ]; then
+      tui_restore
+      printf 'Error: No menu items at path: %s\n' "$_fm_path" >&2
+      unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
+      unset _fm_dsl_file _fm_key _fm_bottom _fm_max_scroll _fm_new_path _fm_selected
+      return 1
+    fi
+
+    # Ensure cursor is within bounds
+    [ "$_fm_cursor" -gt "$_fm_children_count" ] && _fm_cursor=$_fm_children_count
+    [ "$_fm_cursor" -lt 1 ] && _fm_cursor=1
+
+    # Render current level
+    _flu_menu_render
+
+    # Read key
+    _tui_read_key
+    _fm_key="$_tui_rk_result"
+
+    # --- Navigation dispatch ---
+    case "$_fm_key" in
+      "$TUI_KEY_UP")
+        if [ "$_fm_cursor" -gt 1 ]; then
+          _fm_cursor=$((_fm_cursor - 1))
+          if [ "$_fm_cursor" -lt "$_fm_scroll" ]; then
+            _fm_scroll=$((_fm_scroll - 1))
+          fi
+        fi
+        _fm_error_msg=''
+        ;;
+      "$TUI_KEY_DOWN")
+        if [ "$_fm_cursor" -lt "$_fm_children_count" ]; then
+          _fm_cursor=$((_fm_cursor + 1))
+          _fm_bottom=$((_fm_scroll + _fm_page_size - 1))
+          if [ "$_fm_cursor" -gt "$_fm_bottom" ]; then
+            _fm_scroll=$((_fm_scroll + 1))
+          fi
+        fi
+        _fm_error_msg=''
+        ;;
+      "$TUI_KEY_PGUP")
+        _fm_scroll=$((_fm_scroll - _fm_page_size))
+        [ "$_fm_scroll" -lt 1 ] && _fm_scroll=1
+        _fm_cursor=$_fm_scroll
+        _fm_error_msg=''
+        ;;
+      "$TUI_KEY_PGDN")
+        _fm_scroll=$((_fm_scroll + _fm_page_size))
+        _fm_max_scroll=$((_fm_children_count - _fm_page_size + 1))
+        [ "$_fm_max_scroll" -lt 1 ] && _fm_max_scroll=1
+        [ "$_fm_scroll" -gt "$_fm_max_scroll" ] && _fm_scroll=$_fm_max_scroll
+        _fm_bottom=$((_fm_scroll + _fm_page_size - 1))
+        [ "$_fm_bottom" -gt "$_fm_children_count" ] && _fm_bottom=$_fm_children_count
+        _fm_cursor=$_fm_bottom
+        _fm_error_msg=''
+        ;;
+      "$TUI_KEY_HOME")
+        _fm_cursor=1; _fm_scroll=1; _fm_error_msg=''
+        ;;
+      "$TUI_KEY_END")
+        _fm_cursor=$_fm_children_count
+        _fm_max_scroll=$((_fm_children_count - _fm_page_size + 1))
+        [ "$_fm_max_scroll" -lt 1 ] && _fm_max_scroll=1
+        _fm_scroll=$_fm_max_scroll
+        _fm_error_msg=''
+        ;;
+      "$TUI_KEY_ENTER")
+        # Get selected child label
+        eval "_fm_selected=\$_fm_child_$_fm_cursor"
+        if [ -z "$_fm_path" ]; then
+          _fm_new_path="$_fm_selected"
+        else
+          _fm_new_path="${_fm_path}|${_fm_selected}"
+        fi
+
+        # Check if leaf
+        if flu_menu_is_leaf "$_fm_new_path"; then
+          # Leaf selected — return path + action
+          tui_restore
+          _fm_action=$(flu_menu_get_action "$_fm_new_path")
+          printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
+          TUI_RESULT="$_fm_new_path"
+          # Cleanup all _fm_* variables
+          unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
+          unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
+          unset _fm_key _fm_bottom _fm_max_scroll _fm_action
+          return 0
+        fi
+
+        # Not leaf — descend into submenu
+        _fm_path="$_fm_new_path"
+        _fm_cursor=1
+        _fm_scroll=1
+        _fm_error_msg=''
+        ;;
+
+      "$TUI_KEY_ESC"|"$TUI_KEY_Q"|"$TUI_KEY_LEFT")
+        # Check for Left arrow escape sequence (ESC [ D)
+        # Only attempt sub-reads when key is ESC — Left and Right
+        # are already decoded by _tui_read_key but we handle Left here
+        # and do an additional check for missed ESC [ D patterns
+        _flu_menu_esc_result=''
+        if [ "$_fm_key" = "$TUI_KEY_ESC" ]; then
+          stty min 0 time 1 2>/dev/null || true
+          _flu_menu_b1=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
+          if [ "${_flu_menu_b1:-}" = "91" ]; then
+            # Got '[' — read the direction byte
+            _flu_menu_b2=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
+            if [ "${_flu_menu_b2:-}" = "68" ]; then
+              # ESC [ D = Left arrow → go back (same as Esc)
+              _flu_menu_esc_result='left'
+            elif [ "${_flu_menu_b2:-}" = "67" ]; then
+              # ESC [ C = Right arrow → same as Enter for navigation
+              _flu_menu_esc_result='right'
+            fi
+          fi
+          stty -echo -icanon min 1 time 0 2>/dev/null || true
+        elif [ "$_fm_key" = "$TUI_KEY_LEFT" ]; then
+          _flu_menu_esc_result='left'
+        fi
+
+        if [ "$_flu_menu_esc_result" = "right" ]; then
+          # Right arrow — same as Enter (select current item)
+          eval "_fm_selected=\$_fm_child_$_fm_cursor"
+          if [ -z "$_fm_path" ]; then
+            _fm_new_path="$_fm_selected"
+          else
+            _fm_new_path="${_fm_path}|${_fm_selected}"
+          fi
+          if flu_menu_is_leaf "$_fm_new_path"; then
+            tui_restore
+            _fm_action=$(flu_menu_get_action "$_fm_new_path")
+            printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
+            TUI_RESULT="$_fm_new_path"
+            unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
+            unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
+            unset _fm_key _fm_bottom _fm_max_scroll _fm_action
+            unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
+            return 0
+          fi
+          _fm_path="$_fm_new_path"
+          _fm_cursor=1
+          _fm_scroll=1
+          _fm_error_msg=''
+          unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2 2>/dev/null
+          continue
+        fi
+
+        if [ -z "$_fm_path" ]; then
+          # At root — exit
+          tui_restore
+          TUI_RESULT=''
+          unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
+          unset _fm_dsl_file _fm_key _fm_bottom _fm_max_scroll _fm_new_path _fm_selected
+          unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
+          return 1
+        fi
+        # Go up one level — strip last pipe segment
+        _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')
+        _fm_cursor=1
+        _fm_scroll=1
+        _fm_error_msg=''
+        ;;
+
+      "$TUI_KEY_HELP")
+        if [ "$_fm_show_help" = "true" ]; then
+          _fm_show_help=false
+        else
+          _fm_show_help=true
+        fi
+        ;;
+    esac
+
+    unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2 2>/dev/null
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Section 9: _flu_menu_navigate_fallback() — Non-TTY fallback navigation
+# ---------------------------------------------------------------------------
+
+# Provides the same 3-level hierarchical navigation using numbered text
+# prompts when TERM=dumb or no TTY is available. Called automatically by
+# flu_menu_navigate() when _tui_use_tui is "false".
+# shellcheck disable=SC2034
+_flu_menu_navigate_fallback() {
+  _fm_path=""
+
+  while :; do
+    flu_menu_get_children "$_fm_path"
+    _fm_breadcrumb=$(flu_menu_get_breadcrumb "$_fm_path")
+
+    printf '\n'
+    printf '%s\n' "$_fm_breadcrumb"
+    printf '%s\n' "----------------------------------------"
+
+    _fm_i=1
+    while [ "$_fm_i" -le "$_fm_children_count" ]; do
+      # shellcheck disable=SC2086
+      eval "printf ' %2d) %s\n' \"$_fm_i\" \"\$_fm_child_$_fm_i\""
+      _fm_i=$((_fm_i + 1))
+    done
+
+    if [ -n "$_fm_path" ]; then
+      printf '  0) Back\n'
+    else
+      printf '  0) Exit\n'
+    fi
+
+    printf '> '
+    IFS= read -r _fm_choice || { printf '\n'; unset _fm_path _fm_breadcrumb _fm_i; return 1; }
+
+    case "$_fm_choice" in
+      0)
+        if [ -z "$_fm_path" ]; then
+          # Exit at root
+          TUI_RESULT=''
+          unset _fm_path _fm_breadcrumb _fm_i _fm_choice
+          return 1
+        fi
+        # Go up one level — strip last pipe segment
+        _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')
+        ;;
+
+      *)
+        # Validate numeric input
+        _fm_choice_num=$(printf '%s' "$_fm_choice" | awk '{print $1 + 0}')
+        if [ "${_fm_choice_num:-0}" -ge 1 ] 2>/dev/null && \
+           [ "${_fm_choice_num:-0}" -le "$_fm_children_count" ] 2>/dev/null; then
+          # shellcheck disable=SC2086
+          eval "_fm_selected=\$_fm_child_$_fm_choice_num"
+
+          if [ -z "$_fm_path" ]; then
+            _fm_new_path="$_fm_selected"
+          else
+            _fm_new_path="${_fm_path}|${_fm_selected}"
+          fi
+
+          if flu_menu_is_leaf "$_fm_new_path"; then
+            _fm_action=$(flu_menu_get_action "$_fm_new_path")
+            printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
+            TUI_RESULT="$_fm_new_path"
+            unset _fm_path _fm_new_path _fm_selected _fm_breadcrumb _fm_i _fm_choice _fm_choice_num _fm_action
+            return 0
+          fi
+
+          # Descend into submenu
+          _fm_path="$_fm_new_path"
+        else
+          printf 'Invalid choice: %s\n' "$_fm_choice" >&2
+        fi
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Section 10: Demo mode
+# ---------------------------------------------------------------------------
+
+# Only execute demo when run directly (not when sourced)
+case "${0##*/}" in
+  menu.sh|menu)
+    if [ "${1:-}" = "--demo" ] || [ "${1:-}" = "--demo-menu" ]; then
+      echo "flu.sh Menu Demo"
+      echo "================"
+      echo ""
+      echo "Navigating menu.db..."
+      echo ""
+
+      # Source tui.sh relative to menu.sh location
+      _menu_dir=$(cd "$(dirname "$0")" && pwd)
+      # shellcheck disable=SC1091
+      . "$_menu_dir/tui.sh"
+      unset _menu_dir
+
+      flu_menu_navigate "menu.db"
+      _demo_rc=$?
+
+      echo ""
+      if [ "$_demo_rc" -eq 0 ]; then
+        echo "Selected: $TUI_RESULT"
+      else
+        echo "Cancelled."
+      fi
+      unset _demo_rc
+    fi
+    ;;
+esac
