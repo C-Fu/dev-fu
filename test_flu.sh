@@ -52,7 +52,8 @@ _assert_grep_count() {
     _agc_count="$2"
     _agc_pattern="$3"
     _agc_file="$4"
-    _agc_actual=$(grep -c "$_agc_pattern" "$_agc_file" 2>/dev/null || printf '0')
+    _agc_actual=$(grep -c "$_agc_pattern" "$_agc_file" 2>/dev/null)
+    _agc_actual="${_agc_actual:-0}"
     if [ "$_agc_actual" -eq "$_agc_count" ]; then
         _pass "$_agc_desc"
     else
@@ -157,19 +158,19 @@ _assert_grep "flu.sh has TUI_RESULT usage" \
     "TUI_RESULT" "./flu.sh"
 
 _assert_grep_count "flu.sh has exactly 1 flu_menu_navigate call" \
-    "1" "flu_menu_navigate" "./flu.sh"
+    "1" '^[^#]*flu_menu_navigate' "./flu.sh"
 
 _assert_grep_count "flu.sh has exactly 1 flu_menu_get_action call" \
-    "1" "flu_menu_get_action" "./flu.sh"
+    "1" '^[^#]*flu_menu_get_action' "./flu.sh"
 
 _assert_grep_count "flu.sh has exactly 1 flu_spinner_start call" \
-    "1" "flu_spinner_start" "./flu.sh"
+    "1" '^[^#]*flu_spinner_start' "./flu.sh"
 
 _assert_grep_count "flu.sh has exactly 1 flu_module_execute call" \
-    "1" "flu_module_execute" "./flu.sh"
+    "1" '^[^#]*flu_module_execute' "./flu.sh"
 
 _assert_grep_count "flu.sh has exactly 1 flu_spinner_stop call" \
-    "1" "flu_spinner_stop" "./flu.sh"
+    "1" '^[^#]*flu_spinner_stop' "./flu.sh"
 
 # Clean exit path
 _assert_grep "flu.sh cleans up with tui_restore at exit" \

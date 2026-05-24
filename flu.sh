@@ -48,6 +48,7 @@ flu_module_set_env
 # 🖥 Startup Platform Display
 # ──────────────
 # Show detected platform info before entering menu
+# shellcheck disable=SC2154
 if [ "$_tui_use_tui" = "true" ]; then
     tui_init
     clear_screen
@@ -123,3 +124,75 @@ if [ ! -f "$FLU_MENU_FILE" ]; then
         "$TUI_RED" "$FLU_MENU_FILE" "$TUI_RESET" >&2
     exit 1
 fi
+
+# ──────────────
+# 🔄 Main Event Loop
+# ──────────────
+
+# Track module execution for flow control
+_flu_running=true
+
+while [ "$_flu_running" = "true" ]; do
+    # --- Step 1: Menu Navigation ---
+    # flu_menu_navigate() handles its own TUI lifecycle:
+    #   - Calls tui_init() internally
+    #   - Renders menu levels, handles keyboard input
+    #   - Calls tui_restore() on exit (cancel at root) or
+    #     before returning (leaf select)
+    # Returns 0 on leaf selection (TUI_RESULT set to "L1|L2|L3" path)
+    # Returns 1 on cancel at root level
+    flu_menu_navigate "$FLU_MENU_FILE"
+    _flu_nav_rc=$?
+
+    if [ "$_flu_nav_rc" -ne 0 ]; then
+        # User cancelled at root — exit cleanly
+        _flu_running=false
+        continue
+    fi
+
+    # --- Step 2: Extract Action ID ---
+    # TUI_RESULT is set by flu_menu_navigate on leaf selection
+    # Example: "Developer Tools|Languages|Python"
+    # flu_menu_get_action extracts the action field from menu.db
+    # shellcheck disable=SC2154
+    _flu_action=$(flu_menu_get_action "$TUI_RESULT")
+
+    if [ -z "$_flu_action" ]; then
+        # No action defined for this path — edge case, return to menu
+        continue
+    fi
+
+    # --- Step 3: Module Execution with Spinner (INTG-01, D-05) ---
+    # Start the spinner BEFORE flu_module_execute so it's visible
+    # during the network fetch phase (flu_module_fetch uses curl/wget).
+    # The spinner renders via background process.
+    # flu_module_execute internally:
+    #   1. flu_module_fetch() — network call (spinner visible)
+    #   2. flu_module_parse_metadata()
+    #   3. flu_module_set_env()
+    #   4. Platform compatibility check
+    #   5. flu_module_collect_params() — TUI prompts
+    #   6. Execute module in subshell
+    #   7. flu_module_display_result() — TUI modal
+    # After flu_module_display_result, tui_restore() is called
+    # internally, returning terminal to cooked mode.
+    flu_spinner_start
+    flu_module_execute "$_flu_action"
+    _flu_mod_rc=$?
+    flu_spinner_stop
+
+    # --- Step 4: Post-Execution ---
+    # Clear screen to prepare for fresh menu render on next iteration
+    clear_screen
+
+    # _flu_mod_rc is preserved but not used here — error recovery
+    # is handled in Plan 05-03 (error mapping).
+done
+
+# --- Step 5: Clean Exit ---
+tui_restore
+printf '%sflu.sh — Goodbye!%s\n' "$TUI_GREEN" "$TUI_RESET"
+
+# Cleanup globals
+unset _flu_action _flu_nav_rc _flu_mod_rc _flu_running
+unset FLU_SCRIPT_DIR FLU_MENU_FILE
