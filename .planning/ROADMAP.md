@@ -13,7 +13,7 @@ Build a zero-dependency, curl-pipe-bash TUI menu system that fetches and execute
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget (completed 2026-05-23)
-- [ ] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract
+- [x] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract (completed 2026-05-24)
 - [ ] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs
 - [ ] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts
 - [ ] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch
@@ -49,9 +49,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Extend key reader with Ctrl+D/Delete/*/- keys + implement tui_checklist() multi-select checkbox widget
-- [ ] 02-02-PLAN.md — Implement tui_radio() single-select and tui_yesno() confirmation dialog widgets
-- [ ] 02-03-PLAN.md — Implement tui_text_input() freeform text entry widget with line editing
+- [x] 02-01-PLAN.md — Extend key reader with Ctrl+D/Delete/*/- keys + implement tui_checklist() multi-select checkbox widget
+- [x] 02-02-PLAN.md — Implement tui_radio() single-select and tui_yesno() confirmation dialog widgets
+- [x] 02-03-PLAN.md — Implement tui_text_input() freeform text entry widget with line editing
 **UI hint**: yes
 
 ### Phase 3: Menu System
@@ -129,7 +129,7 @@ Phases execute in numeric order. With parallelization enabled:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
-| 2. Interactive Widgets | 0/? | Not started | - |
+| 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
 | 3. Menu System | 0/? | Not started | - |
 | 4. Module Architecture | 0/? | Not started | - |
 | 5. Integration & Orchestrator | 0/? | Not started | - |
