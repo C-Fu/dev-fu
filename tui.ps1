@@ -409,3 +409,368 @@ function Read-TuiChar {
         $Script:_tui_rc_char = [char]0
     }
 }
+
+# ---------------------------------------------------------------------------
+# Section 11: Single-Select Menu Widget (Show-TuiSelect)
+# ---------------------------------------------------------------------------
+
+function Show-TuiSelect {
+    <#
+    .SYNOPSIS
+    Single-select TUI menu widget. PowerShell port of tui_sh tui_select().
+
+    .PARAMETER Title
+    Box title displayed in the top border.
+
+    .PARAMETER Subtitle
+    Context line displayed below title (e.g., breadcrumb).
+
+    .PARAMETER Items
+    Array of item strings to display and choose from.
+
+    .DESCRIPTION
+    Renders a full-screen bordered box with items, keyboard navigation,
+    scroll indicators, help footer, and number jump.
+    Sets $Script:TUI_RESULT to 0-based selected index on Enter.
+    Sets $Script:TUI_RESULT to -1 on Esc/q cancel.
+    Falls back to numbered text prompt when $_tui_use_tui is $false.
+
+    Matching tui.sh tui_select() behaviors:
+      - Items overflow → scroll with ↑more / ↓more indicators
+      - PgUp/PgDn jump by page height
+      - Home/End jump to first/last
+      - Number accumulator: typing 1,2,3 → jumps to item index as digits accumulate
+      - Help footer with keyboard legend
+      - Reverse video highlight on current item ($Script:TUI_REV)
+    #>
+    param(
+        [string]$Title,
+        [string]$Subtitle,
+        [string[]]$Items
+    )
+
+    # Handle empty items list
+    if ($Items.Count -eq 0) {
+        $Script:TUI_RESULT = -1
+        return
+    }
+
+    # Fallback mode: numbered text prompt
+    if (-not $Script:_tui_use_tui) {
+        $result = Show-TuiSelectFallback -Title $Title -Subtitle $Subtitle -Items $Items
+        $Script:TUI_RESULT = $result
+        return
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    $itemCount   = $Items.Count
+    $currentIndex = 0
+    $topIndex     = 0      # first visible item index (0-based, matching $Items array)
+    $digitAccum   = ''     # multi-digit number accumulator
+    $running      = $true
+    $needsRedraw  = $true
+
+    # Get terminal dimensions
+    $termRows = 24
+    $termCols = 80
+    try {
+        $termRows = $Host.UI.RawUI.WindowSize.Height
+        $termCols = $Host.UI.RawUI.WindowSize.Width
+    } catch {}
+
+    # Calculate box dimensions
+    $boxWidth = [Math]::Min(76, $termCols - 2)
+    if ($boxWidth -lt 20) { $boxWidth = 20 }
+    # Overhead: title row + subtitle row + separator + footer row + 2 border rows + status row = 7 rows
+    $overheadRows = 7
+    if (-not $Subtitle) { $overheadRows -= 1 }  # no subtitle row needed
+    $visibleRows = [Math]::Max(1, $termRows - $overheadRows)
+
+    $boxHeight = $visibleRows + $overheadRows
+    if ($boxHeight -gt $termRows) {
+        $boxHeight = $termRows
+        $visibleRows = [Math]::Max(1, $boxHeight - $overheadRows)
+    }
+
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+    $innerWidth = [Math]::Max(4, $boxWidth - 4)  # inside padding (2 each side)
+
+    # Phase tracking for terminal resize detection
+    $prevNeedsScroll = $false
+
+    while ($running) {
+        if ($needsRedraw) {
+            Clear-TuiScreen
+
+            # Render the full box inline (matching tui.sh _tui_render_select layout):
+            # Row layout: top border, title row, [subtitle row], separator, items, status, bottom, footer
+
+            $r = $boxY
+            $innerW = $boxWidth - 2
+            $hLine = $Script:TUI_BOX_H * $innerW
+            $contentWidth = [Math]::Max(4, $boxWidth - 4)  # space for item text between V borders + padding
+
+            # Top border
+            Move-TuiCursor -Row $r -Col $boxX
+            Write-Host "$($Script:TUI_BOX_TL)$hLine$($Script:TUI_BOX_TR)" -NoNewline
+            $r++
+
+            # Title row
+            $plainTitle = $Title -replace '\x1b\[[0-9;]*m', ''
+            $titleLen = [Math]::Min($plainTitle.Length, $innerW)
+            $titleShow = $plainTitle.Substring(0, $titleLen)
+            $titlePad = $innerW - $titleLen
+            $titlePl = [Math]::Floor($titlePad / 2)
+            $titlePr = $titlePad - $titlePl
+
+            Move-TuiCursor -Row $r -Col $boxX
+            Write-Host $Script:TUI_BOX_V -NoNewline
+            Write-Host (" " * [Math]::Max(0, $titlePl)) -NoNewline
+            Write-Host "$($Script:TUI_BOLD)$titleShow$($Script:TUI_RESET)" -NoNewline
+            Write-Host (" " * [Math]::Max(0, $titlePr)) -NoNewline
+            Write-Host $Script:TUI_BOX_V -NoNewline
+            $r++
+
+            # Subtitle row (if present)
+            if ($Subtitle) {
+                $plainSub = $Subtitle -replace '\x1b\[[0-9;]*m', ''
+                $subLen = [Math]::Min($plainSub.Length, $innerW)
+                $subShow = $plainSub.Substring(0, $subLen)
+                $subPad = $innerW - $subLen
+                $subPl = [Math]::Floor($subPad / 2)
+                $subPr = $subPad - $subPl
+
+                Move-TuiCursor -Row $r -Col $boxX
+                Write-Host $Script:TUI_BOX_V -NoNewline
+                Write-Host (" " * [Math]::Max(0, $subPl)) -NoNewline
+                Write-Host "$($Script:TUI_DIM)$subShow$($Script:TUI_RESET)" -NoNewline
+                Write-Host (" " * [Math]::Max(0, $subPr)) -NoNewline
+                Write-Host $Script:TUI_BOX_V -NoNewline
+                $r++
+            }
+
+            # Separator row
+            Move-TuiCursor -Row $r -Col $boxX
+            Write-Host $Script:TUI_BOX_V -NoNewline
+            Write-Host $hLine -NoNewline
+            Write-Host $Script:TUI_BOX_V -NoNewline
+            $r++
+
+            # Item rendering area starts here
+            $itemStartRow = $r
+
+            # Footer and bottom border positions
+            $footerRow = $boxY + $boxHeight - 2
+            $bottomRow = $boxY + $boxHeight - 1
+
+            # Calculate how many rows available for items
+            $availableForItems = $footerRow - $itemStartRow
+            $renderedVisible = [Math]::Max(1, $availableForItems)
+
+            # Top scroll indicator
+            if ($itemCount -gt $renderedVisible -and $topIndex -gt 0) {
+                Move-TuiCursor -Row $itemStartRow -Col ($boxX + 2)
+                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                $itemStartRow++
+                $renderedVisible--
+            }
+
+            $itemsToRender = [Math]::Min($renderedVisible, $itemCount - $topIndex)
+
+            for ($i = 0; $i -lt $itemsToRender; $i++) {
+                $itemIdx = $topIndex + $i
+                $row = $itemStartRow + $i
+                $isCurrent = ($itemIdx -eq $currentIndex)
+
+                # Render item at position
+                $itemText = $Items[$itemIdx]
+                # Truncate to fit content width
+                if ($itemText.Length -gt $contentWidth) {
+                    $itemText = $itemText.Substring(0, $contentWidth - 3) + '...'
+                }
+                $padLen = [Math]::Max(0, $contentWidth - $itemText.Length)
+                $paddedText = $itemText + (' ' * $padLen)
+
+                Move-TuiCursor -Row $row -Col ($boxX + 2)
+                if ($isCurrent) {
+                    Write-Host "$($Script:TUI_REV)$paddedText$($Script:TUI_RESET)" -NoNewline
+                } else {
+                    Write-Host $paddedText -NoNewline
+                }
+            }
+
+            $itemsEndRow = $itemStartRow + $itemsToRender - 1
+
+            # Bottom scroll indicator
+            if ($itemCount -gt $visibleRows -and ($topIndex + $itemsToRender) -lt $itemCount) {
+                Move-TuiCursor -Row $itemsEndRow -Col ($boxX + 2)
+                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+            }
+
+            # Fill remaining body rows with empty V-bordered lines up to footer
+            $fillRow = $itemStartRow + $itemsToRender
+            while ($fillRow -lt $footerRow) {
+                Move-TuiCursor -Row $fillRow -Col $boxX
+                Write-Host $Script:TUI_BOX_V -NoNewline
+                Write-Host (" " * $innerW) -NoNewline
+                Write-Host $Script:TUI_BOX_V -NoNewline
+                $fillRow++
+            }
+
+            # Help footer row
+            $footerText = "↑↓ jk move  ↵ select  Esc/q cancel  ? help  Home End PgUp PgDn"
+            $footerCol = $boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2))
+            Move-TuiCursor -Row $footerRow -Col $footerCol
+            Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
+
+            # Bottom border
+            Move-TuiCursor -Row $bottomRow -Col $boxX
+            Write-Host "$($Script:TUI_BOX_BL)$hLine$($Script:TUI_BOX_BR)" -NoNewline
+
+            $needsRedraw = $false
+        }
+
+        # Read key
+        Read-TuiKey
+        $key = $Script:_tui_rk_result
+
+        # Apply accumulated number if the key is not a digit
+        if ($key -ne $Script:TUI_KEY_NUMBER -and $digitAccum -ne '') {
+            if ([int]::TryParse($digitAccum, [ref]$null)) {
+                $targetIdx = [int]$digitAccum
+                if ($targetIdx -ge 1 -and $targetIdx -le $itemCount) {
+                    $currentIndex = $targetIdx - 1  # convert 1-based to 0-based
+                    if ($currentIndex -lt $topIndex) { $topIndex = $currentIndex }
+                    if ($currentIndex -ge $topIndex + $renderedVisible) {
+                        $topIndex = [Math]::Max(0, $currentIndex - [Math]::Max(1, $renderedVisible - 1))
+                    }
+                    $needsRedraw = $true
+                }
+            }
+            $digitAccum = ''
+        }
+
+        switch ($key) {
+            $Script:TUI_KEY_UP {
+                if ($currentIndex -gt 0) {
+                    $currentIndex--
+                    if ($currentIndex -lt $topIndex) { $topIndex = $currentIndex }
+                }
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_DOWN {
+                if ($currentIndex -lt $itemCount - 1) {
+                    $currentIndex++
+                    if ($currentIndex -ge $topIndex + $renderedVisible) {
+                        $topIndex = [Math]::Max(0, $currentIndex - $renderedVisible + 1)
+                    }
+                }
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_PGUP {
+                $currentIndex = [Math]::Max(0, $currentIndex - [Math]::Max(1, $visibleRows))
+                $topIndex = [Math]::Max(0, $topIndex - [Math]::Max(1, $visibleRows))
+                if ($currentIndex -lt $topIndex) { $topIndex = $currentIndex }
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_PGDN {
+                $currentIndex = [Math]::Min($itemCount - 1, $currentIndex + [Math]::Max(1, $visibleRows))
+                $topIndex = [Math]::Min(
+                    [Math]::Max(0, $itemCount - [Math]::Max(1, $visibleRows)),
+                    $topIndex + [Math]::Max(1, $visibleRows)
+                )
+                if ($topIndex -lt 0) { $topIndex = 0 }
+                if ($currentIndex -ge $topIndex + $renderedVisible) {
+                    $topIndex = [Math]::Max(0, $currentIndex - $renderedVisible + 1)
+                }
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_HOME {
+                $currentIndex = 0
+                $topIndex = 0
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_END {
+                $currentIndex = $itemCount - 1
+                $topIndex = [Math]::Max(0, $itemCount - [Math]::Max(1, $visibleRows))
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_ENTER {
+                $Script:TUI_RESULT = $currentIndex
+                $running = $false
+            }
+            $Script:TUI_KEY_ESC {
+                $Script:TUI_RESULT = -1
+                $running = $false
+            }
+            $Script:TUI_KEY_Q {
+                $Script:TUI_RESULT = -1
+                $running = $false
+            }
+            $Script:TUI_KEY_HELP {
+                # Toggle help — for now, just redraw (extended help in future plans)
+                $needsRedraw = $true
+                $digitAccum = ''
+            }
+            $Script:TUI_KEY_NUMBER {
+                # Multi-digit number accumulator (matching tui.sh behavior)
+                $digitAccum += $Script:_tui_rk_digit
+                $needsRedraw = $true
+            }
+            default {
+                $digitAccum = ''
+            }
+        }
+    }
+
+    Restore-Tui
+}
+
+function Show-TuiSelectFallback {
+    <#
+    .SYNOPSIS
+    Numbered text prompt fallback when TUI is unavailable.
+    Matches tui.sh _tui_fallback_prompt() behavior.
+    #>
+    param([string]$Title, [string]$Subtitle, [string[]]$Items)
+
+    Write-Host ""
+    Write-Host "  $Title"
+    if ($Subtitle) { Write-Host "  $Subtitle" }
+    Write-Host "  ---"
+
+    $idx = 1
+    foreach ($item in $Items) {
+        Write-Host ("{0,3}) {1}" -f $idx, $item)
+        $idx++
+    }
+
+    Write-Host ""
+    $choice = Read-Host "Enter number (1-$($Items.Count)) or empty to cancel"
+
+    if ([string]::IsNullOrWhiteSpace($choice)) {
+        return -1
+    }
+
+    $num = 0
+    if ([int]::TryParse($choice, [ref]$num)) {
+        if ($num -ge 1 -and $num -le $Items.Count) {
+            return $num - 1
+        }
+        if ($num -eq 0) {
+            Write-Host "Invalid selection"
+            return -1
+        }
+    }
+    Write-Host "Invalid input: not a number"
+    return -1
+}
