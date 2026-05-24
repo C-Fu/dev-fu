@@ -1,0 +1,16 @@
+# menu.db — Menu definition for flu.sh
+# Format: Level1|Level2|Level3|action
+# Lines starting with # are comments. Empty lines are ignored.
+# Level1 = top category, Level2 = sub-category, Level3 = leaf item, action = future Phase 4 hook
+Developer Tools|Languages|Python|install_python
+Developer Tools|Languages|Node.js|install_node
+Developer Tools|Languages|Go|install_go
+Developer Tools|Editors|VS Code|install_vscode
+Developer Tools|Editors|Neovim|install_neovim
+Developer Tools|Shell|Zsh|install_zsh
+Developer Tools|Shell|Fish|install_fish
+System|Monitoring|htop|install_htop
+System|Monitoring|btop|install_btop
+System|Networking|curl|install_curl
+System|Networking|wget|install_wget
+Media|FFmpeg|Install|install_ffmpeg
