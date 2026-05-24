@@ -166,6 +166,10 @@ TUI_KEY_END="end"
 TUI_KEY_SPACE="space"
 TUI_KEY_TAB="tab"
 TUI_KEY_BACKSPACE="backspace"
+TUI_KEY_CTRL_D="ctrl_d"
+TUI_KEY_DELETE="delete"
+TUI_KEY_ASTERISK="asterisk"
+TUI_KEY_MINUS="minus"
 TUI_KEY_Q="q"
 TUI_KEY_HELP="help"
 TUI_KEY_NUMBER="number"
@@ -213,6 +217,15 @@ _tui_read_key() {
     ' ')
       _tui_rk_result="$TUI_KEY_SPACE"
       ;;
+    "$(printf '\004')")
+      _tui_rk_result="$TUI_KEY_CTRL_D"
+      ;;
+    '*')
+      _tui_rk_result="$TUI_KEY_ASTERISK"
+      ;;
+    '-')
+      _tui_rk_result="$TUI_KEY_MINUS"
+      ;;
     "$_tui_rk_tab")
       _tui_rk_result="$TUI_KEY_TAB"
       ;;
@@ -226,10 +239,10 @@ _tui_read_key() {
       _tui_rk_result="$TUI_KEY_HELP"
       ;;
     'j')
-      _tui_rk_result="$TUI_KEY_DOWN"
+      _tui_rk_result="$TUI_KEY_UP"
       ;;
     'k')
-      _tui_rk_result="$TUI_KEY_UP"
+      _tui_rk_result="$TUI_KEY_DOWN"
       ;;
     'G')
       _tui_rk_result="$TUI_KEY_END"
@@ -291,6 +304,18 @@ _tui_read_key() {
             unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2 _tui_rk_c3
             return
             ;;
+          3)
+            _tui_read_byte || _tui_rb_byte=''
+            _tui_rk_c3="$_tui_rb_byte"
+            stty min 1 time 0 2>/dev/null || true
+            if [ "$_tui_rk_c3" = '~' ]; then
+              _tui_rk_result="$TUI_KEY_DELETE"
+            else
+              _tui_rk_result="$TUI_KEY_UNKNOWN"
+            fi
+            unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2 _tui_rk_c3
+            return
+            ;;
         esac
         stty min 1 time 0 2>/dev/null || true
         unset _tui_key_timeout _tui_rk_c1 _tui_rk_c2
@@ -307,6 +332,21 @@ _tui_read_key() {
       ;;
   esac
   unset _tui_rk_nl _tui_rk_cr _tui_rk_esc _tui_rk_tab _tui_rk_bs _tui_rk_del
+}
+
+# ---------------------------------------------------------------------------
+# Section 8a: Character reader for text input widgets
+# ---------------------------------------------------------------------------
+
+# Read a single character byte and return it directly (not symbolic).
+# Used by text input widgets that need the actual character value.
+# Sets _tui_rc_char to the byte, returns 0 on success, 1 on EOF.
+# IMPORTANT: Caller must NOT wrap in $() — use _tui_rc_char directly.
+_tui_read_char() {
+  _tui_rc_char=''
+  _tui_read_byte || return 1
+  _tui_rc_char="$_tui_rb_byte"
+  return 0
 }
 
 # ---------------------------------------------------------------------------
