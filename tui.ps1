@@ -712,6 +712,12 @@ function Show-TuiSelect {
                 $Script:TUI_RESULT = -1
                 $running = $false
             }
+            $Script:TUI_KEY_LEFT {
+                # Left arrow: exit (used by menu navigation for back-navigation)
+                # Menu handles root vs non-root via pathStack.Count check
+                $Script:TUI_RESULT = -1
+                $running = $false
+            }
             $Script:TUI_KEY_Q {
                 $Script:TUI_RESULT = -1
                 $running = $false

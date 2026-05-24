@@ -271,3 +271,215 @@ function Get-FluMenuAction {
     }
     return ''
 }
+
+# ---------------------------------------------------------------------------
+# Section 8: Menu Navigation Engine — Show-FluMenuNavigate
+# ---------------------------------------------------------------------------
+
+function Show-FluMenuNavigate {
+    <#
+    .SYNOPSIS
+    Hierarchical menu navigation engine with up to 3 levels.
+    PowerShell port of flu_menu_navigate().
+
+    .PARAMETER DslFile
+    Path to the menu definition file (menu.db).
+
+    .DESCRIPTION
+    Interactive menu navigation using Show-TuiSelect for each level.
+    Maintains a path stack for back-navigation.
+    Left arrow / Esc go back to parent menu.
+    Leaf selection returns the full path.
+
+    Sets $Script:TUI_RESULT to the full menu path on leaf selection.
+    (e.g., "Developer Tools|Languages|Python")
+    Sets $Script:TUI_RESULT to $null on cancel at root.
+
+    Returns 0 on leaf selection, 1 on cancel at root.
+
+    Matching flu_menu_navigate() behaviors:
+      - 3-level depth limit
+      - Breadcrumb displayed as subtitle at each level
+      - Left arrow / Esc for back-navigation (except at root where Esc cancels)
+      - TUI lifecycle managed internally (calls Initialize-Tui/Restore-Tui)
+      - Fallback mode when no TTY available
+    #>
+    param([string]$DslFile)
+
+    # Load the menu definition
+    Import-FluMenu -DslFile $DslFile
+
+    if ($Script:_fluMenuLines.Count -eq 0) {
+        Write-Error "Menu definition is empty: $DslFile"
+        return 1
+    }
+
+    # Fallback: non-TTY numbered prompt
+    if (-not $Script:_tui_use_tui) {
+        $result = Show-FluMenuNavigateFallback -DslFile $DslFile
+        $Script:TUI_RESULT = $result
+        return $(if ($result) { 0 } else { 1 })
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    # Path stack: array of selected labels at each level
+    $pathStack = @()  # e.g., @("Developer Tools", "Languages", "Python")
+    $running = $true
+
+    while ($running) {
+        # Get children for current path
+        $currentPath = $pathStack -join '|'
+        $children = Get-FluMenuChildren -ParentPath $currentPath
+
+        if ($children.Count -eq 0) {
+            # No children — shouldn't happen with valid menu.db
+            $running = $false
+            break
+        }
+
+        # Build breadcrumb for current level
+        $breadcrumb = if ($pathStack.Count -gt 0) {
+            Get-FluMenuBreadcrumb -Path ($pathStack -join '|')
+        } else {
+            "Main Menu"
+        }
+
+        # Build title based on level
+        $titlePrefix = switch ($pathStack.Count) {
+            0 { "flu.sh v0.1.0 — Main Menu" }
+            1 { "flu.sh v0.1.0 — $($pathStack[0])" }
+            2 { "flu.sh v0.1.0 — $($pathStack[0]) > $($pathStack[1])" }
+            default { "flu.sh v0.1.0" }
+        }
+
+        # Render the menu level using Show-TuiSelect
+        Show-TuiSelect -Title $titlePrefix -Subtitle $breadcrumb -Items $children
+        $selectedIndex = $Script:TUI_RESULT
+
+        if ($selectedIndex -lt 0) {
+            # Esc/q/Left pressed — go back or exit
+            if ($pathStack.Count -eq 0) {
+                # At root level, Esc cancels entirely
+                $Script:TUI_RESULT = $null
+                $running = $false
+                break
+            } else {
+                # Go back to parent level (pop last segment)
+                $pathStack = $pathStack[0..($pathStack.Count - 2)]
+                continue
+            }
+        }
+
+        # Get the selected label
+        $currentLabel = $children[$selectedIndex]
+        $pathStack += $currentLabel
+
+        # Check if this is a leaf or intermediate node
+        $fullPath = $pathStack -join '|'
+
+        if (Test-FluMenuIsLeaf -Path $fullPath) {
+            # Leaf node selected — return the full path
+            $Script:TUI_RESULT = $fullPath
+            $running = $false
+            break
+        }
+
+        # Intermediate node — will loop to show children on next iteration
+        if ($pathStack.Count -ge 3) {
+            # Max depth reached (3 levels) — treat as leaf
+            $Script:TUI_RESULT = $fullPath
+            $running = $false
+            break
+        }
+    }
+
+    Restore-Tui
+
+    if ($Script:TUI_RESULT) { return 0 } else { return 1 }
+}
+
+# ---------------------------------------------------------------------------
+# Section 9: Navigation Fallback — Show-FluMenuNavigateFallback
+# ---------------------------------------------------------------------------
+
+function Show-FluMenuNavigateFallback {
+    <#
+    .SYNOPSIS
+    Numbered text prompt fallback for menu navigation (no TTY).
+    PowerShell port of _flu_menu_navigate_fallback().
+
+    .PARAMETER DslFile
+    Path to the menu definition file (menu.db).
+
+    .DESCRIPTION
+    Provides the same 3-level hierarchical navigation using numbered
+    text prompts when TERM=dumb or no TTY is available.
+    Called automatically by Show-FluMenuNavigate when $_tui_use_tui is $false.
+
+    Returns the full pipe-delimited path on selection, or $null on cancel.
+    #>
+    param([string]$DslFile)
+
+    Import-FluMenu -DslFile $DslFile
+
+    $pathStack = @()
+    $running = $true
+
+    while ($running) {
+        $currentPath = $pathStack -join '|'
+        $children = Get-FluMenuChildren -ParentPath $currentPath
+
+        if ($children.Count -eq 0) {
+            Write-Host "No menu items available."
+            return $null
+        }
+
+        $breadcrumb = Get-FluMenuBreadcrumb -Path ($pathStack -join '|')
+        Write-Host ""
+        Write-Host $breadcrumb
+        Write-Host "─────────────────────"
+
+        for ($i = 0; $i -lt $children.Count; $i++) {
+            $num = $i + 1
+            Write-Host ("  {0}) {1}" -f $num, $children[$i])
+        }
+        if ($pathStack.Count -gt 0) {
+            Write-Host "  0) ← Back"
+        } else {
+            Write-Host "  0) Exit"
+        }
+
+        $choice = Read-Host "Enter number"
+        $num = 0
+        if (-not [int]::TryParse($choice, [ref]$num)) {
+            Write-Host "Invalid input."
+            continue
+        }
+
+        if ($num -eq 0) {
+            if ($pathStack.Count -gt 0) {
+                # Go back to parent level
+                $pathStack = $pathStack[0..($pathStack.Count - 2)]
+            } else {
+                # Exit at root
+                return $null
+            }
+            continue
+        }
+
+        if ($num -ge 1 -and $num -le $children.Count) {
+            $selectedLabel = $children[$num - 1]
+            $pathStack += $selectedLabel
+            $fullPath = $pathStack -join '|'
+
+            if (Test-FluMenuIsLeaf -Path $fullPath -or $pathStack.Count -ge 3) {
+                return $fullPath
+            }
+            # Otherwise, loop to show children at next level
+        }
+    }
+
+    return $null
+}
