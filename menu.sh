@@ -572,33 +572,25 @@ flu_menu_navigate() {
         _fm_error_msg=''
         ;;
 
-      "$TUI_KEY_ESC"|"$TUI_KEY_Q"|"$TUI_KEY_LEFT")
-        # Check for Left arrow escape sequence (ESC [ D)
-        # Only attempt sub-reads when key is ESC — Left and Right
-        # are already decoded by _tui_read_key but we handle Left here
-        # and do an additional check for missed ESC [ D patterns
+      "$TUI_KEY_ESC"|"$TUI_KEY_Q")
+        # Check for missed ESC [ D / C patterns — _tui_read_key already
+        # decodes them to TUI_KEY_LEFT/TUI_KEY_RIGHT but timing can yield
+        # plain ESC before the full sequence arrives
         _flu_menu_esc_result=''
-        if [ "$_fm_key" = "$TUI_KEY_ESC" ]; then
-          stty min 0 time 1 2>/dev/null || true
-          _flu_menu_b1=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
-          if [ "${_flu_menu_b1:-}" = "91" ]; then
-            # Got '[' — read the direction byte
-            _flu_menu_b2=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
-            if [ "${_flu_menu_b2:-}" = "68" ]; then
-              # ESC [ D = Left arrow → go back (same as Esc)
-              _flu_menu_esc_result='left'
-            elif [ "${_flu_menu_b2:-}" = "67" ]; then
-              # ESC [ C = Right arrow → same as Enter for navigation
-              _flu_menu_esc_result='right'
-            fi
+        stty min 0 time 1 2>/dev/null || true
+        _flu_menu_b1=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
+        if [ "${_flu_menu_b1:-}" = "91" ]; then
+          _flu_menu_b2=$(dd bs=1 count=1 2>/dev/null </dev/tty | od -A n -t d1 | awk '{print $1}')
+          if [ "${_flu_menu_b2:-}" = "68" ]; then
+            _flu_menu_esc_result='left'
+          elif [ "${_flu_menu_b2:-}" = "67" ]; then
+            _flu_menu_esc_result='right'
           fi
-          stty -echo -icanon min 1 time 0 2>/dev/null || true
-        elif [ "$_fm_key" = "$TUI_KEY_LEFT" ]; then
-          _flu_menu_esc_result='left'
         fi
+        # Restore terminal to raw mode before any further key reads
+        stty -echo -icanon min 1 time 0 2>/dev/null || true
 
         if [ "$_flu_menu_esc_result" = "right" ]; then
-          # Right arrow — same as Enter (select current item)
           eval "_fm_selected=\$_fm_child_$_fm_cursor"
           if [ -z "$_fm_path" ]; then
             _fm_new_path="$_fm_selected"
@@ -624,8 +616,20 @@ flu_menu_navigate() {
           continue
         fi
 
+        if [ "$_flu_menu_esc_result" = "left" ]; then
+          if [ -z "$_fm_path" ]; then
+            # At root: Left arrow is a no-op (don't exit)
+            _fm_error_msg=''
+            continue
+          fi
+          _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')
+          _fm_cursor=1
+          _fm_scroll=1
+          _fm_error_msg=''
+          continue
+        fi
+
         if [ -z "$_fm_path" ]; then
-          # At root — exit
           tui_restore
           TUI_RESULT=''
           unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
@@ -633,7 +637,16 @@ flu_menu_navigate() {
           unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
           return 1
         fi
-        # Go up one level — strip last pipe segment
+        _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')
+        _fm_cursor=1
+        _fm_scroll=1
+        _fm_error_msg=''
+        ;;
+
+      "$TUI_KEY_LEFT")
+        if [ -z "$_fm_path" ]; then
+          continue
+        fi
         _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')
         _fm_cursor=1
         _fm_scroll=1
