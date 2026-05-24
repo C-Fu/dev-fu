@@ -136,7 +136,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTG-03 | Phase 1 | Pending |
 | INTG-04 | Phase 1 | Pending |
 | INTG-05 | Phase 5 | Pending |
-| PS-01 | Phase 6 | Pending |
+| PS-01 | Phase 6 | In Progress (2/5 plans complete) |
 | PS-02 | Phase 6 | Pending |
 | PS-03 | Phase 6 | Pending |
 | GIT-01 | Phase 5 | Pending |
