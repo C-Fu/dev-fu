@@ -188,6 +188,69 @@ else
 fi
 
 # ──────────────
+# Task 3: Error Recovery & Signal Safety (Plan 05-03)
+# ──────────────
+
+echo ""
+echo "=== Task 3: Error Recovery ==="
+echo ""
+
+if [ -f "./flu.sh" ]; then
+
+_assert "flu.sh is valid shell syntax (error recovery)" \
+    sh -n ./flu.sh
+
+_assert_grep_count "flu.sh defines _flu_map_exit_code exactly once" \
+    "1" "_flu_map_exit_code()" "./flu.sh"
+
+_assert_grep_count "flu.sh references _flu_map_exit_code at least twice" \
+    "2" "_flu_map_exit_code" "./flu.sh"
+
+_assert_grep "flu.sh prompts 'Press any key to return to menu'" \
+    "Press any key to return to menu" "./flu.sh"
+
+_assert_grep_count "flu.sh uses TUI_YELLOW at least 4 times for hints" \
+    "4" "TUI_YELLOW" "./flu.sh"
+
+_assert_grep "flu.sh shows internet connection hint" \
+    "Check your internet connection" "./flu.sh"
+
+_assert_grep "flu.sh shows retry hint" \
+    "Try running the operation again" "./flu.sh"
+
+echo ""
+echo "=== Task 3: Signal Safety ==="
+echo ""
+
+_assert_grep_count "flu.sh defines _flu_cleanup_exit exactly once" \
+    "1" "_flu_cleanup_exit()" "./flu.sh"
+
+_assert_grep_count "flu.sh registers _flu_cleanup_exit trap at least 3 times" \
+    "3" "trap.*_flu_cleanup_exit" "./flu.sh"
+
+_assert_grep "flu.sh cleanup calls tui_restore with error suppression" \
+    "tui_restore 2>/dev/null" "./flu.sh"
+
+_assert_grep "flu.sh cleanup stops spinner with error suppression" \
+    "flu_spinner_stop 2>/dev/null" "./flu.sh"
+
+_assert_grep "flu.sh trap handles INT signal" \
+    "trap.*_flu_cleanup_exit.*INT" "./flu.sh"
+
+_assert_grep "flu.sh trap handles TERM signal" \
+    "trap.*_flu_cleanup_exit.*TERM" "./flu.sh"
+
+_assert_grep "flu.sh trap handles HUP signal" \
+    "trap.*_flu_cleanup_exit.*HUP" "./flu.sh"
+
+_assert_grep "flu.sh trap handles QUIT signal" \
+    "trap.*_flu_cleanup_exit.*QUIT" "./flu.sh"
+
+else
+    echo "  (skipping remaining tests — flu.sh not found)"
+fi
+
+# ──────────────
 # Summary
 # ──────────────
 
