@@ -53,7 +53,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### PowerShell
 
-- [ ] **PS-01**: PowerShell port (flu.ps1) implements the same TUI menu system, widgets, submenu navigation, and inline prompts
+- [x] **PS-01**: PowerShell port (flu.ps1) implements the same TUI menu system, widgets, submenu navigation, and inline prompts
 - [ ] **PS-02**: PowerShell port fetches and executes the same remote modules with adapted argument passing
 - [ ] **PS-03**: PowerShell port works on PowerShell 5.1 (Windows) and PowerShell 7 (cross-platform)
 

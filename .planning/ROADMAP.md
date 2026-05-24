@@ -116,7 +116,7 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md — TUI Engine Foundation: ANSI primitives, PS version detection, keyboard input, single-select widget
 - [x] 06-02-PLAN.md — Interactive Widgets: checklist, radio, yesno, text input (PS port of tui.sh widgets)
-- [ ] 06-03-PLAN.md — Menu System: DSL parser (menu.db), hierarchical navigation engine with breadcrumbs
+- [x] 06-03-PLAN.md — Menu System: DSL parser (menu.db), hierarchical navigation engine with breadcrumbs
 - [ ] 06-04-PLAN.md — Module Pipeline: fetch, metadata parse, parameter prompts, WSL/bash execution, result display
 - [ ] 06-05-PLAN.md — Orchestrator: flu.ps1 main entry, platform detection, event loop, spinner, error recovery
 **UI hint**: yes
@@ -138,4 +138,4 @@ Phases execute in numeric order. With parallelization enabled:
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
 | 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
 | 5. Integration & Orchestrator | 0/0 | Complete    | 2026-05-24 |
-| 6. PowerShell Port | 2/5 | In Progress | - |
+| 6. PowerShell Port | 3/5 | In Progress | - |
