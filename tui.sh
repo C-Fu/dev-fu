@@ -2060,6 +2060,112 @@ tui_text_input() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 16: Async spinner widget
+# ---------------------------------------------------------------------------
+
+# Detect UTF-8 support for spinner character selection.
+# Called at module scope — mirrors _tui_detect_box_chars pattern.
+_flu_spinner_utf8=false
+
+_flu_spinner_detect_utf8() {
+  _locale="${LANG:-}${LC_ALL:-}${LC_CTYPE:-}"
+  case "$_locale" in
+    *UTF-8*|*utf-8*|*utf8*|*UTF8*) _flu_spinner_utf8=true ;;
+    *) _flu_spinner_utf8=false ;;
+  esac
+  unset _locale
+}
+
+_flu_spinner_detect_utf8
+
+# Spinner state: PID of background process (empty when idle), frame counter.
+_flu_spinner_pid=''
+_flu_spinner_frame=0
+
+# _flu_spinner_render() — render one frame of the spinner animation.
+# Called by the background loop. Uses _flu_spinner_frame to select the
+# spinner character, renders via _tui_printf_at in TUI mode or plain
+# printf with \r overwrite in fallback mode.
+# shellcheck disable=SC2034
+_flu_spinner_render() {
+  _flu_spinner_char=''
+
+  if [ "$_flu_spinner_utf8" = "true" ]; then
+    # Braille spinner: 10-frame smooth animation
+    case $(( _flu_spinner_frame % 10 )) in
+      0) _flu_spinner_char='⠋' ;; 1) _flu_spinner_char='⠙' ;;
+      2) _flu_spinner_char='⠹' ;; 3) _flu_spinner_char='⠸' ;;
+      4) _flu_spinner_char='⠼' ;; 5) _flu_spinner_char='⠴' ;;
+      6) _flu_spinner_char='⠦' ;; 7) _flu_spinner_char='⠧' ;;
+      8) _flu_spinner_char='⠇' ;; 9) _flu_spinner_char='⠏' ;;
+    esac
+  else
+    # ASCII spinner: 4-frame classic animation
+    case $(( _flu_spinner_frame % 4 )) in
+      0) _flu_spinner_char='|' ;;
+      1) _flu_spinner_char='/' ;;
+      2) _flu_spinner_char='-' ;;
+      3) _flu_spinner_char='\' ;;
+    esac
+  fi
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    # Non-TUI mode: simple text line with carriage-return overwrite
+    printf '\r  Working... %s' "$_flu_spinner_char"
+  else
+    # TUI mode: positioned output at bottom of screen, centered
+    _flu_render_row=$(tput lines 2>/dev/null || printf '24')
+    _flu_render_col=$(tput cols 2>/dev/null || printf '80')
+    _flu_render_col=$(( (_flu_render_col - 12) / 2 ))
+    [ "$_flu_render_col" -lt 1 ] && _flu_render_col=1
+    _tui_printf_at "$_flu_render_row" "$_flu_render_col" \
+      "  ${TUI_CYAN}Loading${TUI_RESET} %s" "$_flu_spinner_char"
+    unset _flu_render_row _flu_render_col
+  fi
+
+  _flu_spinner_frame=$((_flu_spinner_frame + 1))
+}
+
+# flu_spinner_start() — start the spinner background process.
+# Guard: if spinner is already running, return immediately (idempotent).
+# Launches a background subshell that calls _flu_spinner_render in a loop.
+flu_spinner_start() {
+  if [ -n "${_flu_spinner_pid:-}" ]; then
+    return 0
+  fi
+
+  _flu_spinner_frame=0
+  (while :; do _flu_spinner_render; sleep 0.1; done) &
+  _flu_spinner_pid=$!
+}
+
+# flu_spinner_stop() — stop the spinner and clean up the screen area.
+# Guard: if no spinner is running, return immediately (no-op safe).
+# Kills the background process, waits for reaping, then clears the
+# spinner text from the screen.
+flu_spinner_stop() {
+  if [ -z "${_flu_spinner_pid:-}" ]; then
+    return 0
+  fi
+
+  kill "$_flu_spinner_pid" 2>/dev/null
+  wait "$_flu_spinner_pid" 2>/dev/null
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    # Move to next line after the carriage-return-overwritten spinner text
+    printf '\n'
+  else
+    # Move cursor to spinner row and clear the line
+    _flu_stop_row=$(tput lines 2>/dev/null || printf '24')
+    move_cursor "$_flu_stop_row" 1
+    _tui_clear_line
+    unset _flu_stop_row
+  fi
+
+  _flu_spinner_pid=''
+}
+
+# ---------------------------------------------------------------------------
 # Demo / standalone execution (only when run directly, not sourced)
 # ---------------------------------------------------------------------------
 
