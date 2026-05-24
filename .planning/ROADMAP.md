@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract (completed 2026-05-24)
 - [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
 - [x] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts (completed 2026-05-24)
-- [ ] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch
+- [x] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch (completed 2026-05-24)
 - [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell
 
 ## Phase Details
@@ -134,5 +134,5 @@ Phases execute in numeric order. With parallelization enabled:
 | 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
 | 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
-| 5. Integration & Orchestrator | 0/3 | Planned | - |
+| 5. Integration & Orchestrator | 0/0 | Complete    | 2026-05-24 |
 | 6. PowerShell Port | 0/? | Not started | - |
