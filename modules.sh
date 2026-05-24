@@ -275,3 +275,265 @@ _flu_parse_params() {
   unset _fpp_input
   return $_fpp_rc
 }
+
+# ---------------------------------------------------------------------------
+# Section 6: flu_module_set_env() — Platform context detection
+# ---------------------------------------------------------------------------
+
+# _flu_detect_pkg_mgr
+# Detects the available package manager on the system.
+# Checks in priority order: apt-get, apk, dnf, pacman, zypper, brew.
+# Prints package manager name to stdout. Returns 0 always.
+_flu_detect_pkg_mgr() {
+  if command -v apt-get >/dev/null 2>&1; then
+    printf 'apt\n'; return 0
+  fi
+  if command -v apk >/dev/null 2>&1; then
+    printf 'apk\n'; return 0
+  fi
+  if command -v dnf >/dev/null 2>&1; then
+    printf 'dnf\n'; return 0
+  fi
+  if command -v pacman >/dev/null 2>&1; then
+    printf 'pacman\n'; return 0
+  fi
+  if command -v zypper >/dev/null 2>&1; then
+    printf 'zypper\n'; return 0
+  fi
+  if command -v brew >/dev/null 2>&1; then
+    printf 'brew\n'; return 0
+  fi
+  printf 'unknown\n'; return 0
+}
+
+# flu_module_set_env
+# Detects platform context and exports FLU_* environment variables
+# for module scripts. Sets all 7 variables: FLU_OS, FLU_DISTRO,
+# FLU_PKG_MGR, FLU_ARCH, FLU_IS_WSL, FLU_IS_TERMUX, FLU_IS_ROOT.
+# Pattern adapted from fu.sh detect_platform()/detect_distro()
+# rewritten in POSIX sh (D-11).
+flu_module_set_env() {
+  # FLU_OS: detect via uname (darwin/linux)
+  _fse_os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  case "$_fse_os" in
+    darwin*) FLU_OS="darwin" ;;
+    linux*)  FLU_OS="linux" ;;
+    *)       FLU_OS="linux" ;;
+  esac
+
+  # FLU_DISTRO: parse /etc/os-release for ID field
+  if [ -f /etc/os-release ]; then
+    FLU_DISTRO=$(
+      # shellcheck disable=SC1091
+      . /etc/os-release 2>/dev/null && printf '%s' "${ID:-linux}"
+    )
+  else
+    FLU_DISTRO="linux"
+  fi
+
+  # FLU_PKG_MGR: detect available package manager
+  FLU_PKG_MGR=$(_flu_detect_pkg_mgr)
+
+  # FLU_ARCH: CPU architecture string
+  FLU_ARCH=$(uname -m)
+
+  # FLU_IS_WSL: check /proc/version for Microsoft signature
+  if grep -qi "microsoft" /proc/version 2>/dev/null; then
+    FLU_IS_WSL="1"
+  else
+    FLU_IS_WSL="0"
+  fi
+
+  # FLU_IS_TERMUX: check env var and standard Termux directory
+  if [ -n "${TERMUX_VERSION:-}" ] || [ -d /data/data/com.termux ]; then
+    FLU_IS_TERMUX="1"
+  else
+    FLU_IS_TERMUX="0"
+  fi
+
+  # FLU_IS_ROOT: check effective UID
+  if [ "$(id -u)" -eq 0 ]; then
+    FLU_IS_ROOT="1"
+  else
+    FLU_IS_ROOT="0"
+  fi
+
+  # Export all 7 platform context variables to module environment
+  export FLU_OS FLU_DISTRO FLU_PKG_MGR FLU_ARCH
+  export FLU_IS_WSL FLU_IS_TERMUX FLU_IS_ROOT
+
+  unset _fse_os
+}
+
+# ---------------------------------------------------------------------------
+# Section 7: flu_module_collect_params() — Parameter collection via TUI widgets
+# ---------------------------------------------------------------------------
+
+# flu_module_collect_params <param_string>
+# Parses @params declarations and prompts the user for each parameter
+# using the appropriate Phase 2 TUI widget (D-10).
+#
+# Parameter types:
+#   radio  → tui_radio()  — single-select from comma-separated choices
+#   text   → tui_text_input() — freeform text entry
+#   yesno  → tui_yesno()  — boolean confirmation
+#
+# Collected values are accumulated as --key value pairs in the
+# global _flu_module_args variable for the executor to consume.
+#
+# Returns 0 after all params collected, 1 if user cancelled (Esc).
+_flu_module_args=''
+flu_module_collect_params() {
+  _fc_param_string="$1"
+
+  # Guard: verify tui.sh has been sourced (check for TUI_RESET constant)
+  if [ -z "${TUI_RESET:-}" ]; then
+    printf '%s[ERROR]%s tui.sh must be sourced before calling flu_module_collect_params\n' \
+      "$TUI_RED" "$TUI_RESET" >&2
+    return 1
+  fi
+
+  _flu_module_args=''
+
+  # Empty params — no collection needed, valid state
+  if [ -z "$_fc_param_string" ]; then
+    unset _fc_param_string
+    return 0
+  fi
+
+  # Parse the parameter string into index|name|type|choices rows
+  _fc_parsed=$(_flu_parse_params "$_fc_param_string")
+  _fc_parse_rc=$?
+  if [ "$_fc_parse_rc" -ne 0 ]; then
+    unset _fc_param_string _fc_parse_rc _fc_parsed
+    return 1
+  fi
+
+  # Write parsed rows to temp file to avoid subshell issues
+  # with pipe (while ... | read creates subshell in POSIX sh).
+  _fc_tmp="/tmp/flu_collect_$$"
+  printf '%s\n' "$_fc_parsed" > "$_fc_tmp"
+
+  while IFS='|' read -r _fc_idx _fc_name _fc_type _fc_choices; do
+    [ -z "$_fc_name" ] && continue
+
+    case "$_fc_type" in
+      radio)
+        # Count choices and store them for later index lookup
+        _fc_count=0
+        _fc_saved_ifs="$IFS"
+        IFS=','
+        for _fc_ch in $_fc_choices; do
+          _fc_count=$((_fc_count + 1))
+        done
+        IFS="$_fc_saved_ifs"
+
+        if [ "$_fc_count" -eq 0 ]; then
+          continue
+        fi
+
+        # Build eval-safe tui_radio call with all choices as positional args.
+        # Pattern: sed "s/'/'\\\\''/g" for safe eval (established in tui.sh).
+        _fc_eval="tui_radio \"\$_fc_name\" \"Select \$_fc_name\""
+        _fc_saved_ifs="$IFS"
+        IFS=','
+        for _fc_ch in $_fc_choices; do
+          _fc_safe=$(printf '%s' "$_fc_ch" | sed "s/'/'\\\\''/g")
+          _fc_eval="$_fc_eval '$_fc_safe'"
+        done
+        IFS="$_fc_saved_ifs"
+
+        # Dispatch to radio widget
+        eval "$_fc_eval"
+        _fc_rc=$?
+
+        # Check cancellation (Esc in radio returns 1)
+        if [ "$_fc_rc" -ne 0 ]; then
+          rm -f "$_fc_tmp"
+          unset _fc_param_string _fc_parsed _fc_parse_rc _fc_tmp
+          unset _fc_idx _fc_name _fc_type _fc_choices
+          unset _fc_count _fc_saved_ifs _fc_ch _fc_safe _fc_eval _fc_rc
+          return 1
+        fi
+
+        # Map 0-based index from TUI_RESULT to the corresponding choice string
+        _fc_target=$((TUI_RESULT + 1))
+        _fc_i=1
+        _fc_sel_text=''
+        IFS=','
+        for _fc_ch in $_fc_choices; do
+          if [ "$_fc_i" -eq "$_fc_target" ]; then
+            _fc_sel_text="$_fc_ch"
+            break
+          fi
+          _fc_i=$((_fc_i + 1))
+        done
+        IFS="$_fc_saved_ifs"
+
+        # Append --key value to args
+        _flu_module_args="${_flu_module_args} --${_fc_name} ${_fc_sel_text}"
+        ;;
+
+      text)
+        # Dispatch to text input widget
+        tui_text_input "$_fc_name" "Enter $_fc_name"
+        _fc_rc=$?
+
+        # Check cancellation (Esc in text returns 1)
+        if [ "$_fc_rc" -ne 0 ]; then
+          rm -f "$_fc_tmp"
+          unset _fc_param_string _fc_parsed _fc_parse_rc _fc_tmp
+          unset _fc_idx _fc_name _fc_type _fc_choices
+          unset _fc_count _fc_saved_ifs _fc_ch _fc_safe _fc_eval _fc_rc
+          unset _fc_target _fc_i _fc_sel_text
+          return 1
+        fi
+
+        # Append --key value to args (TUI_RESULT holds typed string)
+        _flu_module_args="${_flu_module_args} --${_fc_name} ${TUI_RESULT}"
+        ;;
+
+      yesno)
+        # Dispatch to yes/no confirmation widget (defaults to "no")
+        tui_yesno "$_fc_name" "Enable $_fc_name?" "no"
+        _fc_rc=$?
+
+        # Check cancellation (Esc in yesno returns 1)
+        if [ "$_fc_rc" -ne 0 ]; then
+          rm -f "$_fc_tmp"
+          unset _fc_param_string _fc_parsed _fc_parse_rc _fc_tmp
+          unset _fc_idx _fc_name _fc_type _fc_choices
+          unset _fc_count _fc_saved_ifs _fc_ch _fc_safe _fc_eval _fc_rc
+          unset _fc_target _fc_i _fc_sel_text
+          return 1
+        fi
+
+        # Append --key value to args (TUI_RESULT holds 'yes' or 'no')
+        _flu_module_args="${_flu_module_args} --${_fc_name} ${TUI_RESULT}"
+        ;;
+
+      *)
+        # Unknown type — treat as text input (safe default)
+        tui_text_input "$_fc_name" "Enter $_fc_name"
+        _fc_rc=$?
+        if [ "$_fc_rc" -ne 0 ]; then
+          rm -f "$_fc_tmp"
+          unset _fc_param_string _fc_parsed _fc_parse_rc _fc_tmp
+          unset _fc_idx _fc_name _fc_type _fc_choices
+          unset _fc_count _fc_saved_ifs _fc_ch _fc_safe _fc_eval _fc_rc
+          unset _fc_target _fc_i _fc_sel_text
+          return 1
+        fi
+        _flu_module_args="${_flu_module_args} --${_fc_name} ${TUI_RESULT}"
+        ;;
+    esac
+  done < "$_fc_tmp"
+
+  # Cleanup
+  rm -f "$_fc_tmp"
+  unset _fc_param_string _fc_parsed _fc_parse_rc _fc_tmp
+  unset _fc_idx _fc_name _fc_type _fc_choices
+  unset _fc_count _fc_saved_ifs _fc_ch _fc_safe _fc_eval _fc_rc
+  unset _fc_target _fc_i _fc_sel_text
+  return 0
+}
