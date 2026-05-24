@@ -176,7 +176,11 @@ TUI_KEY_UNKNOWN="unknown"
 # IMPORTANT: Caller must NOT wrap in $() — use _tui_rb_byte directly.
 _tui_read_byte() {
   _tui_rb_byte=''
-  _tui_rb_byte=$(dd bs=1 count=1 2>/dev/null </dev/tty || true)
+  # Append sentinel char to prevent $() from stripping trailing newlines.
+  # Critical: stty may fail silently, leaving terminal in cooked mode where
+  # Enter sends \n (0x0A) — $() strips it, making the byte undetectable.
+  _tui_rb_byte=$(dd bs=1 count=1 2>/dev/null </dev/tty; printf 'X')
+  _tui_rb_byte="${_tui_rb_byte%X}"
   [ -n "$_tui_rb_byte" ]
 }
 
