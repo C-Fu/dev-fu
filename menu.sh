@@ -208,3 +208,82 @@ flu_menu_get_children() {
 
   unset _fm_parent _fm_i _fm_lab _fm_entry _fm_entry_l1 _fm_entry_l2 _fm_entry_l3 _fm_entry_prefix _fm_depth _fm_safe
 }
+
+# ---------------------------------------------------------------------------
+# Section 4: flu_menu_is_leaf() — Check if path is a leaf node
+# ---------------------------------------------------------------------------
+
+# flu_menu_is_leaf <path>
+# Returns 0 (true) if path is a leaf (has no children / is at max depth).
+# Returns 1 (false) if path is an intermediate node (has children).
+# Path is in the form "L1|L2" or "L1|L2|L3" or empty string.
+flu_menu_is_leaf() {
+  _fm_path=$1
+  if [ -z "$_fm_path" ]; then
+    # Root is never a leaf — always has children (Level 1 items)
+    unset _fm_path
+    return 1
+  fi
+  _fm_depth=$(printf '%s' "$_fm_path" | awk -F'|' '{print NF}')
+  if [ "$_fm_depth" -ge 3 ]; then
+    # Level 3 items are always leaves (max depth reached per MENU-01)
+    unset _fm_path _fm_depth
+    return 0
+  fi
+  # For depth 1 or 2, check if any children exist
+  flu_menu_get_children "$_fm_path" >/dev/null
+  if [ "$_fm_children_count" -eq 0 ]; then
+    unset _fm_path _fm_depth
+    return 0  # No children → leaf
+  fi
+  unset _fm_path _fm_depth
+  return 1  # Has children → not leaf
+}
+
+# ---------------------------------------------------------------------------
+# Section 5: flu_menu_get_breadcrumb() — Convert path to breadcrumb string
+# ---------------------------------------------------------------------------
+
+# flu_menu_get_breadcrumb <path>
+# Converts a pipe-delimited path to " > " separated breadcrumb string.
+# "Developer Tools|Languages" → "Main Menu > Developer Tools > Languages"
+# Empty path → "Main Menu"
+# Prints breadcrumb to stdout.
+flu_menu_get_breadcrumb() {
+  _fm_path=$1
+  if [ -z "$_fm_path" ]; then
+    printf 'Main Menu'
+  else
+    printf 'Main Menu'
+    printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<=NF;i++) printf " > %s", $i}'
+  fi
+  unset _fm_path
+}
+
+# ---------------------------------------------------------------------------
+# Section 6: flu_menu_get_action() — Get action field for a full path
+# ---------------------------------------------------------------------------
+
+# flu_menu_get_action <full_path>
+# Given a full 3-level path like "Developer Tools|Languages|Python",
+# returns the action (4th field) from the matching DSL line.
+# Prints action to stdout. If no match, prints empty string.
+# shellcheck disable=SC2154  # eval-assigned variables
+flu_menu_get_action() {
+  _fm_path=$1
+  _fm_i=1
+  while [ "$_fm_i" -le "$_fm_count" ]; do
+    eval "_fm_line=\$_fm_line_$_fm_i"
+    _fm_prefix=$(printf '%s' "$_fm_line" | awk -F'|' '{print $1 "|" $2 "|" $3}')
+    if [ "$_fm_prefix" = "$_fm_path" ]; then
+      _fm_action=$(printf '%s' "$_fm_line" | awk -F'|' '{print $4}')
+      printf '%s' "$_fm_action"
+      unset _fm_path _fm_i _fm_line _fm_prefix _fm_action
+      return 0
+    fi
+    _fm_i=$((_fm_i + 1))
+  done
+  # No match found
+  unset _fm_path _fm_i _fm_line _fm_prefix
+  return 1
+}
