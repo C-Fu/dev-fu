@@ -96,11 +96,12 @@ Plans:
   3. Error messages include actionable recovery hints (not just "failed") — the user always knows what to do next
   4. flu.sh coexists with fu.sh — both scripts are independent, non-conflicting, and can coexist in the same repository
   5. Development occurs on branch `flu.sh`, merged to `main` when validated and stable
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Spinner widget: async rotating character animation in tui.sh
+- [ ] 05-02-PLAN.md — Orchestrator core: TTY reattachment, subsystem sourcing, menu loop, module dispatch with spinner
+- [ ] 05-03-PLAN.md — Error recovery mapping, signal-safe terminal restoration, git branch setup
 
 ### Phase 6: PowerShell Port
 **Goal**: Windows and cross-platform PowerShell users have full feature parity with the POSIX flu.sh — same menus, widgets, navigation, and module execution
@@ -133,5 +134,5 @@ Phases execute in numeric order. With parallelization enabled:
 | 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
 | 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
-| 5. Integration & Orchestrator | 0/? | Not started | - |
+| 5. Integration & Orchestrator | 0/3 | Planned | - |
 | 6. PowerShell Port | 0/? | Not started | - |
