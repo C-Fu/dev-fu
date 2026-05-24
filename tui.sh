@@ -1187,10 +1187,409 @@ tui_checklist() {
         return 1
         ;;
       "$TUI_KEY_HELP")
-        if [ "$_tc_show_help" = "true" ]; then
-          _tc_show_help=false
+    if [ "$_tc_show_help" = "true" ]; then
+      _tc_show_help=false
+    else
+      _tc_show_help=true
+    fi
+    ;;
+esac
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Section 13: Radio glyph auto-detection
+# ---------------------------------------------------------------------------
+
+# Auto-detect radio glyphs based on locale (same heuristic as box-drawing)
+_tui_radio_glyph_on=''
+_tui_radio_glyph_off=''
+_tui_radio_init_glyphs() {
+  _locale="${LANG:-}${LC_ALL:-}${LC_CTYPE:-}"
+  case "$_locale" in
+    *UTF-8*|*utf-8*|*utf8*|*UTF8*)
+      _tui_radio_glyph_on='(•)'
+      _tui_radio_glyph_off='(○)'
+      ;;
+    *)
+      _tui_radio_glyph_on='(*)'
+      _tui_radio_glyph_off='( )'
+      ;;
+  esac
+  unset _locale
+}
+_tui_radio_init_glyphs
+
+# ---------------------------------------------------------------------------
+# Section 13a: Radio fallback prompt
+# ---------------------------------------------------------------------------
+
+# _tui_radio_fallback
+# Uses _tr_* globals set by tui_radio() for items and selection state.
+# Prints 0-based index to stdout, sets TUI_RESULT.
+# Returns 0 on selection, 1 on cancel/invalid.
+_tui_radio_fallback() {
+  printf '\n'
+  printf '  %s\n' "$_tr_title"
+  if [ -n "$_tr_subtitle" ]; then
+    printf '  %s\n' "$_tr_subtitle"
+  fi
+  printf '  ---\n'
+
+  _fbr_i=1
+  while [ "$_fbr_i" -le "$_tr_count" ]; do
+    # shellcheck disable=SC2086
+    eval "_fbr_lab=\$_tr_label_$_fbr_i"
+    # shellcheck disable=SC2154
+    if [ "$_fbr_i" = "$_tr_selected" ]; then
+      printf '%3d) %s %s\n' "$_fbr_i" "$_tui_radio_glyph_on" "$_fbr_lab"
+    else
+      printf '%3d) %s %s\n' "$_fbr_i" "$_tui_radio_glyph_off" "$_fbr_lab"
+    fi
+    _fbr_i=$((_fbr_i + 1))
+  done
+
+  printf '\n'
+  printf 'Enter number (empty to cancel): '
+  _fbr_input=''
+  IFS= read -r _fbr_input </dev/tty 2>/dev/null || read -r _fbr_input
+
+  if [ -z "$_fbr_input" ]; then
+    unset _fbr_i _fbr_lab _fbr_input
+    return 1
+  fi
+
+  case "$_fbr_input" in
+    *[!0-9]*) unset _fbr_i _fbr_lab _fbr_input; return 1 ;;
+    '') unset _fbr_i _fbr_lab _fbr_input; return 1 ;;
+  esac
+
+  _fbr_input=$((_fbr_input + 0))
+  if [ "$_fbr_input" -ge 1 ] && [ "$_fbr_input" -le "$_tr_count" ]; then
+    _fbr_idx=$((_fbr_input - 1))
+    printf '%d\n' "$_fbr_idx"
+    TUI_RESULT="$_fbr_idx"
+    unset _fbr_i _fbr_lab _fbr_input _fbr_idx
+    return 0
+  fi
+
+  printf 'Invalid selection\n'
+  unset _fbr_i _fbr_lab _fbr_input
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# Section 13b: Rendering function for tui_radio
+# ---------------------------------------------------------------------------
+
+# shellcheck disable=SC2034,SC2154
+_tui_render_radio() {
+  clear_screen
+  _rr_rows=$(tput lines 2>/dev/null || printf '24')
+  _rr_cols=$(tput cols 2>/dev/null || printf '80')
+  _rr_box_w=$((_rr_cols - 4))
+  [ "$_rr_box_w" -lt 40 ] && _rr_box_w=40
+  _rr_inner=$((_rr_box_w - 2))
+  _rr_x=2
+  _rr_r=1
+
+  move_cursor "$_rr_r" "$_rr_x"
+  printf '%s' "$TUI_BOX_TL"
+  _rr_i=1; while [ "$_rr_i" -le "$_rr_inner" ]; do printf '%s' "$TUI_BOX_H"; _rr_i=$((_rr_i + 1)); done
+  printf '%s' "$TUI_BOX_TR"
+  _rr_r=$((_rr_r + 1))
+
+  move_cursor "$_rr_r" "$_rr_x"
+  printf '%s' "$TUI_BOX_V"
+  _rr_tlen=${#_tr_title}
+  if [ "$_rr_tlen" -gt "$_rr_inner" ]; then _rr_tlen=$_rr_inner; fi
+  _rr_tshow=$(printf '%s' "$_tr_title" | awk -v L="$_rr_tlen" '{print substr($0,1,L)}')
+  _rr_pad=$((_rr_inner - ${#_rr_tshow}))
+  _rr_pl=$((_rr_pad / 2)); _rr_pr=$((_rr_pad - _rr_pl))
+  _rr_j=0; while [ "$_rr_j" -lt "$_rr_pl" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+  printf '%s%s%s' "$TUI_BOLD" "$_rr_tshow" "$TUI_RESET"
+  _rr_j=0; while [ "$_rr_j" -lt "$_rr_pr" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rr_r=$((_rr_r + 1))
+
+  if [ -n "$_tr_subtitle" ]; then
+    move_cursor "$_rr_r" "$_rr_x"
+    printf '%s' "$TUI_BOX_V"
+    _rr_slen=${#_tr_subtitle}
+    if [ "$_rr_slen" -gt "$_rr_inner" ]; then _rr_slen=$_rr_inner; fi
+    _rr_sshow=$(printf '%s' "$_tr_subtitle" | awk -v L="$_rr_slen" '{print substr($0,1,L)}')
+    _rr_spad=$((_rr_inner - ${#_rr_sshow}))
+    _rr_spl=$((_rr_spad / 2)); _rr_spr=$((_rr_spad - _rr_spl))
+    _rr_j=0; while [ "$_rr_j" -lt "$_rr_spl" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+    printf '%s%s%s' "$TUI_DIM" "$_rr_sshow" "$TUI_RESET"
+    _rr_j=0; while [ "$_rr_j" -lt "$_rr_spr" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rr_r=$((_rr_r + 1))
+  fi
+
+  move_cursor "$_rr_r" "$_rr_x"
+  printf '%s' "$TUI_BOX_V"
+  _rr_i=1; while [ "$_rr_i" -le "$_rr_inner" ]; do printf '%s' "$TUI_BOX_H"; _rr_i=$((_rr_i + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  _rr_r=$((_rr_r + 1))
+
+  _rr_status_row=$((_rr_rows - 3))
+  _rr_bottom_row=$((_rr_rows - 2))
+  _rr_footer_row=$((_rr_rows - 1))
+  _tr_page_size=$((_rr_status_row - _rr_r + 1))
+  [ "$_tr_page_size" -lt 1 ] && _tr_page_size=1
+
+  if [ "$_tr_scroll" -gt 1 ]; then
+    move_cursor "$_rr_r" $((_rr_x + _rr_box_w - 9))
+    printf '%s%cmore%s' "$TUI_DIM" '↑' "$TUI_RESET"
+  fi
+
+  _rr_end=$((_tr_scroll + _tr_page_size - 1))
+  [ "$_rr_end" -gt "$_tr_count" ] && _rr_end=$_tr_count
+  _rr_maxlab=$((_rr_inner - 11))
+  [ "$_rr_maxlab" -lt 3 ] && _rr_maxlab=3
+  _rr_i=$_tr_scroll
+  while [ "$_rr_i" -le "$_rr_end" ]; do
+    # shellcheck disable=SC2086
+    eval "_rr_lab=\$_tr_label_$_rr_i"
+    # shellcheck disable=SC2154
+    _rr_trunc=$(printf '%s' "$_rr_lab" | awk -v L="$_rr_maxlab" '{print substr($0,1,L)}')
+    move_cursor "$_rr_r" "$_rr_x"
+    printf '%s' "$TUI_BOX_V"
+    if [ "$_tr_selected" -eq "$_rr_i" ]; then
+      _rr_prefix="$_tui_radio_glyph_on"
+    else
+      _rr_prefix="$_tui_radio_glyph_off"
+    fi
+    if [ "$_rr_i" -eq "$_tr_cursor" ]; then
+      printf '%s%s %3d) %s' "$TUI_REV" "$_rr_prefix" "$_rr_i" "$_rr_trunc"
+      _rr_used=$((11 + ${#_rr_trunc}))
+      _rr_fill=$((_rr_inner - _rr_used))
+      [ "$_rr_fill" -gt 0 ] && _rr_j=0 && while [ "$_rr_j" -lt "$_rr_fill" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+      printf '%s' "$TUI_RESET"
+    else
+      printf '%s %3d) %s' "$_rr_prefix" "$_rr_i" "$_rr_trunc"
+      _rr_used=$((11 + ${#_rr_trunc}))
+      _rr_fill=$((_rr_inner - _rr_used))
+      [ "$_rr_fill" -gt 0 ] && _rr_j=0 && while [ "$_rr_j" -lt "$_rr_fill" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+    fi
+    printf '%s' "$TUI_BOX_V"
+    _rr_r=$((_rr_r + 1))
+    _rr_i=$((_rr_i + 1))
+  done
+
+  while [ "$_rr_r" -le "$_rr_status_row" ]; do
+    move_cursor "$_rr_r" "$_rr_x"
+    printf '%s' "$TUI_BOX_V"
+    _rr_j=0; while [ "$_rr_j" -lt "$_rr_inner" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+    printf '%s' "$TUI_BOX_V"
+    _rr_r=$((_rr_r + 1))
+  done
+
+  if [ "$_rr_end" -lt "$_tr_count" ]; then
+    _rr_drow=$((_rr_r - 1))
+    move_cursor "$_rr_drow" $((_rr_x + _rr_box_w - 9))
+    printf '%s%cmore%s' "$TUI_DIM" '↓' "$TUI_RESET"
+  fi
+
+  move_cursor "$_rr_status_row" "$_rr_x"
+  printf '%s' "$TUI_BOX_V"
+  _rr_j=0; while [ "$_rr_j" -lt "$_rr_inner" ]; do printf ' '; _rr_j=$((_rr_j + 1)); done
+  printf '%s' "$TUI_BOX_V"
+  move_cursor "$_rr_status_row" $((_rr_x + 2))
+  if [ -n "$_tr_error_msg" ]; then
+    printf '%s%s%s' "$TUI_RED" "$_tr_error_msg" "$TUI_RESET"
+  elif [ "$_tr_selected" -gt 0 ]; then
+    # shellcheck disable=SC2086
+    eval "_rr_sellab=\$_tr_label_$_tr_selected"
+    # shellcheck disable=SC2154
+    printf 'Selected: %s' "$_rr_sellab"
+  else
+    printf 'Item %d of %d' "$_tr_cursor" "$_tr_count"
+  fi
+
+  move_cursor "$_rr_bottom_row" "$_rr_x"
+  printf '%s' "$TUI_BOX_BL"
+  _rr_i=1; while [ "$_rr_i" -le "$_rr_inner" ]; do printf '%s' "$TUI_BOX_H"; _rr_i=$((_rr_i + 1)); done
+  printf '%s' "$TUI_BOX_BR"
+
+  move_cursor "$_rr_footer_row" "$_rr_x"
+  if [ "$_tr_show_help" = "true" ]; then
+    _rr_ft='Up/Dn Move  Space=Select  Enter=Confirm  Esc=Cancel  PgUp/PgDn Page  Home/End  j/k Vi  ? Less'
+  else
+    _rr_ft='Up/Dn Move  Space=Select  Enter=Confirm  Esc=Cancel  ?=More'
+  fi
+  printf '%s%s%s' "$TUI_DIM" "$_rr_ft" "$TUI_RESET"
+
+  printf '%s[?25l' "$ESC"
+
+  unset _rr_rows _rr_cols _rr_box_w _rr_inner _rr_x _rr_r _rr_i _rr_j
+  unset _rr_tlen _rr_tshow _rr_pad _rr_pl _rr_pr _rr_slen _rr_sshow _rr_spad _rr_spl _rr_spr
+  unset _rr_status_row _rr_bottom_row _rr_footer_row _rr_end _rr_maxlab _rr_lab _rr_trunc
+  unset _rr_prefix _rr_used _rr_fill _rr_drow _rr_ft _rr_sellab
+}
+
+# ---------------------------------------------------------------------------
+# Section 13c: tui_radio() — Single-select radio button widget
+# ---------------------------------------------------------------------------
+
+# tui_radio title subtitle item1 item2 ... [--default N]
+# Single-select radio widget with (•)/(○) indicators.
+# Up/Down navigate, SPACE selects, ENTER confirms, Esc cancels.
+# --default N pre-selects the Nth item (0-based index).
+# Prints the 0-based index of the selected item to stdout.
+# Sets TUI_RESULT to the same 0-based index.
+# Returns 0 on success, 1 on cancel.
+tui_radio() {
+  _tr_title=$1; _tr_subtitle=$2; shift 2
+
+  _tr_count=0
+  _tr_cursor=1
+  _tr_scroll=1
+  _tr_selected=0
+  _tr_default=0
+  _tr_show_help=false
+  _tr_page_size=1
+  _tr_error_msg=''
+
+  _tr_parse_mode=items
+  for _tr_arg in "$@"; do
+    if [ "$_tr_arg" = "--default" ]; then
+      _tr_parse_mode=default; continue
+    fi
+    if [ "$_tr_parse_mode" = "default" ]; then
+      _tr_default=$((_tr_arg + 1))
+      _tr_selected=$_tr_default
+      _tr_cursor=$_tr_default
+      _tr_parse_mode=items; continue
+    fi
+    _tr_count=$((_tr_count + 1))
+    _tr_safe=$(printf '%s' "$_tr_arg" | sed "s/'/'\\\\''/g")
+    eval "_tr_label_$_tr_count='$_tr_safe'"
+  done
+  unset _tr_arg _tr_safe _tr_parse_mode
+
+  if [ "$_tr_count" -eq 0 ]; then
+    return 1
+  fi
+
+  # Clamp cursor/selected to valid range
+  [ "$_tr_cursor" -gt "$_tr_count" ] && _tr_cursor=1
+  [ "$_tr_selected" -gt "$_tr_count" ] && _tr_selected=0
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    _tui_radio_fallback
+    _tr_rc=$?
+    _tr_i=1
+    while [ "$_tr_i" -le "$_tr_count" ]; do
+      # shellcheck disable=SC2086
+      eval "unset _tr_label_$_tr_i"
+      _tr_i=$((_tr_i + 1))
+    done
+    _tr_ret=$_tr_rc
+    unset _tr_title _tr_subtitle _tr_count _tr_cursor _tr_scroll
+    unset _tr_selected _tr_default _tr_show_help _tr_page_size _tr_error_msg
+    unset _tr_i _tr_rc _tr_bottom _tr_max_scroll
+    return $_tr_ret
+  fi
+
+  tui_init
+
+  while :; do
+    _tui_render_radio
+    # shellcheck disable=SC2034
+    _tui_read_key
+    key="$_tui_rk_result"
+
+    case "$key" in
+      "$TUI_KEY_SPACE")
+        _tr_selected=$_tr_cursor
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_ENTER")
+        if [ "$_tr_selected" -eq 0 ]; then
+          _tr_error_msg="Select an option"
         else
-          _tc_show_help=true
+          tui_restore
+          _tr_idx=$((_tr_selected - 1))
+          TUI_RESULT=$_tr_idx
+          printf '%d\n' "$_tr_idx"
+          _tr_i=1
+          while [ "$_tr_i" -le "$_tr_count" ]; do
+            # shellcheck disable=SC2086
+            eval "unset _tr_label_$_tr_i"
+            _tr_i=$((_tr_i + 1))
+          done
+          unset _tr_idx _tr_i _tr_title _tr_subtitle _tr_count _tr_cursor
+          unset _tr_scroll _tr_selected _tr_default _tr_show_help _tr_page_size _tr_error_msg
+          unset _tr_bottom _tr_max_scroll
+          return 0
+        fi
+        ;;
+      "$TUI_KEY_UP")
+        if [ "$_tr_cursor" -gt 1 ]; then
+          _tr_cursor=$((_tr_cursor - 1))
+          if [ "$_tr_cursor" -lt "$_tr_scroll" ]; then
+            _tr_scroll=$((_tr_scroll - 1))
+          fi
+        fi
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_DOWN")
+        if [ "$_tr_cursor" -lt "$_tr_count" ]; then
+          _tr_cursor=$((_tr_cursor + 1))
+          _tr_bottom=$((_tr_scroll + _tr_page_size - 1))
+          if [ "$_tr_cursor" -gt "$_tr_bottom" ]; then
+            _tr_scroll=$((_tr_scroll + 1))
+          fi
+        fi
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_PGUP")
+        _tr_scroll=$((_tr_scroll - _tr_page_size))
+        [ "$_tr_scroll" -lt 1 ] && _tr_scroll=1
+        _tr_cursor=$_tr_scroll
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_PGDN")
+        _tr_scroll=$((_tr_scroll + _tr_page_size))
+        _tr_max_scroll=$((_tr_count - _tr_page_size + 1))
+        [ "$_tr_max_scroll" -lt 1 ] && _tr_max_scroll=1
+        [ "$_tr_scroll" -gt "$_tr_max_scroll" ] && _tr_scroll=$_tr_max_scroll
+        _tr_bottom=$((_tr_scroll + _tr_page_size - 1))
+        [ "$_tr_bottom" -gt "$_tr_count" ] && _tr_bottom=$_tr_count
+        _tr_cursor=$_tr_bottom
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_HOME")
+        _tr_cursor=1; _tr_scroll=1; _tr_error_msg=''
+        ;;
+      "$TUI_KEY_END")
+        _tr_cursor=$_tr_count
+        _tr_max_scroll=$((_tr_count - _tr_page_size + 1))
+        [ "$_tr_max_scroll" -lt 1 ] && _tr_max_scroll=1
+        _tr_scroll=$_tr_max_scroll
+        _tr_error_msg=''
+        ;;
+      "$TUI_KEY_ESC"|"$TUI_KEY_Q")
+        tui_restore
+        TUI_RESULT=''
+        _tr_i=1
+        while [ "$_tr_i" -le "$_tr_count" ]; do
+          # shellcheck disable=SC2086
+          eval "unset _tr_label_$_tr_i"
+          _tr_i=$((_tr_i + 1))
+        done
+        unset _tr_i _tr_title _tr_subtitle _tr_count _tr_cursor _tr_scroll
+        unset _tr_selected _tr_default _tr_show_help _tr_page_size _tr_error_msg
+        unset _tr_bottom _tr_max_scroll
+        return 1
+        ;;
+      "$TUI_KEY_HELP")
+        if [ "$_tr_show_help" = "true" ]; then
+          _tr_show_help=false
+        else
+          _tr_show_help=true
         fi
         ;;
     esac
@@ -1235,6 +1634,20 @@ case "${0##*/}" in
       _demo_rc=$?
       if [ $_demo_rc -eq 0 ]; then
         printf 'Selected indexes:\n%s\n' "$(cat)"
+      else
+        printf 'Cancelled\n'
+      fi
+      exit $_demo_rc
+    fi
+    if [ "${1:-}" = "--demo-radio" ]; then
+      shift
+      if [ $# -eq 0 ]; then
+        set -- "Light theme" "Dark theme" "System default"
+      fi
+      tui_radio "Radio Demo" "Choose a theme:" "$@" --default 1
+      _demo_rc=$?
+      if [ $_demo_rc -eq 0 ]; then
+        printf 'Selected index: %s\n' "$TUI_RESULT"
       else
         printf 'Cancelled\n'
       fi
