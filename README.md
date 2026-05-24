@@ -1,10 +1,15 @@
 # dev-fu — One command to bootstrap a developer machine ([Bahasa Melayu version](README.ms-MY.md))
 
-**One command to bootstrap a complete (kinda) developer machine, anywhere.**
+Two scripts, one goal. **`fu.sh`** is the battle-tested monolithic installer. **`flu.sh`** is the new modular TUI system with nested menus and on-demand module fetching. Both are zero-dependency, curl-pipe-bash ready.
 
 ```bash
-# bash / zsh
+# fu.sh — monolithic (bash / zsh)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+```bash
+# flu.sh — modular TUI (bash / zsh / sh / dash / ash / busybox)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
 ```
 
 ```sh
@@ -71,6 +76,89 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 ▉══════════════════
 ▸ Choice: 
 ```
+
+## flu.sh — Modular TUI Menu
+
+`flu.sh` is the next-generation version with a professional terminal UI, nested submenus, and a remote module architecture. Each menu option fetches and executes a standalone install script from GitHub on demand. Both scripts coexist — `fu.sh` is the simple legacy version, `flu.sh` is the feature-rich modular system.
+
+### Quick Start
+
+```bash
+# Option 1: Clone and run locally
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+./flu.sh
+```
+
+```bash
+# Option 2: curl-pipe-bash (any POSIX shell)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
+```
+
+```sh
+# Option 2: BusyBox / dash / ash (no process substitution)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+```
+
+### Menu Structure
+
+```
+flu.sh v0.1.0
+├── Developer Tools
+│   ├── Languages
+│   │   ├── Python
+│   │   ├── Node.js
+│   │   └── Go
+│   ├── Editors
+│   │   ├── VS Code
+│   │   └── Neovim
+│   └── Shell
+│       ├── Zsh
+│       └── Fish
+├── System
+│   ├── Monitoring
+│   │   ├── htop
+│   │   └── btop
+│   └── Networking
+│       ├── curl
+│       └── wget
+└── Media
+    └── FFmpeg
+```
+
+### Module Architecture
+
+Each menu item maps to a standalone POSIX sh script under `modules/`:
+
+```
+modules/
+├── install_python.sh
+├── install_node.sh
+├── install_go.sh
+├── install_vscode.sh
+├── install_neovim.sh
+├── install_zsh.sh
+├── install_fish.sh
+├── install_htop.sh
+├── install_btop.sh
+├── install_curl.sh
+├── install_wget.sh
+└── install_ffmpeg.sh
+```
+
+Modules are self-contained, use the `FLU_*` environment variables for platform context, and are fetched on-demand from GitHub when running remotely. When running locally, `flu.sh` uses the modules from disk — no network access needed.
+
+### fu.sh vs flu.sh
+
+| Feature | `fu.sh` | `flu.sh` |
+|---------|---------|----------|
+| Shell | Bash 4+ | POSIX sh (bash, zsh, dash, ash, busybox) |
+| UI | Numbered list prompt | ANSI TUI with arrow-key navigation |
+| Menu depth | Flat (18 options) | 3-level nested submenus |
+| Architecture | Monolithic | Modular (remote on-demand scripts) |
+| Module source | Inline in script | `modules/` directory (local) or GitHub (remote) |
+| Notable tools | Docker, Rust, PHP, Tailscale, Fancy Prompt | Python, Node.js, Go, VS Code, Neovim, etc. |
+| Install count | 18 operations | 12 modules (growing) |
 
 ## Why dev-fu
 

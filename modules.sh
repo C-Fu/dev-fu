@@ -39,7 +39,7 @@ fi
 # Prints the full URL to stdout. Returns 0 on success.
 flu_module_resolve_url() {
   _fmr_action="$1"
-  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/flu-modules/main/modules/}"
+  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/main/modules/}"
   printf '%s%s.sh\n' "$_fmr_base" "$_fmr_action"
   unset _fmr_action _fmr_base
   return 0
@@ -57,6 +57,14 @@ flu_module_resolve_url() {
 # Returns 0 on success, 1 on failure.
 flu_module_fetch() {
   _fmf_action="$1"
+
+  # Check for local module first — co-located with flu.sh in modules/
+  if [ -n "${FLU_SCRIPT_DIR:-}" ] && [ -f "${FLU_SCRIPT_DIR}/modules/${_fmf_action}.sh" ]; then
+    cat "${FLU_SCRIPT_DIR}/modules/${_fmf_action}.sh"
+    unset _fmf_action
+    return 0
+  fi
+
   _fmf_url=$(flu_module_resolve_url "$_fmf_action")
   _fmf_attempt=1
 

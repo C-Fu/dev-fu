@@ -1,10 +1,15 @@
 # dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang
 
-**Satu sekerip untuk menyediakan mesin pembangun yang lengkap (lebih kurang), di mana-mana sahaja.**
+Dua skrip, satu matlamat. **`fu.sh`** adalah pemasang monolitik yang teruji. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash.
 
 ```bash
-# bash / zsh
+# fu.sh — monolithic (bash / zsh)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
+```
+
+```bash
+# flu.sh — TUI modular (bash / zsh / sh / dash / ash / busybox)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
 ```
 
 ```sh
@@ -72,6 +77,89 @@ irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get
 ▉══════════════════
 ▸ Choice: 
 ```
+
+## flu.sh — Menu TUI Modular
+
+`flu.sh` adalah versi generasi seterusnya dengan UI terminal profesional, submenu bersarang, dan seni bina modul jauh. Setiap pilihan menu mengambil dan melaksanakan skrip pemasangan kendiri dari GitHub atas permintaan. Kedua-dua skrip wujud bersama — `fu.sh` adalah versi ringkas/legasi, `flu.sh` adalah sistem modular yang kaya ciri.
+
+### Mula Pantas
+
+```bash
+# Option 1: Klon dan jalankan secara tempatan
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+./flu.sh
+```
+
+```bash
+# Option 2: curl-pipe-bash (mana-mana shell POSIX)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh)
+```
+
+```sh
+# Option 2: BusyBox / dash / ash (tiada process substitution)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+```
+
+### Struktur Menu
+
+```
+flu.sh v0.1.0
+├── Developer Tools
+│   ├── Languages
+│   │   ├── Python
+│   │   ├── Node.js
+│   │   └── Go
+│   ├── Editors
+│   │   ├── VS Code
+│   │   └── Neovim
+│   └── Shell
+│       ├── Zsh
+│       └── Fish
+├── System
+│   ├── Monitoring
+│   │   ├── htop
+│   │   └── btop
+│   └── Networking
+│       ├── curl
+│       └── wget
+└── Media
+    └── FFmpeg
+```
+
+### Seni Bina Modul
+
+Setiap item menu dipetakan kepada skrip sh POSIX kendiri di bawah `modules/`:
+
+```
+modules/
+├── install_python.sh
+├── install_node.sh
+├── install_go.sh
+├── install_vscode.sh
+├── install_neovim.sh
+├── install_zsh.sh
+├── install_fish.sh
+├── install_htop.sh
+├── install_btop.sh
+├── install_curl.sh
+├── install_wget.sh
+└── install_ffmpeg.sh
+```
+
+Modul adalah kendiri, menggunakan pemboleh ubah persekitaran `FLU_*` untuk konteks platform, dan diambil atas permintaan dari GitHub apabila dijalankan dari jauh. Apabila dijalankan secara tempatan, `flu.sh` menggunakan modul dari cakera — tiada akses rangkaian diperlukan.
+
+### fu.sh vs flu.sh
+
+| Ciri | `fu.sh` | `flu.sh` |
+|------|---------|----------|
+| Shell | Bash 4+ | POSIX sh (bash, zsh, dash, ash, busybox) |
+| UI | Prompt senarai bernombor | TUI ANSI dengan navigasi anak panah |
+| Kedalaman Menu | Rata (18 pilihan) | Submenu bersarang 3 peringkat |
+| Seni Bina | Monolitik | Modular (skrip jauh atas permintaan) |
+| Sumber Modul | Sebaris dalam skrip | Direktori `modules/` (tempatan) atau GitHub (jauh) |
+| Alat terkenal | Docker, Rust, PHP, Tailscale, Fancy Prompt | Python, Node.js, Go, VS Code, Neovim, dll. |
+| Jumlah pemasangan | 18 operasi | 12 modul (berkembang) |
 
 ## Mengapa dev-fu
 
