@@ -169,8 +169,8 @@ _assert_grep_count "flu.sh has exactly 1 flu_spinner_start call" \
 _assert_grep_count "flu.sh has exactly 1 flu_module_execute call" \
     "1" '^[^#]*flu_module_execute' "./flu.sh"
 
-_assert_grep_count "flu.sh has exactly 1 flu_spinner_stop call" \
-    "1" '^[^#]*flu_spinner_stop' "./flu.sh"
+_assert_grep_count "flu.sh has exactly 2 flu_spinner_stop calls" \
+    "2" '^[^#]*flu_spinner_stop' "./flu.sh"
 
 # Clean exit path
 _assert_grep "flu.sh cleans up with tui_restore at exit" \

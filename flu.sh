@@ -37,6 +37,32 @@ FLU_SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 . "$FLU_SCRIPT_DIR/modules.sh"
 
 # ──────────────
+# 🛡 Signal-Safe Cleanup
+# ──────────────
+# Orchestrator-level safety net: ensures terminal is always restored
+# on every exit path (normal, error, or signal).
+# Subsystems (tui.sh, menu.sh, modules.sh) set their own traps during
+# TUI operations, but this trap covers gaps between TUI sessions.
+_flu_cleanup_exit() {
+    # Attempt terminal restoration — safe to call even if already restored
+    # tui_restore is idempotent: if _tui_saved_stty is empty, it's a no-op
+    tui_restore 2>/dev/null || true
+
+    # Clear any remaining spinner
+    flu_spinner_stop 2>/dev/null || true
+
+    printf '\nflu.sh — Goodbye!\n'
+    exit 130
+}
+
+# Register traps for common termination signals
+# INT  (2)  — Ctrl-C
+# TERM (15) — kill (default)
+# HUP  (1)  — terminal closed / SSH disconnected
+# QUIT (3)  — Ctrl-\ (core dump signal)
+trap '_flu_cleanup_exit' INT TERM HUP QUIT
+
+# ──────────────
 # 🔍 Platform Detection
 # ──────────────
 # Detect OS, distro, package manager, architecture via modules.sh
@@ -101,6 +127,8 @@ if [ "$_tui_use_tui" = "true" ]; then
     _tui_read_key
 
     tui_restore
+    # Re-register orchestrator safety-net trap (overwritten by tui_init)
+    trap '_flu_cleanup_exit' INT TERM HUP QUIT
 else
     # Non-TUI: print plain text platform summary
     printf 'flu.sh v0.1.0\n'
@@ -112,6 +140,58 @@ fi
 unset _flu_su_cols _flu_su_rows _flu_su_box_w _flu_su_box_x _flu_su_box_y
 unset _flu_su_inner_x _flu_su_row _flu_su_footer_row
 unset _flu_su_os_info _flu_su_distro_info _flu_su_pkg_info _flu_su_arch_info
+
+# ──────────────
+# 🩺 Error Recovery Mapping
+# ──────────────
+# Maps exit codes from flu_module_execute to actionable user hints.
+# Called after module execution in the main loop.
+# Each hint tells the user WHAT to do, not just what failed.
+_flu_map_exit_code() {
+    _fmec_code=$1
+    _fmec_action=$2
+
+    case "$_fmec_code" in
+        0)
+            # Success — no recovery hint needed
+            ;;
+        124)
+            printf '%s⏱ Timeout: The operation took too long.%s\n' \
+                "$TUI_YELLOW" "$TUI_RESET"
+            printf '%s   → Try again. If the issue persists, check your network speed or run during off-peak hours.%s\n' \
+                "$TUI_DIM" "$TUI_RESET"
+            ;;
+        126)
+            printf '%s🔒 Permission denied: The module script could not be executed.%s\n' \
+                "$TUI_YELLOW" "$TUI_RESET"
+            printf '%s   → This may indicate a corrupted download. Try running the operation again.%s\n' \
+                "$TUI_DIM" "$TUI_RESET"
+            ;;
+        127)
+            printf '%s❓ Command not found: A required dependency is missing.%s\n' \
+                "$TUI_YELLOW" "$TUI_RESET"
+            printf '%s   → Ensure all dependencies for "%s" are installed before retrying.%s\n' \
+                "$TUI_DIM" "$_fmec_action" "$TUI_RESET"
+            ;;
+        1)
+            # Generic failure — check if it was a fetch failure or module error
+            printf '%s✗ Operation failed (exit code 1).%s\n' \
+                "$TUI_RED" "$TUI_RESET"
+            printf '%s   → Check your internet connection if this was a network operation.%s\n' \
+                "$TUI_DIM" "$TUI_RESET"
+            printf '%s   → Try running the operation again.%s\n' \
+                "$TUI_DIM" "$TUI_RESET"
+            ;;
+        *)
+            printf '%s✗ Operation exited with code %d.%s\n' \
+                "$TUI_RED" "$_fmec_code" "$TUI_RESET"
+            printf '%s   → An unexpected error occurred. Try running the operation again.%s\n' \
+                "$TUI_DIM" "$TUI_RESET"
+            ;;
+    esac
+
+    unset _fmec_code _fmec_action
+}
 
 # ──────────────
 # 📋 Menu Definition
@@ -181,12 +261,19 @@ while [ "$_flu_running" = "true" ]; do
     _flu_mod_rc=$?
     flu_spinner_stop
 
-    # --- Step 4: Post-Execution ---
-    # Clear screen to prepare for fresh menu render on next iteration
-    clear_screen
+    # --- Error Recovery (D-07, INTG-02) ---
+    if [ "$_flu_mod_rc" -ne 0 ]; then
+        # Module execution failed — display orchestrator-level recovery hint
+        # This supplements the subsystem-level hints shown in the result modal
+        _flu_map_exit_code "$_flu_mod_rc" "$_flu_action"
+        printf '\n%sPress any key to return to menu%s' "$TUI_DIM" "$TUI_RESET"
+        _tui_read_key
+    fi
 
-    # _flu_mod_rc is preserved but not used here — error recovery
-    # is handled in Plan 05-03 (error mapping).
+    # --- Step 4: Post-Execution ---
+    clear_screen
+    # Re-register orchestrator safety-net trap
+    trap '_flu_cleanup_exit' INT TERM HUP QUIT
 done
 
 # --- Step 5: Clean Exit ---
