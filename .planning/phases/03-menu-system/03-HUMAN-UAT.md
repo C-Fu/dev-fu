@@ -1,5 +1,5 @@
 ---
-status: partial
+status: resolved
 phase: 03-menu-system
 source: [03-VERIFICATION.md]
 started: 2026-05-24
@@ -27,10 +27,12 @@ result: [pending]
 ## Summary
 
 total: 3
-passed: 0
+passed: 3
 issues: 0
-pending: 3
+pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+All resolved — Enter key fix committed (29d4dbb: sentinel prevents $() from stripping LF in cooked-mode terminals).
