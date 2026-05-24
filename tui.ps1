@@ -1301,3 +1301,217 @@ function Show-TuiYesNo {
 
     Restore-Tui
 }
+
+# ---------------------------------------------------------------------------
+# Section 15: Freeform Text Input Widget (Show-TuiTextInput)
+# ---------------------------------------------------------------------------
+
+function Show-TuiTextInput {
+    <#
+    .SYNOPSIS
+    Freeform text input TUI widget. PowerShell port of tui_text_input().
+
+    .PARAMETER Title
+    Box title.
+    .PARAMETER Prompt
+    Label shown before the input field (e.g., "Enter your name").
+    .PARAMETER DefaultValue
+    Pre-filled text (optional).
+
+    .DESCRIPTION
+    Inline text editor with cursor movement and editing.
+    Left/Right move cursor. Backspace/Delete remove characters.
+    Home (Ctrl+A) jumps to start. End (Ctrl+E) jumps to end.
+    Enter submits. Esc cancels.
+
+    Sets $Script:TUI_RESULT to entered text on submit.
+    Sets $Script:TUI_RESULT to "" on cancel.
+    Note: Unlike other widgets, 'q' does NOT cancel — users need to type all letters.
+
+    Matching tui_text_input() behaviors:
+      - Inline cursor with bold reverse-video position indicator
+      - Left/Right arrow cursor movement within text
+      - Backspace deletes before cursor, Delete deletes at cursor
+      - Home/End jump to start/end of text
+      - Ctrl+A/Ctrl+E also mapped to Home/End
+      - Max length enforced (no overflow beyond box width)
+      - Help footer: "Type text  ← → move  Home End  Backspace Delete  ↵ submit  Esc cancel"
+    #>
+    param(
+        [string]$Title,
+        [string]$Prompt,
+        [string]$DefaultValue = ''
+    )
+
+    if (-not $Script:_tui_use_tui) {
+        Write-Host "$Title"
+        $text = Read-Host -Prompt $Prompt
+        if ($text) { $Script:TUI_RESULT = $text } else { $Script:TUI_RESULT = $DefaultValue }
+        return
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    # Use StringBuilder for efficient text manipulation
+    $textBuilder = New-Object System.Text.StringBuilder
+    if ($DefaultValue) { [void]$textBuilder.Append($DefaultValue) }
+    $cursorPos = $textBuilder.Length  # position AFTER last char (0 = before first char)
+
+    $running = $true
+    $needsRedraw = $true
+
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+
+    $boxWidth = [Math]::Min(70, $termCols - 4)
+    if ($boxWidth -lt 30) { $boxWidth = 30 }
+    $boxHeight = 7
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+    $inputMaxLen = $boxWidth - 6  # padding inside box
+
+    while ($running) {
+        if ($needsRedraw) {
+            Clear-TuiScreen
+            Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight -Title $Title
+
+            # Render prompt label
+            Write-TuiAt -Row ($boxY + 2) -Col ($boxX + 2)
+            Write-Host "$Prompt:" -NoNewline
+
+            # Render input field background
+            $inputRow = $boxY + 3
+            $bgStr = ' ' * $inputMaxLen
+            Write-TuiAt -Row $inputRow -Col ($boxX + 2)
+            Write-Host "$($Script:TUI_REV)$bgStr$($Script:TUI_RESET)" -NoNewline
+
+            # Render text + cursor inside input field
+            $text = $textBuilder.ToString()
+            $visibleText = $text
+            $scrollOffset = 0
+
+            # If text longer than field, scroll to show cursor
+            if ($text.Length -gt $inputMaxLen) {
+                if ($cursorPos -ge $inputMaxLen) {
+                    $scrollOffset = $cursorPos - $inputMaxLen + 1
+                    if ($scrollOffset + $inputMaxLen -gt $text.Length) {
+                        $scrollOffset = $text.Length - $inputMaxLen + 1
+                    }
+                    if ($scrollOffset -lt 0) { $scrollOffset = 0 }
+                }
+                $visibleText = $text.Substring($scrollOffset, [Math]::Min($inputMaxLen, $text.Length - $scrollOffset))
+            }
+
+            # Pad visible text to fill field width
+            $displayText = $visibleText + (' ' * [Math]::Max(0, $inputMaxLen - $visibleText.Length))
+
+            Write-TuiAt -Row $inputRow -Col ($boxX + 2)
+            Write-Host $displayText -NoNewline
+
+            # Render cursor as bold reverse-video character
+            $cursorDisplayPos = $cursorPos - $scrollOffset
+            if ($cursorDisplayPos -ge 0 -and $cursorDisplayPos -lt $inputMaxLen) {
+                $cursorChar = if ($cursorDisplayPos -lt $visibleText.Length) { $visibleText[$cursorDisplayPos] } else { ' ' }
+                Write-TuiAt -Row $inputRow -Col ($boxX + 2 + $cursorDisplayPos)
+                Write-Host "$($Script:TUI_BOLD)$($Script:TUI_REV)$cursorChar$($Script:TUI_RESET)" -NoNewline
+            }
+
+            # Footer
+            $footerRow = $boxY + $boxHeight - 2
+            $footerText = "Type text  ← → move  Home End  Backspace Delete  ↵ submit  Esc cancel"
+            Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
+            Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
+
+            $needsRedraw = $false
+        }
+
+        # Read key directly — we need both ConsoleKey (for navigation) and KeyChar (for text).
+        # Using [Console]::ReadKey() directly instead of Read-TuiKey/Read-TuiChar to avoid
+        # the double-consumption bug: Read-TuiKey eats the key, leaving nothing for Read-TuiChar.
+        $keyInfo = $null
+        try {
+            $keyInfo = [Console]::ReadKey($true)
+        } catch {
+            # On error (e.g., input redirected), treat as unknown/ignore
+            continue
+        }
+
+        $char = $keyInfo.KeyChar
+        $consoleKey = $keyInfo.Key
+        $modifiers = $keyInfo.Modifiers
+
+        # --- Navigation and editing keys ---
+        switch ($consoleKey) {
+            'LeftArrow' {
+                if ($cursorPos -gt 0) { $cursorPos-- }
+                $needsRedraw = $true
+                continue
+            }
+            'RightArrow' {
+                if ($cursorPos -lt $textBuilder.Length) { $cursorPos++ }
+                $needsRedraw = $true
+                continue
+            }
+            'Home' {
+                $cursorPos = 0
+                $needsRedraw = $true
+                continue
+            }
+            'End' {
+                $cursorPos = $textBuilder.Length
+                $needsRedraw = $true
+                continue
+            }
+            'Backspace' {
+                if ($cursorPos -gt 0) {
+                    $textBuilder.Remove($cursorPos - 1, 1)
+                    $cursorPos--
+                    $needsRedraw = $true
+                }
+                continue
+            }
+            'Delete' {
+                if ($cursorPos -lt $textBuilder.Length) {
+                    $textBuilder.Remove($cursorPos, 1)
+                    $needsRedraw = $true
+                }
+                continue
+            }
+            'Enter' {
+                $Script:TUI_RESULT = $textBuilder.ToString()
+                $running = $false
+                continue
+            }
+            'Escape' {
+                $Script:TUI_RESULT = ''
+                $running = $false
+                continue
+            }
+        }
+
+        # Check for Ctrl+A (Home) and Ctrl+E (End) via modifiers
+        if ($consoleKey -eq 'A' -and ($modifiers -band [System.ConsoleModifiers]::Control)) {
+            $cursorPos = 0
+            $needsRedraw = $true
+            continue
+        }
+        if ($consoleKey -eq 'E' -and ($modifiers -band [System.ConsoleModifiers]::Control)) {
+            $cursorPos = $textBuilder.Length
+            $needsRedraw = $true
+            continue
+        }
+
+        # --- Printable character insertion ---
+        # Note: Unlike other widgets, Show-TuiTextInput does NOT cancel on 'q'
+        # — users need to type all letters including 'q'. Esc is the cancel key.
+        $charCode = [int][char]$char
+        if ($charCode -ge 32 -and $charCode -le 126 -and $textBuilder.Length -lt $inputMaxLen) {
+            $textBuilder.Insert($cursorPos, $char)
+            $cursorPos++
+            $needsRedraw = $true
+        }
+    }
+
+    Restore-Tui
+}
