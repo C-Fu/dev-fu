@@ -46,11 +46,12 @@ Plans:
   2. User is prompted with Yes/No confirmation before destructive operations (remove, uninstall) and can proceed or cancel
   3. User can choose exactly one option from a radio-button list with (•)/(○) indicators
   4. User can enter freeform text in an inline input with cursor movement and backspace editing
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Extend key reader with Ctrl+D/Delete/*/- keys + implement tui_checklist() multi-select checkbox widget
+- [ ] 02-02-PLAN.md — Implement tui_radio() single-select and tui_yesno() confirmation dialog widgets
+- [ ] 02-03-PLAN.md — Implement tui_text_input() freeform text entry widget with line editing
 **UI hint**: yes
 
 ### Phase 3: Menu System
