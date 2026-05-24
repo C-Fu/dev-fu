@@ -1597,6 +1597,184 @@ tui_radio() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 14: Yes/No fallback prompt
+# ---------------------------------------------------------------------------
+
+# _tui_yesno_fallback
+# Uses _ty_* globals set by tui_yesno() for title, message, and selection.
+# Prompts the user for y/n input with the pre-selected default shown.
+# Prints 'yes' or 'no' to stdout, sets TUI_RESULT.
+# Returns 0 on selection, 1 on cancel/invalid.
+_tui_yesno_fallback() {
+  printf '\n'
+  printf '  %s\n' "$_ty_title"
+  printf '  %s\n' "$_ty_message"
+  printf '\n'
+  if [ "$_ty_selected" = "yes" ]; then
+    printf '  [x] Yes    [ ] No\n'
+  else
+    printf '  [ ] Yes    [x] No\n'
+  fi
+  printf '\n'
+  printf 'Enter y/n (default: %s): ' "$_ty_selected"
+  _ty_input=''
+  IFS= read -r _ty_input </dev/tty 2>/dev/null || read -r _ty_input
+
+  case "$_ty_input" in
+    [yY]*) _ty_result="yes" ;;
+    [nN]*) _ty_result="no" ;;
+    '') _ty_result="$_ty_selected" ;;
+    *)
+      unset _ty_title _ty_message _ty_default _ty_selected _ty_input
+      return 1
+      ;;
+  esac
+
+  printf '%s\n' "$_ty_result"
+  TUI_RESULT="$_ty_result"
+  unset _ty_title _ty_message _ty_default _ty_selected _ty_input
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# Section 14a: Rendering function for tui_yesno
+# ---------------------------------------------------------------------------
+
+_tui_render_yesno() {
+  clear_screen
+  _ty_rows=$(tput lines 2>/dev/null || printf '24')
+  _ty_cols=$(tput cols 2>/dev/null || printf '80')
+  _ty_box_w=50
+  [ "$_ty_box_w" -gt "$_ty_cols" ] && _ty_box_w=$((_ty_cols - 4))
+  _ty_box_h=8
+  _ty_x=$(( (_ty_cols - _ty_box_w) / 2 ))
+  _ty_y=$(( (_ty_rows - _ty_box_h) / 2 ))
+  [ "$_ty_x" -lt 1 ] && _ty_x=1
+  [ "$_ty_y" -lt 1 ] && _ty_y=1
+  _ty_inner=$((_ty_box_w - 2))
+
+  # Draw the box frame with centered title
+  _tui_draw_box "$_ty_x" "$_ty_y" "$_ty_box_w" "$_ty_box_h" "$_ty_title"
+
+  # Message (centered on row _ty_y+2)
+  _ty_msg_row=$((_ty_y + 2))
+  _ty_msg_display=$(printf '%s' "$_ty_message" | awk -v L="$_ty_inner" '{print substr($0,1,L)}')
+  _ty_msg_pad=$(( (_ty_inner - ${#_ty_msg_display}) / 2 ))
+  [ "$_ty_msg_pad" -lt 0 ] && _ty_msg_pad=0
+  move_cursor "$_ty_msg_row" $((_ty_x + 1 + _ty_msg_pad))
+  printf '%s' "$_ty_msg_display"
+
+  # Yes/No buttons (centered on row _ty_y+4)
+  _ty_btn_row=$((_ty_y + 4))
+  _ty_yes_label="    Yes    "
+  _ty_no_label="    No     "
+  _ty_btn_total=$(( ${#_ty_yes_label} + ${#_ty_no_label} + 2 ))
+  _ty_btn_start=$(( _ty_x + (_ty_box_w - _ty_btn_total) / 2 ))
+
+  # Render Yes button
+  move_cursor "$_ty_btn_row" "$_ty_btn_start"
+  if [ "$_ty_selected" = "yes" ]; then
+    printf '%s%s%s' "$TUI_REV" "$_ty_yes_label" "$TUI_RESET"
+  else
+    printf '%s' "$_ty_yes_label"
+  fi
+
+  # Gap between buttons
+  printf '  '
+
+  # Render No button
+  if [ "$_ty_selected" = "no" ]; then
+    printf '%s%s%s' "$TUI_REV" "$_ty_no_label" "$TUI_RESET"
+  else
+    printf '%s' "$_ty_no_label"
+  fi
+
+  # Footer (on the bottom border row of the box)
+  _ty_footer_row=$((_ty_y + _ty_box_h - 1))
+  move_cursor "$_ty_footer_row" "$_ty_x"
+  if [ "$_ty_show_help" = "true" ]; then
+    _ty_ft='←→ Move  Enter=Confirm  Esc=Cancel  ? Less'
+  else
+    _ty_ft='←→ Move  Enter=Confirm  Esc=Cancel  ? Keys'
+  fi
+  printf '%s%s%s' "$TUI_DIM" "$_ty_ft" "$TUI_RESET"
+
+  printf '%s[?25l' "$ESC"
+
+  unset _ty_rows _ty_cols _ty_box_w _ty_box_h _ty_x _ty_y _ty_inner
+  unset _ty_msg_row _ty_msg_display _ty_msg_pad _ty_btn_row _ty_btn_total _ty_btn_start
+  unset _ty_yes_label _ty_no_label _ty_footer_row _ty_ft
+}
+
+# ---------------------------------------------------------------------------
+# Section 14b: tui_yesno() — Confirmation dialog widget
+# ---------------------------------------------------------------------------
+
+# tui_yesno title message [default]
+# Full-screen centered modal confirmation dialog with Yes/No buttons.
+# Left/Right arrows toggle highlight. ENTER confirms. Esc cancels.
+# default: "yes" or "no" (defaults to "no" for safety).
+# Returns literal 'yes' or 'no' string to stdout and TUI_RESULT.
+# Returns 0 on confirm, 1 on cancel.
+tui_yesno() {
+  _ty_title=$1; _ty_message=$2
+  _ty_default="${3:-no}"
+  _ty_selected=''
+  _ty_show_help=false
+
+  # Set initial selection based on default (D-14: "No" by default)
+  case "$_ty_default" in
+    yes|Yes|YES|y|Y) _ty_selected="yes" ;;
+    *) _ty_selected="no" ;;
+  esac
+
+  if [ "$_tui_use_tui" = "false" ]; then
+    _tui_yesno_fallback
+    return $?
+  fi
+
+  tui_init
+
+  while :; do
+    _tui_render_yesno
+    # shellcheck disable=SC2034
+    _tui_read_key
+    key="$_tui_rk_result"
+
+    case "$key" in
+      "$TUI_KEY_LEFT"|"$TUI_KEY_RIGHT")
+        # Toggle between yes and no (D-13)
+        if [ "$_ty_selected" = "yes" ]; then
+          _ty_selected="no"
+        else
+          _ty_selected="yes"
+        fi
+        ;;
+      "$TUI_KEY_ENTER")
+        tui_restore
+        TUI_RESULT="$_ty_selected"
+        printf '%s\n' "$_ty_selected"
+        unset _ty_title _ty_message _ty_default _ty_selected _ty_show_help
+        return 0
+        ;;
+      "$TUI_KEY_ESC")
+        tui_restore
+        TUI_RESULT=''
+        unset _ty_title _ty_message _ty_default _ty_selected _ty_show_help
+        return 1
+        ;;
+      "$TUI_KEY_HELP")
+        if [ "$_ty_show_help" = "true" ]; then
+          _ty_show_help=false
+        else
+          _ty_show_help=true
+        fi
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
 # Demo / standalone execution (only when run directly, not sourced)
 # ---------------------------------------------------------------------------
 
@@ -1648,6 +1826,17 @@ case "${0##*/}" in
       _demo_rc=$?
       if [ $_demo_rc -eq 0 ]; then
         printf 'Selected index: %s\n' "$TUI_RESULT"
+      else
+        printf 'Cancelled\n'
+      fi
+      exit $_demo_rc
+    fi
+    if [ "${1:-}" = "--demo-yesno" ]; then
+      shift
+      tui_yesno "Confirm Removal" "${1:-Remove all selected packages?}" "${2:-no}"
+      _demo_rc=$?
+      if [ $_demo_rc -eq 0 ]; then
+        printf 'Result: %s\n' "$TUI_RESULT"
       else
         printf 'Cancelled\n'
       fi
