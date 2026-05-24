@@ -250,3 +250,162 @@ function Write-TuiBox {
     Move-TuiCursor -Row ($Y + $Height - 1) -Col $X
     Write-Host "$($Script:TUI_BOX_BL)$hLine$($Script:TUI_BOX_BR)" -NoNewline
 }
+
+# ---------------------------------------------------------------------------
+# Section 8: Key Name Constants
+# ---------------------------------------------------------------------------
+
+$Script:TUI_KEY_UP      = "up"
+$Script:TUI_KEY_DOWN    = "down"
+$Script:TUI_KEY_LEFT    = "left"
+$Script:TUI_KEY_RIGHT   = "right"
+$Script:TUI_KEY_ENTER   = "enter"
+$Script:TUI_KEY_ESC     = "esc"
+$Script:TUI_KEY_PGUP    = "pgup"
+$Script:TUI_KEY_PGDN    = "pgdn"
+$Script:TUI_KEY_HOME    = "home"
+$Script:TUI_KEY_END     = "end"
+$Script:TUI_KEY_SPACE   = "space"
+$Script:TUI_KEY_TAB     = "tab"
+$Script:TUI_KEY_BACKSPACE = "backspace"
+$Script:TUI_KEY_CTRL_D  = "ctrl_d"
+$Script:TUI_KEY_DELETE  = "delete"
+$Script:TUI_KEY_ASTERISK = "asterisk"
+$Script:TUI_KEY_MINUS   = "minus"
+$Script:TUI_KEY_Q       = "q"
+$Script:TUI_KEY_HELP    = "help"
+$Script:TUI_KEY_NUMBER  = "number"
+$Script:TUI_KEY_UNKNOWN = "unknown"
+
+# Configurable escape sequence timeout (matching TUI_KEY_TIMEOUT in tui.sh)
+$Script:TUI_KEY_TIMEOUT = 100  # milliseconds
+
+# ---------------------------------------------------------------------------
+# Section 9: Key Reading Function (D-09)
+# ---------------------------------------------------------------------------
+
+function Read-TuiKey {
+    <#
+    .SYNOPSIS
+    Read a single keypress using [Console]::ReadKey() and decode to symbolic name.
+    Sets $Script:_tui_rk_result and $Script:_tui_rk_digit.
+    Caller reads these script-scope variables — do NOT wrap in $().
+
+    Per D-09: uses [Console]::ReadKey() — PowerShell's native single-keypress API.
+    [Console]::ReadKey() already decodes escape sequences, so arrow keys,
+    PgUp/PgDn, Home/End all map to ConsoleKey enum values.
+    No manual escape sequence parsing needed (unlike POSIX tui.sh).
+    #>
+    $Script:_tui_rk_result = $Script:TUI_KEY_UNKNOWN
+    $Script:_tui_rk_digit = ''
+
+    $keyInfo = $null
+    try {
+        $keyInfo = [Console]::ReadKey($true)
+    } catch {
+        # On error (e.g., input redirected), return unknown
+        $Script:_tui_rk_result = $Script:TUI_KEY_UNKNOWN
+        return
+    }
+
+    $char = $keyInfo.KeyChar
+    $key  = $keyInfo.Key
+    $modifiers = $keyInfo.Modifiers
+
+    # --- Character-based mappings (matching tui.sh lines 205-248) ---
+
+    # Check KeyChar first for printable characters
+    switch -Regex ($char.ToString()) {
+        "`r" { $Script:_tui_rk_result = $Script:TUI_KEY_ENTER; return }
+        "`n" { $Script:_tui_rk_result = $Script:TUI_KEY_ENTER; return }
+        ' '  { $Script:_tui_rk_result = $Script:TUI_KEY_SPACE; return }
+        '\*' { $Script:_tui_rk_result = $Script:TUI_KEY_ASTERISK; return }
+        '-'  { $Script:_tui_rk_result = $Script:TUI_KEY_MINUS; return }
+        "`t" { $Script:_tui_rk_result = $Script:TUI_KEY_TAB; return }
+        '[qQ]' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_Q; return
+        }
+        '\?' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_HELP; return
+        }
+        # Vi keys: j=down, k=up (matching standard vi convention)
+        'j' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_DOWN; return
+        }
+        'k' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_UP; return
+        }
+        # Vi keys: g=Home, G=End
+        'G' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_END; return
+        }
+        'g' {
+            $Script:_tui_rk_result = $Script:TUI_KEY_HOME; return
+        }
+        '^\d$' {
+            $Script:_tui_rk_digit = $char.ToString()
+            $Script:_tui_rk_result = $Script:TUI_KEY_NUMBER
+            return
+        }
+    }
+
+    # --- ConsoleKey-based mappings (escape sequences handled natively by ReadKey) ---
+
+    switch ($key) {
+        'UpArrow'    { $Script:_tui_rk_result = $Script:TUI_KEY_UP; return }
+        'DownArrow'  { $Script:_tui_rk_result = $Script:TUI_KEY_DOWN; return }
+        'LeftArrow'  { $Script:_tui_rk_result = $Script:TUI_KEY_LEFT; return }
+        'RightArrow' { $Script:_tui_rk_result = $Script:TUI_KEY_RIGHT; return }
+        'Enter'      { $Script:_tui_rk_result = $Script:TUI_KEY_ENTER; return }
+        'Escape'     { $Script:_tui_rk_result = $Script:TUI_KEY_ESC; return }
+        'PageUp'     { $Script:_tui_rk_result = $Script:TUI_KEY_PGUP; return }
+        'PageDown'   { $Script:_tui_rk_result = $Script:TUI_KEY_PGDN; return }
+        'Home'       { $Script:_tui_rk_result = $Script:TUI_KEY_HOME; return }
+        'End'        { $Script:_tui_rk_result = $Script:TUI_KEY_END; return }
+        'Spacebar'   { $Script:_tui_rk_result = $Script:TUI_KEY_SPACE; return }
+        'Tab'        { $Script:_tui_rk_result = $Script:TUI_KEY_TAB; return }
+        'Backspace'  { $Script:_tui_rk_result = $Script:TUI_KEY_BACKSPACE; return }
+        'Delete'     { $Script:_tui_rk_result = $Script:TUI_KEY_DELETE; return }
+
+        # Ctrl+D handling — ReadKey exposes modifiers
+        'D' {
+            if ($modifiers -band [System.ConsoleModifiers]::Control) {
+                $Script:_tui_rk_result = $Script:TUI_KEY_CTRL_D; return
+            }
+        }
+    }
+
+    # Fallback: process raw byte value for edge cases
+    $byteVal = [int][char]$char
+    switch ($byteVal) {
+        10  { $Script:_tui_rk_result = $Script:TUI_KEY_ENTER; return }
+        13  { $Script:_tui_rk_result = $Script:TUI_KEY_ENTER; return }
+        27  { $Script:_tui_rk_result = $Script:TUI_KEY_ESC; return }
+        127 { $Script:_tui_rk_result = $Script:TUI_KEY_BACKSPACE; return }
+        8   { $Script:_tui_rk_result = $Script:TUI_KEY_BACKSPACE; return }
+        9   { $Script:_tui_rk_result = $Script:TUI_KEY_TAB; return }
+        32  { $Script:_tui_rk_result = $Script:TUI_KEY_SPACE; return }
+    }
+
+    $Script:_tui_rk_result = $Script:TUI_KEY_UNKNOWN
+}
+
+# ---------------------------------------------------------------------------
+# Section 10: Character Reader for Text Input Widgets
+# ---------------------------------------------------------------------------
+
+function Read-TuiChar {
+    <#
+    .SYNOPSIS
+    Read a single character and return its actual value (not symbolic).
+    Sets $Script:_tui_rc_char to the character.
+    Used by text input widgets that need the actual character value.
+    Caller reads $Script:_tui_rc_char directly.
+    #>
+    try {
+        $keyInfo = [Console]::ReadKey($true)
+        $Script:_tui_rc_char = $keyInfo.KeyChar
+    } catch {
+        $Script:_tui_rc_char = [char]0
+    }
+}
