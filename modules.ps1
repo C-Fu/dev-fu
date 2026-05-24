@@ -528,3 +528,145 @@ function Invoke-FluModuleExecute {
         Success    = ($exitCode -eq 0)
     }
 }
+
+# ---------------------------------------------------------------------------
+# Section 9: Recovery Hint Mapper (Get-FluRecoveryHint)
+# ---------------------------------------------------------------------------
+
+function Get-FluRecoveryHint {
+    <#
+    .SYNOPSIS
+    Map exit code to actionable recovery hint.
+    PowerShell port of _flu_display_recovery_hints().
+
+    .PARAMETER ExitCode
+    Module exit code.
+    .PARAMETER Stderr
+    Module stderr content for pattern matching.
+    #>
+    param([int]$ExitCode, [string]$Stderr)
+
+    switch ($ExitCode) {
+        124 {
+            return "The operation timed out. Try again with a faster connection or check if the service is responsive."
+        }
+        126 {
+            return "The module script could not be executed. This may indicate a corrupted download. Try running again."
+        }
+        127 {
+            return "A required command was not found. Check that all dependencies are installed for this module."
+        }
+        1 {
+            if ($Stderr -match 'curl|wget|fetch|Invoke-WebRequest') {
+                return "Network error — unable to reach the server. Check your internet connection."
+            } elseif ($Stderr -match 'Permission denied|permission denied') {
+                return "Permission denied — try running with elevated privileges."
+            } elseif ($Stderr -match 'not found|Not found') {
+                return "A required dependency was not found. Check that all dependencies are installed."
+            } else {
+                return "Module exited with code 1. Check the output above for details. You can re-run this operation."
+            }
+        }
+        6 { return "Network error — unable to reach the server. Check your internet connection." }
+        7 { return "Network error — unable to reach the server. Check your internet connection." }
+        22 { return "Network error — unable to reach the server. Check your internet connection." }
+        28 { return "Network error — unable to reach the server. Check your internet connection." }
+        default {
+            return "Module exited with code $ExitCode. Check the output above for details. You can re-run this operation."
+        }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Section 10: Result Display (Write-FluModuleResult)
+# ---------------------------------------------------------------------------
+
+function Write-FluModuleResult {
+    <#
+    .SYNOPSIS
+    Display module execution results in a box-rendered modal.
+    PowerShell port of flu_module_display_result().
+
+    .PARAMETER Result
+    Result object from Invoke-FluModuleExecute (with ExitCode, Stdout, Stderr, ModuleName).
+
+    .DESCRIPTION
+    Success (exit 0): green ✓ status with module stdout content.
+    Failure (exit != 0): red ✗ status with exit code, stderr, and recovery hints.
+    User presses any key to dismiss the modal.
+
+    Matching flu_module_display_result() behaviors:
+      - Box-rendered modal with status-colored title
+      - Content rendered inside box with truncation
+      - Recovery hints on failure
+      - "Press any key to return to menu" footer
+      - Manages its own TUI lifecycle
+    #>
+    param($Result)
+
+    if (-not $Result) { return }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+
+    $boxWidth = 70
+    if ($boxWidth -gt ($termCols - 4)) { $boxWidth = $termCols - 4 }
+    $boxHeight = $termRows - 4
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = 2
+    $innerWidth = $boxWidth - 4
+
+    # Build status title
+    if ($Result.Success) {
+        $title = "✓ $($Result.ModuleName) — Complete"
+        $titleColor = $Script:TUI_GREEN
+    } else {
+        $title = "✗ $($Result.ModuleName) — Failed (exit: $($Result.ExitCode))"
+        $titleColor = $Script:TUI_RED
+    }
+
+    Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight `
+        -Title "$titleColor$title$($Script:TUI_RESET)"
+
+    # Render output content
+    $content = if ($Result.Success) { $Result.Stdout } else { $Result.Stderr }
+    $contentRow = $boxY + 3
+    $maxRow = $boxY + $boxHeight - 4
+
+    if ($content) {
+        $contentLines = $content -split "`n"
+        foreach ($line in $contentLines) {
+            if ($contentRow -ge $maxRow) { break }
+            $truncated = if ($line.Length -gt $innerWidth) { $line.Substring(0, $innerWidth) } else { $line }
+            Write-TuiAt -Row $contentRow -Col ($boxX + 2)
+            Write-Host $truncated -NoNewline
+            $contentRow++
+        }
+    } elseif (-not $Result.Success) {
+        Write-TuiAt -Row $contentRow -Col ($boxX + 2)
+        Write-Host "$($Script:TUI_YELLOW)Module exited with code $($Result.ExitCode) but produced no error output.$($Script:TUI_RESET)" -NoNewline
+        $contentRow++
+    }
+
+    # Recovery hints on failure
+    if (-not $Result.Success) {
+        $contentRow++
+        $hint = Get-FluRecoveryHint -ExitCode $Result.ExitCode -Stderr $Result.Stderr
+        if ($hint) {
+            Write-TuiAt -Row $contentRow -Col ($boxX + 2)
+            Write-Host "$($Script:TUI_YELLOW)→ $hint$($Script:TUI_RESET)" -NoNewline
+        }
+    }
+
+    # Footer
+    $footerRow = $boxY + $boxHeight - 2
+    Write-TuiAt -Row $footerRow -Col ($boxX + 2)
+    Write-Host "$($Script:TUI_DIM)Press any key to return to menu$($Script:TUI_RESET)" -NoNewline
+
+    # Wait for keypress
+    Read-TuiKey | Out-Null
+    Restore-Tui
+}
