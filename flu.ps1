@@ -8,6 +8,12 @@
 # Compatibility: PowerShell 5.1+ / PowerShell 7+
 # Branch: flu.sh (development), merged to main when stable
 # ============================================================
+# Deployment:
+#   Local:  .\flu.ps1
+#   Remote: irm https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/flu.ps1 | iex
+#   Requires: PowerShell 5.1+ (Windows) or PowerShell 7 (cross-platform)
+#   Sibling files: tui.ps1, menu.ps1, modules.ps1, menu.db must be in same directory
+# ============================================================
 
 # ──────────────
 # 📡 TTY Reattachment (for irm | iex)
@@ -415,6 +421,48 @@ function Start-FluMainLoop {
         # --- Step 4: Post-Execution ---
         Clear-TuiScreen
     }
+}
+
+# ──────────────
+# 🩺 Health Check
+# ──────────────
+# Self-test to verify all subsystems loaded correctly.
+
+function Test-FluHealth {
+    <#
+    .SYNOPSIS
+    Verify all subsystems are loaded and functional.
+    #>
+    $ok = $true
+
+    # Check tui.ps1
+    if (-not (Test-Path variable:Script:TUI_RESET)) {
+        Write-Warning "tui.ps1 not loaded (TUI_RESET missing)"
+        $ok = $false
+    }
+
+    # Check menu.ps1
+    if (-not (Test-Path function:\Get-FluMenuChildren)) {
+        Write-Warning "menu.ps1 not loaded (Get-FluMenuChildren missing)"
+        $ok = $false
+    }
+
+    # Check modules.ps1
+    if (-not (Test-Path function:\Invoke-FluModuleFetch)) {
+        Write-Warning "modules.ps1 not loaded (Invoke-FluModuleFetch missing)"
+        $ok = $false
+    }
+
+    # Check menu.db
+    if (-not (Test-Path "$FLU_SCRIPT_DIR\menu.db")) {
+        Write-Warning "menu.db not found"
+        $ok = $false
+    }
+
+    if ($ok) {
+        Write-Host "$($Script:TUI_GREEN)✓ flu.ps1 health check passed$($Script:TUI_RESET)"
+    }
+    return $ok
 }
 
 # ──────────────
