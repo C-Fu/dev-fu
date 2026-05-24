@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
 - [x] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts (completed 2026-05-24)
 - [x] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch (completed 2026-05-24)
-- [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell
+- [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell (planned 2026-05-25)
 
 ## Phase Details
 
@@ -111,11 +111,14 @@ Plans:
   1. PowerShell users get the same TUI menu system with widgets, submenu navigation, and inline prompts as flu.sh
   2. PowerShell port fetches and executes the same remote modules with adapted argument passing for the Windows ecosystem
   3. The port works on both PowerShell 5.1 (Windows built-in) and PowerShell 7 (cross-platform)
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — TUI Engine Foundation: ANSI primitives, PS version detection, keyboard input, single-select widget
+- [ ] 06-02-PLAN.md — Interactive Widgets: checklist, radio, yesno, text input (PS port of tui.sh widgets)
+- [ ] 06-03-PLAN.md — Menu System: DSL parser (menu.db), hierarchical navigation engine with breadcrumbs
+- [ ] 06-04-PLAN.md — Module Pipeline: fetch, metadata parse, parameter prompts, WSL/bash execution, result display
+- [ ] 06-05-PLAN.md — Orchestrator: flu.ps1 main entry, platform detection, event loop, spinner, error recovery
 **UI hint**: yes
 
 ## Progress
@@ -135,4 +138,4 @@ Phases execute in numeric order. With parallelization enabled:
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
 | 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
 | 5. Integration & Orchestrator | 0/0 | Complete    | 2026-05-24 |
-| 6. PowerShell Port | 0/? | Not started | - |
+| 6. PowerShell Port | 0/5 | Planned | - |
