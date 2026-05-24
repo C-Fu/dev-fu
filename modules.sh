@@ -691,26 +691,126 @@ flu_module_execute() {
 }
 
 # ---------------------------------------------------------------------------
-# Section 10: _flu_module_show_status() — Execution result display
+# Section 10: flu_module_display_result() — Box-rendered result modal
 # ---------------------------------------------------------------------------
 
-# _flu_module_show_status <exit_code> <module_name>
-# Prints a color-coded status line indicating success or failure.
-# Green ✓ for exit code 0, red ✗ with exit code for non-zero.
-# This stub function will be replaced by the full result modal in Plan 04-03.
-_flu_module_show_status() {
-  _fmss_rc="$1"
-  _fmss_name="$2"
+# _flu_wait_for_key
+# Reads a single keypress from /dev/tty and discards it.
+# Used to pause before returning to menu after viewing results.
+# Uses _tui_read_key from tui.sh which sets _tui_rk_result.
+_flu_wait_for_key() {
+  _tui_read_key
+}
 
-  printf '\n'
-  if [ "$_fmss_rc" -eq 0 ]; then
-    printf '%s  ✓  %s completed successfully%s\n' \
-      "$TUI_GREEN" "$_fmss_name" "$TUI_RESET"
-  else
-    printf '%s  ✗  %s failed (exit code: %d)%s\n' \
-      "$TUI_RED" "$_fmss_name" "$_fmss_rc" "$TUI_RESET"
+# flu_module_display_result <exit_code> <output> <name>
+# Displays module execution results in a box-rendered modal (D-12, D-13).
+# Success (exit 0): green ✓ status banner with module stdout content.
+# Failure (exit != 0): red ✗ status banner with exit code, stderr
+#   content and actionable recovery hints.
+# User presses any key to dismiss the modal and return to menu.
+#
+# Replaces the _flu_module_show_status stub from Plan 04-02 with
+# the full D-12/D-13 box-rendered result modal implementation.
+flu_module_display_result() {
+  _fdr_exit_code=$1
+  _fdr_output=$2
+  _fdr_name=$3
+
+  # Guard: verify tui.sh has been sourced
+  if [ -z "${TUI_RESET:-}" ]; then
+    printf 'Error: tui.sh must be sourced before calling flu_module_display_result\n' >&2
+    return 1
   fi
-  printf '\n'
 
-  unset _fmss_rc _fmss_name
+  # Init TUI (terminal raw mode, signal traps)
+  tui_init
+
+  # Clear screen
+  clear_screen
+
+  # Get terminal size with fallbacks
+  _fdr_rows=$(tput lines 2>/dev/null || printf '24')
+  _fdr_cols=$(tput cols 2>/dev/null || printf '80')
+
+  # Calculate box dimensions
+  _fdr_box_w=70
+  [ "$_fdr_box_w" -gt $((_fdr_cols - 4)) ] && _fdr_box_w=$((_fdr_cols - 4))
+  _fdr_box_h=$((_fdr_rows - 4))
+  _fdr_x=$(( (_fdr_cols - _fdr_box_w) / 2 ))
+  [ "$_fdr_x" -lt 1 ] && _fdr_x=1
+  _fdr_y=2
+
+  # Build status banner title (D-12)
+  if [ "$_fdr_exit_code" -eq 0 ]; then
+    _fdr_title="✓ ${_fdr_name} — Complete"
+    _fdr_title_color="${TUI_GREEN}"
+  else
+    _fdr_title="✗ ${_fdr_name} — Failed (exit: ${_fdr_exit_code})"
+    _fdr_title_color="${TUI_RED}"
+  fi
+
+  # Draw the box with status-colored title
+  _tui_draw_box "$_fdr_x" "$_fdr_y" "$_fdr_box_w" "$_fdr_box_h" \
+    "${_fdr_title_color}${_fdr_title}${TUI_RESET}"
+
+  # Inner width for content (2 for borders + 2 padding)
+  _fdr_inner=$((_fdr_box_w - 4))
+
+  # Write output to temp file for line-by-line reading.
+  # Avoids POSIX pipe subshell issue where while-read in a pipeline
+  # creates a subshell that loses variable state.
+  _fdr_tmp="/tmp/flu_result_$$"
+  printf '%s\n' "$_fdr_output" > "$_fdr_tmp"
+
+  # Render output content inside the box (D-13)
+  # Start at row y+3 (after title row, separator, and one padding row)
+  _fdr_content_row=$((_fdr_y + 3))
+  _fdr_max_row=$((_fdr_y + _fdr_box_h - 4))
+  _fdr_line_count=0
+
+  while IFS= read -r _fdr_line; do
+    [ "$_fdr_content_row" -ge "$_fdr_max_row" ] && break
+
+    # Truncate line to fit inner width
+    _fdr_truncated=$(printf '%s' "$_fdr_line" | awk -v L="$_fdr_inner" \
+      '{print substr($0,1,L)}')
+
+    move_cursor "$_fdr_content_row" $((_fdr_x + 2))
+    printf '%s' "$_fdr_truncated"
+
+    _fdr_content_row=$((_fdr_content_row + 1))
+    _fdr_line_count=$((_fdr_line_count + 1))
+  done < "$_fdr_tmp"
+
+  rm -f "$_fdr_tmp"
+
+  # If no output but non-zero exit, show explanation
+  if [ "$_fdr_exit_code" -ne 0 ] && [ "$_fdr_line_count" -eq 0 ]; then
+    move_cursor "$_fdr_content_row" $((_fdr_x + 2))
+    printf '%sModule exited with code %d but produced no error output.%s' \
+      "$TUI_YELLOW" "$_fdr_exit_code" "$TUI_RESET"
+  fi
+
+  # Failure: display recovery hints (D-13)
+  if [ "$_fdr_exit_code" -ne 0 ]; then
+    _flu_display_recovery_hints "$_fdr_exit_code"
+  fi
+
+  # Footer: "Press any key to return to menu"
+  _fdr_footer_row=$((_fdr_y + _fdr_box_h - 2))
+  move_cursor "$_fdr_footer_row" $((_fdr_x + 2))
+  printf '%sPress any key to return to menu%s' "$TUI_DIM" "$TUI_RESET"
+
+  # Wait for keypress
+  _flu_wait_for_key
+
+  # Restore terminal (restores stty, clears screen, removes traps)
+  tui_restore
+
+  # Cleanup
+  unset _fdr_exit_code _fdr_output _fdr_name
+  unset _fdr_rows _fdr_cols _fdr_box_w _fdr_box_h _fdr_x _fdr_y
+  unset _fdr_title _fdr_title_color _fdr_inner _fdr_tmp
+  unset _fdr_content_row _fdr_max_row _fdr_line_count _fdr_line _fdr_truncated
+  unset _fdr_footer_row
 }
