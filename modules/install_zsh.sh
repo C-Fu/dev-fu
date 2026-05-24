@@ -18,6 +18,17 @@ _maybe_sudo() {
     fi
 }
 
+# Auto-detect package manager when not provided by flu.sh
+if [ -z "${FLU_PKG_MGR:-}" ]; then
+    if      command -v apt-get >/dev/null 2>&1; then FLU_PKG_MGR="apt"
+    elif    command -v apk     >/dev/null 2>&1; then FLU_PKG_MGR="apk"
+    elif    command -v dnf     >/dev/null 2>&1; then FLU_PKG_MGR="dnf"
+    elif    command -v pacman  >/dev/null 2>&1; then FLU_PKG_MGR="pacman"
+    elif    command -v zypper  >/dev/null 2>&1; then FLU_PKG_MGR="zypper"
+    elif    command -v brew    >/dev/null 2>&1; then FLU_PKG_MGR="brew"
+    fi
+fi
+
 if command -v zsh >/dev/null 2>&1; then
     printf 'Zsh already installed: %s\n' "$(zsh --version 2>/dev/null)"
     exit 0
