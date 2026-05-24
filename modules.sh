@@ -537,3 +537,180 @@ flu_module_collect_params() {
   unset _fc_target _fc_i _fc_sel_text
   return 0
 }
+
+# ---------------------------------------------------------------------------
+# Section 8: _flu_execute_with_timeout() — Timeout-enforced module execution
+# ---------------------------------------------------------------------------
+
+# _flu_execute_with_timeout <timeout_sec> <script_path> [args...]
+# Executes a module script with timeout enforcement (D-15).
+# Tries the `timeout` command first. Falls back to background+kill
+# watchdog pattern on systems without `timeout` (embedded, busybox).
+#
+# Sets global _flu_exit_code to the module's exit code.
+# Returns 0 on success, non-zero on failure or timeout (124).
+# Module runs with set -eu strict mode + EXIT trap (D-14).
+_flu_execute_with_timeout() {
+  _fet_timeout="$1"; shift
+  _fet_script="$1"; shift
+  # Remaining args ("$@") are module arguments (--key value pairs)
+
+  if command -v timeout >/dev/null 2>&1; then
+    # Preferred path: use timeout command
+    timeout "$_fet_timeout" sh -c '
+      trap '\''_fe_trap_rc=$?'\'' EXIT
+      # Module execution with strict error handling (set -euo pipefail equivalent)
+      set -eu
+      _fet_script="$1"; shift
+      sh "$_fet_script" -- "$@"
+    ' _fet_wrapper "$_fet_script" "$@"
+    _fet_rc=$?
+  else
+    # Fallback: background process + watchdog kill pattern
+    # POSIX-compatible — no `timeout` command needed
+    (
+      trap '_fe_trap_rc=$?' EXIT
+      # Module execution with strict error handling (set -euo pipefail equivalent)
+      set -eu
+      sh "$_fet_script" -- "$@"
+    ) &
+    _fet_pid=$!
+    (
+      sleep "$_fet_timeout"
+      kill "$_fet_pid" 2>/dev/null || true
+    ) &
+    _fet_watchdog=$!
+    wait "$_fet_pid" 2>/dev/null
+    _fet_rc=$?
+    # Kill the watchdog if still running
+    kill "$_fet_watchdog" 2>/dev/null || true
+    wait "$_fet_watchdog" 2>/dev/null || true
+
+    # If killed by signal (rc > 128), treat as timeout (D-15)
+    if [ "$_fet_rc" -gt 128 ] 2>/dev/null; then
+      _fet_rc=124
+    fi
+  fi
+
+  _flu_exit_code=$_fet_rc
+  unset _fet_timeout _fet_script _fet_pid _fet_watchdog _fet_rc
+  return $_flu_exit_code
+}
+
+# ---------------------------------------------------------------------------
+# Section 9: flu_module_execute() — Module execution orchestrator
+# ---------------------------------------------------------------------------
+
+# flu_module_execute <action_id>
+# Full module execution pipeline following the D-09 execution order:
+#   1. Fetch module script from GitHub
+#   2. Parse metadata from comment header
+#   3. Set platform context environment variables
+#   4. Check platform compatibility
+#   5. Collect parameter values from user via TUI widgets
+#   6. Execute module in isolated subshell with timeout
+#   7. Display execution status
+#
+# Returns 0 on successful execution, 1 on any failure (fetch, parse,
+# platform mismatch, user cancellation, or module error).
+flu_module_execute() {
+  _fme_action="$1"
+
+  # Guard: verify tui.sh has been sourced
+  if [ -z "${TUI_RESET:-}" ]; then
+    printf '%s[ERROR]%s tui.sh must be sourced before calling flu_module_execute\n' \
+      "$TUI_RED" "$TUI_RESET" >&2
+    return 1
+  fi
+
+  # Step 1: Fetch module script to temp file
+  _fetmp="/tmp/flu_module_$$.sh"
+  flu_module_fetch "$_fme_action" > "$_fetmp" || {
+    rm -f "$_fetmp"
+    unset _fme_action _fetmp
+    return 1
+  }
+
+  # Step 2: Parse metadata from fetched script
+  flu_module_parse_metadata < "$_fetmp" || {
+    rm -f "$_fetmp"
+    unset _fme_action _fetmp
+    return 1
+  }
+
+  # Step 3: Set platform context env vars (exports all 7 FLU_* vars)
+  flu_module_set_env
+
+  # Step 4: Platform compatibility check (defense in depth)
+  _fme_os_match=false
+  _fme_saved_ifs="$IFS"
+  IFS=','
+  for _fme_p in $_fmp_platforms; do
+    _fme_p=$(printf '%s' "$_fme_p" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    if [ "$_fme_p" = "$FLU_OS" ]; then
+      _fme_os_match=true
+      break
+    fi
+  done
+  IFS="$_fme_saved_ifs"
+
+  if [ "$_fme_os_match" != "true" ]; then
+    printf '%s[ERROR]%s Module "%s" not available for this platform (%s)\n' \
+      "$TUI_RED" "$TUI_RESET" "${_fmp_name:-?}" "$FLU_OS" >&2
+    rm -f "$_fetmp"
+    unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
+    return 1
+  fi
+
+  # Step 5: Collect parameter values from user
+  if [ -n "${_fmp_params:-}" ]; then
+    flu_module_collect_params "$_fmp_params" || {
+      # User cancelled at a prompt — abort gracefully
+      printf '%s[CANCELLED]%s Parameter collection cancelled\n' \
+        "$TUI_YELLOW" "$TUI_RESET" >&2
+      rm -f "$_fetmp"
+      unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
+      return 1
+    }
+  fi
+
+  # Step 6: Execute module with timeout enforcement
+  _fme_timeout="${_fmp_timeout:-300}"
+  # shellcheck disable=SC2086  # _flu_module_args must split into multiple --key value pairs
+  _flu_execute_with_timeout "$_fme_timeout" "$_fetmp" $_flu_module_args
+  _fme_exit_code=$?
+
+  # Step 7: Display execution status
+  _flu_module_show_status "$_fme_exit_code" "${_fmp_name:-Module}"
+
+  # Cleanup temp file
+  rm -f "$_fetmp"
+  unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
+  unset _fme_timeout _fme_exit_code
+  return "$_fme_exit_code"
+}
+
+# ---------------------------------------------------------------------------
+# Section 10: _flu_module_show_status() — Execution result display
+# ---------------------------------------------------------------------------
+
+# _flu_module_show_status <exit_code> <module_name>
+# Prints a color-coded status line indicating success or failure.
+# Green ✓ for exit code 0, red ✗ with exit code for non-zero.
+# This stub function will be replaced by the full result modal in Plan 04-03.
+_flu_module_show_status() {
+  _fmss_rc="$1"
+  _fmss_name="$2"
+
+  printf '\n'
+  if [ "$_fmss_rc" -eq 0 ]; then
+    printf '%s  ✓  %s completed successfully%s\n' \
+      "$TUI_GREEN" "$_fmss_name" "$TUI_RESET"
+  else
+    printf '%s  ✗  %s failed (exit code: %d)%s\n' \
+      "$TUI_RED" "$_fmss_name" "$_fmss_rc" "$TUI_RESET"
+  fi
+  printf '\n'
+
+  unset _fmss_rc _fmss_name
+}
