@@ -1017,3 +1017,287 @@ function Show-TuiChecklistFallback {
     for ($i = 0; $i -lt $Items.Count; $i++) { if ($isChecked[$i]) { $result += $i.ToString() } }
     return ($result -join ' ')
 }
+
+# ---------------------------------------------------------------------------
+# Section 13: Single-Select Radio Widget (Show-TuiRadio)
+# ---------------------------------------------------------------------------
+
+function Show-TuiRadio {
+    <#
+    .SYNOPSIS
+    Single-select radio button TUI widget. PowerShell port of tui_radio().
+
+    .PARAMETER Title
+    Box title.
+    .PARAMETER Subtitle
+    Context line below title.
+    .PARAMETER Items
+    Array of option strings.
+    .PARAMETER Default
+    0-based index of default selection (optional).
+
+    .DESCRIPTION
+    Renders items with (•) for selected, (○) for unselected.
+    Enter confirms. Esc/q cancels.
+    Sets $Script:TUI_RESULT to 0-based selected index.
+    Sets $Script:TUI_RESULT to -1 on cancel.
+
+    Matching tui_radio() behaviors:
+      - (•) indicator on selected item, (○) on others
+      - Arrows/vi-keys to move selection
+      - Scroll indicators and help footer
+    #>
+    param(
+        [string]$Title,
+        [string]$Subtitle,
+        [string[]]$Items,
+        [int]$Default = 0
+    )
+
+    if (-not $Script:_tui_use_tui) {
+        $Script:TUI_RESULT = Show-TuiSelectFallback -Title $Title -Subtitle $Subtitle -Items $Items
+        return
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    $itemCount = $Items.Count
+    $currentIndex = [Math]::Max(0, [Math]::Min($Default, $itemCount - 1))
+    $topIndex = 0
+    $running = $true
+    $needsRedraw = $true
+
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+    $boxWidth = [Math]::Min(76, $termCols - 2)
+    if ($boxWidth -lt 30) { $boxWidth = 30 }
+    $baseVisibleRows = [Math]::Max(1, $termRows - 7)
+    $boxHeight = $baseVisibleRows + 6
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+    $innerWidth = [Math]::Max(4, $boxWidth - 6)
+
+    while ($running) {
+        if ($needsRedraw) {
+            Clear-TuiScreen
+            Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight -Title $Title
+
+            if ($Subtitle) {
+                Write-TuiAt -Row ($boxY + 2) -Col ($boxX + 2)
+                Write-Host $Subtitle -NoNewline
+            }
+
+            $needsScroll = $itemCount -gt $baseVisibleRows
+            $itemStartRow = $boxY + 3
+
+            # Use a local render count to avoid mutating baseVisibleRows
+            $_renderCount = $baseVisibleRows
+
+            if ($needsScroll -and $topIndex -gt 0) {
+                Write-TuiAt -Row $itemStartRow -Col ($boxX + 2)
+                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                $itemStartRow++
+                $_renderCount--
+            }
+
+            for ($i = 0; $i -lt [Math]::Min($_renderCount, $itemCount - $topIndex); $i++) {
+                $itemIdx = $topIndex + $i
+                $row = $itemStartRow + $i
+                $isCurrent = ($itemIdx -eq $currentIndex)
+
+                # Radio dot indicator: (•) for selected, (○) for unselected
+                $dot = if ($isCurrent) { '(•)' } else { '(○)' }
+                $label = $Items[$itemIdx]
+                $maxLabel = $innerWidth - 4
+                if ($label.Length -gt $maxLabel) {
+                    $label = $label.Substring(0, $maxLabel - 3) + '...'
+                }
+                $padded = $label + (' ' * [Math]::Max(0, $maxLabel - $label.Length))
+
+                Write-TuiAt -Row $row -Col ($boxX + 2)
+                if ($isCurrent) {
+                    Write-Host "$($Script:TUI_REV)$dot $padded$($Script:TUI_RESET)" -NoNewline
+                } else {
+                    Write-Host "$dot $padded" -NoNewline
+                }
+            }
+
+            if ($needsScroll -and ($topIndex + $_renderCount) -lt $itemCount) {
+                $bottomRow = $itemStartRow + $i
+                Write-TuiAt -Row $bottomRow -Col ($boxX + 2)
+                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+            }
+
+            $footerRow = $boxY + $boxHeight - 2
+            $footerText = "↑↓ jk move  ↵ confirm  Esc/q cancel"
+            Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
+            Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
+
+            $needsRedraw = $false
+        }
+
+        Read-TuiKey
+        $key = $Script:_tui_rk_result
+
+        switch ($key) {
+            $Script:TUI_KEY_UP {
+                if ($currentIndex -gt 0) { $currentIndex-- }
+                if ($currentIndex -lt $topIndex) { $topIndex = $currentIndex }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_DOWN {
+                if ($currentIndex -lt $itemCount - 1) { $currentIndex++ }
+                if ($currentIndex -ge $topIndex + $baseVisibleRows) { $topIndex = $currentIndex - $baseVisibleRows + 1 }
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_HOME { $currentIndex = 0; $topIndex = 0; $needsRedraw = $true }
+            $Script:TUI_KEY_END {
+                $currentIndex = $itemCount - 1
+                $topIndex = [Math]::Max(0, $itemCount - $baseVisibleRows)
+                $needsRedraw = $true
+            }
+            $Script:TUI_KEY_ENTER { $Script:TUI_RESULT = $currentIndex; $running = $false }
+            $Script:TUI_KEY_ESC { $Script:TUI_RESULT = -1; $running = $false }
+            $Script:TUI_KEY_Q { $Script:TUI_RESULT = -1; $running = $false }
+        }
+    }
+
+    Restore-Tui
+}
+
+# ---------------------------------------------------------------------------
+# Section 14: Yes/No Confirmation Widget (Show-TuiYesNo)
+# ---------------------------------------------------------------------------
+
+function Show-TuiYesNo {
+    <#
+    .SYNOPSIS
+    Yes/No confirmation TUI widget. PowerShell port of tui_yesno().
+
+    .PARAMETER Title
+    Dialog box title.
+    .PARAMETER Message
+    Question text displayed in the box body.
+    .PARAMETER Default
+    "yes" or "no" — which option is pre-highlighted.
+
+    .DESCRIPTION
+    Renders a box with the message and Yes/No options.
+    Left/Right arrows or Up/Down switch between Yes and No.
+    Enter confirms. Esc cancels.
+    Sets $Script:TUI_RESULT to "yes" or "no" on confirm.
+    Sets $Script:TUI_RESULT to "" on cancel.
+
+    Matching tui_yesno() behaviors:
+      - Box with message text in body
+      - Yes/No rendered as selectable options
+      - Enter confirms, Esc cancels
+      - Default pre-selects highlight
+    #>
+    param(
+        [string]$Title,
+        [string]$Message,
+        [string]$Default = "no"
+    )
+
+    if (-not $Script:_tui_use_tui) {
+        Write-Host "$Title"
+        Write-Host $Message
+        $choice = Read-Host "Enter y/yes or n/no"
+        if ($choice -match '^y') {
+            $Script:TUI_RESULT = 'yes'
+        } else {
+            $Script:TUI_RESULT = 'no'
+        }
+        return
+    }
+
+    Initialize-Tui
+    Clear-TuiScreen
+
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+
+    $boxWidth = [Math]::Min(60, $termCols - 4)
+    if ($boxWidth -lt 20) { $boxWidth = 20 }
+    $boxHeight = 8  # title + padding + message + options + footer + borders
+    $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
+    $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+
+    # Word-wrap message to fit box inner width
+    $innerWidth = $boxWidth - 4
+    $wrapped = @()
+    $words = $Message -split ' '
+    $currentLine = ''
+    foreach ($word in $words) {
+        if (($currentLine.Length + $word.Length + 1) -le $innerWidth) {
+            $currentLine = if ($currentLine) { "$currentLine $word" } else { $word }
+        } else {
+            if ($currentLine) { $wrapped += $currentLine }
+            $currentLine = $word
+        }
+    }
+    if ($currentLine) { $wrapped += $currentLine }
+
+    $currentOption = if ($Default -eq 'yes') { 0 } else { 1 }
+    $options = @('Yes', 'No')
+    $running = $true
+    $needsRedraw = $true
+
+    while ($running) {
+        if ($needsRedraw) {
+            Clear-TuiScreen
+            Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight -Title $Title
+
+            # Render wrapped message
+            $msgRow = $boxY + 2
+            foreach ($line in $wrapped[0..[Math]::Min($wrapped.Count - 1, 3)]) {
+                if ($msgRow -ge $boxY + $boxHeight - 4) { break }
+                Write-TuiAt -Row $msgRow -Col ($boxX + 2)
+                Write-Host $line -NoNewline
+                $msgRow++
+            }
+
+            # Render Yes/No options
+            $optRow = $boxY + $boxHeight - 4
+            for ($i = 0; $i -lt 2; $i++) {
+                $label = $options[$i]
+                $pad = [Math]::Max(0, [Math]::Floor(($boxWidth - 4) / 4))
+                $optX = $boxX + 2 + ($i * ($pad * 2 + $label.Length))
+                Write-TuiAt -Row $optRow -Col $optX
+                if ($i -eq $currentOption) {
+                    Write-Host "$($Script:TUI_REV)[ $label ]$($Script:TUI_RESET)" -NoNewline
+                } else {
+                    Write-Host "[ $label ]" -NoNewline
+                }
+            }
+
+            # Footer
+            $footerRow = $boxY + $boxHeight - 2
+            $footerText = "← → move  ↵ confirm  Esc/q cancel"
+            Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
+            Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
+
+            $needsRedraw = $false
+        }
+
+        Read-TuiKey
+        $key = $Script:_tui_rk_result
+
+        switch ($key) {
+            $Script:TUI_KEY_LEFT { $currentOption = 0; $needsRedraw = $true }
+            $Script:TUI_KEY_RIGHT { $currentOption = 1; $needsRedraw = $true }
+            $Script:TUI_KEY_UP { $currentOption = ($currentOption + 1) % 2; $needsRedraw = $true }
+            $Script:TUI_KEY_DOWN { $currentOption = ($currentOption + 1) % 2; $needsRedraw = $true }
+            $Script:TUI_KEY_ENTER {
+                $Script:TUI_RESULT = $options[$currentOption].ToLower()
+                $running = $false
+            }
+            $Script:TUI_KEY_ESC { $Script:TUI_RESULT = ''; $running = $false }
+            $Script:TUI_KEY_Q { $Script:TUI_RESULT = ''; $running = $false }
+        }
+    }
+
+    Restore-Tui
+}
