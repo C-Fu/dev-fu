@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
 - [x] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts (completed 2026-05-24)
 - [x] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch (completed 2026-05-24)
-- [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell (planned 2026-05-25)
+- [x] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell (planned 2026-05-25, completed 2026-05-25)
 
 ## Phase Details
 
@@ -118,7 +118,7 @@ Plans:
 - [x] 06-02-PLAN.md — Interactive Widgets: checklist, radio, yesno, text input (PS port of tui.sh widgets)
 - [x] 06-03-PLAN.md — Menu System: DSL parser (menu.db), hierarchical navigation engine with breadcrumbs
 - [x] 06-04-PLAN.md — Module Pipeline: fetch, metadata parse, parameter prompts, WSL/bash execution, result display
-- [ ] 06-05-PLAN.md — Orchestrator: flu.ps1 main entry, platform detection, event loop, spinner, error recovery
+- [x] 06-05-PLAN.md — Orchestrator: flu.ps1 main entry, platform detection, event loop, spinner, error recovery
 **UI hint**: yes
 
 ## Progress
@@ -138,4 +138,4 @@ Phases execute in numeric order. With parallelization enabled:
 | 3. Menu System | 2/2 | Complete    | 2026-05-24 |
 | 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
 | 5. Integration & Orchestrator | 0/0 | Complete    | 2026-05-24 |
-| 6. PowerShell Port | 4/5 | In Progress | - |
+| 6. PowerShell Port | 5/5 | Complete | 2026-05-25 |
