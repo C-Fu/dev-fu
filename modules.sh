@@ -674,19 +674,32 @@ flu_module_execute() {
     }
   fi
 
-  # Step 6: Execute module with timeout enforcement
+  # Step 6: Execute module with timeout enforcement, capture outputs
   _fme_timeout="${_fmp_timeout:-300}"
+  _fme_out="/tmp/flu_module_out_$$"
+  _fme_err="/tmp/flu_module_err_$$"
   # shellcheck disable=SC2086  # _flu_module_args must split into multiple --key value pairs
-  _flu_execute_with_timeout "$_fme_timeout" "$_fetmp" $_flu_module_args
+  _flu_execute_with_timeout "$_fme_timeout" "$_fetmp" $_flu_module_args >"$_fme_out" 2>"$_fme_err"
   _fme_exit_code=$?
 
-  # Step 7: Display execution status
-  _flu_module_show_status "$_fme_exit_code" "${_fmp_name:-Module}"
+  # Read captured output from temp files
+  _flu_module_output=$(cat "$_fme_out" 2>/dev/null)
+  _flu_module_stderr=$(cat "$_fme_err" 2>/dev/null)
+  rm -f "$_fme_out" "$_fme_err"
 
-  # Cleanup temp file
-  rm -f "$_fetmp"
+  # Step 7: Display results in box-rendered modal (D-12, D-13)
+  # On success: show module stdout. On failure: show stderr + recovery hints.
+  if [ "$_fme_exit_code" -eq 0 ]; then
+    flu_module_display_result 0 "$_flu_module_output" "${_fmp_name:-Module}"
+  else
+    flu_module_display_result "$_fme_exit_code" "$_flu_module_stderr" "${_fmp_name:-Module}"
+  fi
+
+  # Cleanup temp files
+  rm -f "$_fetmp" "$_fme_out" "$_fme_err" 2>/dev/null
   unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
-  unset _fme_timeout _fme_exit_code
+  unset _fme_timeout _fme_exit_code _fme_out _fme_err
+  unset _flu_module_output _flu_module_stderr
   return "$_fme_exit_code"
 }
 
@@ -813,4 +826,99 @@ flu_module_display_result() {
   unset _fdr_title _fdr_title_color _fdr_inner _fdr_tmp
   unset _fdr_content_row _fdr_max_row _fdr_line_count _fdr_line _fdr_truncated
   unset _fdr_footer_row
+}
+
+# ---------------------------------------------------------------------------
+# Section 11: _flu_display_recovery_hints() — Error recovery hints
+# ---------------------------------------------------------------------------
+
+# _flu_display_recovery_hints <exit_code>
+# Displays actionable recovery hints inside the result box (D-13).
+# Called from flu_module_display_result on failure path.
+# Maps common exit codes and error patterns to human-readable hints
+# rendered in TUI_YELLOW at the bottom of the result modal.
+#
+# Accesses _fdr_* variables from flu_module_display_result context:
+#   _fdr_y, _fdr_box_h, _fdr_x, _fdr_inner, _fdr_output
+_flu_display_recovery_hints() {
+  _fdh_exit_code=$1
+
+  # Guard: verify tui.sh has been sourced (defense in depth)
+  if [ -z "${TUI_RESET:-}" ]; then
+    return 1
+  fi
+
+  # Determine hint based on exit code and error patterns
+  _fdh_hint=''
+
+  case "$_fdh_exit_code" in
+    124)
+      _fdh_hint="The operation timed out after ${_fmp_timeout:-300} seconds. Try again with a faster connection or check if the service is responsive."
+      ;;
+    126)
+      _fdh_hint="The module script could not be executed. This may indicate a corrupted download. Try running again."
+      ;;
+    127)
+      _fdh_hint="A required command was not found. Check that all dependencies are installed for this module."
+      ;;
+    1)
+      # Check output content for specific error patterns
+      case "$_fdr_output" in
+        *curl*|*wget*|*fetch*)
+          _fdh_hint="Network error — unable to reach the server. Check your internet connection. If you are behind a proxy, set HTTP_PROXY and HTTPS_PROXY environment variables."
+          ;;
+        *"Permission denied"*|*"permission denied"*)
+          _fdh_hint="Permission denied — try with elevated privileges."
+          ;;
+        *"not found"*|*"Not found"*)
+          _fdh_hint="A required dependency was not found. Check that all dependencies are installed for this module."
+          ;;
+        *)
+          _fdh_hint="Module exited with code 1. Check the output above for details. You can re-run this operation to try again."
+          ;;
+      esac
+      ;;
+    6|7|22|28)
+      _fdh_hint="Network error — unable to reach the server. Check your internet connection. If you are behind a proxy, set HTTP_PROXY and HTTPS_PROXY environment variables."
+      ;;
+    *)
+      _fdh_hint="Module exited with code ${_fdh_exit_code}. Check the output above for details. You can re-run this operation to try again."
+      ;;
+  esac
+
+  # Render hint inside the result box.
+  # Position two rows above bottom border, above "Press any key" footer.
+  _fdh_row=$((_fdr_y + _fdr_box_h - 4))
+
+  # Calculate hint display width (inner width minus arrow prefix padding)
+  _fdh_hint_width=$((_fdr_inner - 4))
+
+  # Word-wrap the hint text to fit box inner width, write to temp file
+  _fdh_tmp="/tmp/flu_hint_$$"
+  printf '%s' "$_fdh_hint" | awk -v W="$_fdh_hint_width" '
+    {
+      line = $0
+      while (length(line) > W) {
+        pos = W
+        while (pos > 0 && substr(line, pos, 1) != " ") pos--
+        if (pos == 0) { pos = W }
+        print substr(line, 1, pos)
+        line = substr(line, pos+1)
+        sub(/^[[:space:]]+/, "", line)
+      }
+      if (length(line) > 0) print line
+    }
+  ' > "$_fdh_tmp"
+
+  # Render each wrapped line with yellow arrow prefix
+  while IFS= read -r _fdh_line; do
+    [ "$_fdh_row" -ge $((_fdr_y + _fdr_box_h - 2)) ] && break
+    move_cursor "$_fdh_row" $((_fdr_x + 2))
+    printf '%s→ %s%s' "$TUI_YELLOW" "$_fdh_line" "$TUI_RESET"
+    _fdh_row=$((_fdh_row + 1))
+  done < "$_fdh_tmp"
+
+  rm -f "$_fdh_tmp"
+
+  unset _fdh_exit_code _fdh_hint _fdh_row _fdh_line _fdh_tmp _fdh_hint_width
 }
