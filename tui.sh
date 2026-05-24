@@ -18,9 +18,26 @@
 # Section 1: Shell detection
 # ---------------------------------------------------------------------------
 
+# shellcheck disable=SC3045  # read -n/-k are tested for capability, fallback to dd
 _tui_has_read_n=false
-if [ -n "${BASH_VERSION:-}" ] || [ -n "${ZSH_VERSION:-}" ]; then
-  _tui_has_read_n=true
+# Test actual read -n1 capability rather than trusting shell version.
+# bash in POSIX mode (sh) has BASH_VERSION set but read -n1 may fail silently.
+if IFS= read -rn1 _tui_test_n 2>/dev/null <<'X'
+x
+X
+then
+  [ "${_tui_test_n:-}" = "x" ] && _tui_has_read_n=true
+fi
+unset _tui_test_n 2>/dev/null || true
+# Fallback for zsh which uses read -k1 instead of -n1
+if [ "$_tui_has_read_n" = "false" ] && [ -n "${ZSH_VERSION:-}" ]; then
+  if IFS= read -rk1 _tui_test_n 2>/dev/null <<'X'
+y
+X
+  then
+    [ "${_tui_test_n:-}" = "y" ] && _tui_has_read_n=true
+  fi
+  unset _tui_test_n 2>/dev/null || true
 fi
 
 # ---------------------------------------------------------------------------
