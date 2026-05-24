@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget (completed 2026-05-23)
 - [x] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract (completed 2026-05-24)
-- [ ] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs
+- [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
 - [ ] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts
 - [ ] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch
 - [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell
@@ -66,7 +66,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Menu DSL parser with pipe-delimited awk parsing and tree query functions (flu_menu_load, flu_menu_get_children, flu_menu_is_leaf, flu_menu_get_breadcrumb, flu_menu_get_action)
-- [ ] 03-02-PLAN.md — Navigation engine with custom TUI renderer, 3-level submenu event loop, breadcrumb display, Left arrow back-navigation, and numbered fallback mode
+- [x] 03-02-PLAN.md — Navigation engine with custom TUI renderer, 3-level submenu event loop, breadcrumb display, Left arrow back-navigation, and numbered fallback mode
 **UI hint**: yes
 
 ### Phase 4: Module Architecture
@@ -130,7 +130,7 @@ Phases execute in numeric order. With parallelization enabled:
 |-------|----------------|--------|-----------|
 | 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
 | 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
-| 3. Menu System | 1/2 | In Progress|  |
+| 3. Menu System | 2/2 | Complete   | 2026-05-24 |
 | 4. Module Architecture | 0/? | Not started | - |
 | 5. Integration & Orchestrator | 0/? | Not started | - |
 | 6. PowerShell Port | 0/? | Not started | - |
