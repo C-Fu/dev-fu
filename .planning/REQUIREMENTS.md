@@ -54,7 +54,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### PowerShell
 
 - [x] **PS-01**: PowerShell port (flu.ps1) implements the same TUI menu system, widgets, submenu navigation, and inline prompts
-- [ ] **PS-02**: PowerShell port fetches and executes the same remote modules with adapted argument passing
+- [x] **PS-02**: PowerShell port fetches and executes the same remote modules with adapted argument passing
 - [ ] **PS-03**: PowerShell port works on PowerShell 5.1 (Windows) and PowerShell 7 (cross-platform)
 
 ### Git
@@ -137,7 +137,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTG-04 | Phase 1 | Pending |
 | INTG-05 | Phase 5 | Pending |
 | PS-01 | Phase 6 | In Progress (2/5 plans complete) |
-| PS-02 | Phase 6 | Pending |
+| PS-02 | Phase 6 | In Progress (4/5 plans complete) |
 | PS-03 | Phase 6 | Pending |
 | GIT-01 | Phase 5 | Pending |
 
