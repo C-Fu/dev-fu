@@ -203,3 +203,246 @@ function Show-FluStartup {
         Write-Host ""
     }
 }
+
+# ──────────────
+# 🩺 Error Recovery Mapping
+# ──────────────
+# Maps exit codes from Invoke-FluModuleExecute to actionable user hints.
+# Called after module execution in the main loop.
+# Each hint tells the user WHAT to do, not just what failed.
+
+function Write-FluExitCodeHint {
+    <#
+    .SYNOPSIS
+    Map module exit code to actionable recovery hint.
+    PowerShell port of _flu_map_exit_code().
+
+    .PARAMETER ExitCode
+    Module exit code.
+    .PARAMETER ActionId
+    Action identifier for context in hints.
+
+    .DESCRIPTION
+    Displays human-readable recovery hints with → arrow prefix.
+    Matching flu.sh _flu_map_exit_code() exit code mappings exactly.
+    #>
+    param([int]$ExitCode, [string]$ActionId)
+
+    switch ($ExitCode) {
+        0 { break }  # Success — no hint needed
+        124 {
+            Write-Host "$($Script:TUI_YELLOW)⏱ Timeout: The operation took too long.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → Try again. If the issue persists, check your network speed or run during off-peak hours.$($Script:TUI_RESET)"
+        }
+        126 {
+            Write-Host "$($Script:TUI_YELLOW)🔒 Permission denied: The module script could not be executed.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → This may indicate a corrupted download. Try running the operation again.$($Script:TUI_RESET)"
+        }
+        127 {
+            Write-Host "$($Script:TUI_YELLOW)❓ Command not found: A required dependency is missing.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → Ensure all dependencies for `"$ActionId`" are installed before retrying.$($Script:TUI_RESET)"
+        }
+        1 {
+            Write-Host "$($Script:TUI_RED)✗ Operation failed (exit code 1).$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → Check your internet connection if this was a network operation.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → Try running the operation again.$($Script:TUI_RESET)"
+        }
+        default {
+            Write-Host "$($Script:TUI_RED)✗ Operation exited with code $ExitCode.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   → An unexpected error occurred. Try running the operation again.$($Script:TUI_RESET)"
+        }
+    }
+}
+
+# ──────────────
+# 🌀 Spinner Animation
+# ──────────────
+# Visual feedback during network/execution operations.
+# Uses PowerShell Start-Job for async spinner rendering.
+# Matches flu.sh flu_spinner_start() / flu_spinner_stop() behavior.
+
+# Spinner state
+$Script:_fluSpinnerJob = $null
+$Script:_fluSpinnerRunning = $false
+$Script:_fluSpinnerChars = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+
+function Start-FluSpinner {
+    <#
+    .SYNOPSIS
+    Start rotating spinner animation in background.
+    PowerShell port of flu_spinner_start().
+
+    .DESCRIPTION
+    Uses PowerShell Runspace for async spinner rendering.
+    Renders rotating braille characters at bottom-right of terminal.
+    Matching flu.sh spinner behavior: visible during network operations.
+    #>
+    if ($Script:_fluSpinnerRunning) { return }
+
+    $Script:_fluSpinnerRunning = $true
+    $Script:_fluSpinnerJob = Start-Job -ScriptBlock {
+        $chars = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+        $i = 0
+        while ($true) {
+            $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+            $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+            $msg = " $($chars[$i % $chars.Count]) Loading..."
+            [Console]::SetCursorPosition($termCols - $msg.Length - 1, $termRows - 2)
+            Write-Host $msg -NoNewline
+            $i++
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}
+
+function Stop-FluSpinner {
+    <#
+    .SYNOPSIS
+    Stop rotating spinner animation.
+    PowerShell port of flu_spinner_stop().
+    #>
+    if (-not $Script:_fluSpinnerRunning) { return }
+
+    $Script:_fluSpinnerRunning = $false
+    if ($Script:_fluSpinnerJob) {
+        Stop-Job -Job $Script:_fluSpinnerJob -ErrorAction SilentlyContinue
+        Remove-Job -Job $Script:_fluSpinnerJob -ErrorAction SilentlyContinue
+        $Script:_fluSpinnerJob = $null
+    }
+
+    # Clear spinner line
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+    $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
+    [Console]::SetCursorPosition(0, $termRows - 2)
+    Write-Host (' ' * 20) -NoNewline
+}
+
+# ──────────────
+# 🔄 Main Event Loop
+# ──────────────
+# Core interactive loop: menu navigation → action extraction → module execution
+# → result display → error recovery. PowerShell port of flu.sh main loop.
+# PowerShell port of flu.sh main loop (lines 209-285).
+
+function Start-FluMainLoop {
+    <#
+    .SYNOPSIS
+    Main interactive event loop.
+    PowerShell port of flu.sh main loop (lines 209-285).
+
+    .DESCRIPTION
+    1. Menu Navigation → flu_menu_navigate(menu_file)
+    2. Extract Action → flu_menu_get_action(TUI_RESULT)
+    3. Module Execution → spinner + flu_module_execute(action) + result display
+    4. Error Recovery → exit code hints
+    Loop until user cancels at root menu.
+    #>
+    $menuFile = "$FLU_SCRIPT_DIR\menu.db"
+
+    # Verify menu file exists (matching flu.sh line 201-206)
+    if (-not (Test-Path $menuFile)) {
+        Write-Error "Error: menu definition not found: $menuFile"
+        return 1
+    }
+
+    $running = $true
+
+    while ($running) {
+        # --- Step 1: Menu Navigation ---
+        # Show-FluMenuNavigate handles its own TUI lifecycle:
+        #   - Calls Initialize-Tui() internally
+        #   - Renders menu levels, handles keyboard input
+        #   - Calls Restore-Tui() on exit (cancel at root) or before returning (leaf select)
+        # Returns 0 on leaf selection (TUI_RESULT set to "L1|L2|L3" path)
+        # Returns 1 on cancel at root level
+        $navResult = Show-FluMenuNavigate -DslFile $menuFile
+
+        if ($navResult -ne 0) {
+            # User cancelled at root — exit cleanly
+            $running = $false
+            continue
+        }
+
+        # --- Step 2: Extract Action ID ---
+        # TUI_RESULT is set by Show-FluMenuNavigate on leaf selection
+        # Example: "Developer Tools|Languages|Python"
+        $actionId = Get-FluMenuAction -Path $Script:TUI_RESULT
+
+        if ([string]::IsNullOrEmpty($actionId)) {
+            # No action defined for this path — return to menu
+            continue
+        }
+
+        # --- Step 3: Module Execution with Spinner (INTG-01) ---
+        # Start spinner BEFORE module execute so it's visible during network fetch.
+        # The spinner renders via background PowerShell job.
+        # Invoke-FluModuleExecute internally:
+        #   1. Invoke-FluModuleFetch() — network call (spinner visible)
+        #   2. ConvertFrom-FluModuleMetadata()
+        #   3. Platform compatibility check
+        #   4. Invoke-FluModuleCollectParams() — TUI prompts
+        #   5. Execute module via WSL/bash
+        # After execute, Write-FluModuleResult displays results.
+
+        Start-FluSpinner
+        $result = Invoke-FluModuleExecute -ActionId $actionId
+        Stop-FluSpinner
+
+        if ($null -eq $result) {
+            # Module execution failed before producing a result
+            Write-Host "$($Script:TUI_RED)✗ Module execution failed for: $actionId$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)Press any key to return to menu$($Script:TUI_RESET)"
+            Read-TuiKey | Out-Null
+            Clear-TuiScreen
+            continue
+        }
+
+        # Display result in box-rendered modal
+        Write-FluModuleResult -Result $result
+
+        # --- Error Recovery (INTG-02) ---
+        if (-not $result.Success) {
+            # Module execution failed — display orchestrator-level recovery hint
+            # This supplements the subsystem-level hints shown in the result modal
+            Write-FluExitCodeHint -ExitCode $result.ExitCode -ActionId $actionId
+
+            if ($Script:_tui_use_tui) {
+                Write-Host "$($Script:TUI_DIM)Press any key to return to menu$($Script:TUI_RESET)"
+                Read-TuiKey | Out-Null
+            }
+        }
+
+        # --- Step 4: Post-Execution ---
+        Clear-TuiScreen
+    }
+}
+
+# ──────────────
+# 🚀 Main Entry Point
+# ──────────────
+# Main execution — called when flu.ps1 is run directly (not dot-sourced).
+
+function Start-Flu {
+    <#
+    .SYNOPSIS
+    Main entry point for flu.ps1.
+    #>
+    # Step 1: Detect platform
+    Get-FluPlatform
+
+    # Step 2: Show startup display
+    Show-FluStartup
+
+    # Step 3: Run main menu loop
+    Start-FluMainLoop
+
+    # Step 4: Clean exit
+    Write-Host "$($Script:TUI_GREEN)flu.ps1 — Goodbye!$($Script:TUI_RESET)"
+}
+
+# Only auto-run if this is the main script (not dot-sourced)
+if ($MyInvocation.InvocationName -eq '.' -or $MyInvocation.Line -match '\.\s+.*flu\.ps1') {
+    # Being dot-sourced — don't auto-run, just load functions
+} else {
+    Start-Flu
+}
