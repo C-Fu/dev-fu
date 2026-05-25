@@ -554,20 +554,26 @@ _flu_execute_with_timeout() {
   _fet_timeout="$1"; shift
   _fet_script="$1"; shift
 
-  stty sane 2>/dev/null < /dev/tty || true
+  _fet_log="/tmp/flu_debug_$$.log"
+  : > "$_fet_log"
 
-  # Foreground subshell: stays in the foreground process group so
-  # sudo/ssh can read from /dev/tty without SIGTTIN.  A watchdog
-  # process enforces the timeout by killing the subshell's real PID
-  # (discovered via the $PPID trick inside a command substitution).
+  printf '1. stty sane\n' >> "$_fet_log"
+  stty sane 2>>"$_fet_log" < /dev/tty || true
+
+  printf '2. entering subshell\n' >> "$_fet_log"
   set +e
   (
+    printf '3. inside subshell pid=%s\n' "$$" >> "${_fet_log}"
     _fet_me=$(exec sh -c 'printf "%s" "$PPID"')
+    printf '4. _fet_me=%s\n' "$_fet_me" >> "${_fet_log}"
     ( sleep "$_fet_timeout"; kill -9 "$_fet_me" 2>/dev/null ) &
+    printf '5. about to exec module\n' >> "${_fet_log}"
     exec sh "$_fet_script" -- "$@"
   )
   _fet_rc=$?
   set -e
+
+  printf '6. subshell done rc=%s\n' "$_fet_rc" >> "$_fet_log"
 
   if [ "$_fet_rc" -eq 137 ]; then
     _fet_rc=124
