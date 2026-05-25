@@ -2149,8 +2149,8 @@ flu_spinner_stop() {
     return 0
   fi
 
-  kill "$_flu_spinner_pid" 2>/dev/null
-  wait "$_flu_spinner_pid" 2>/dev/null
+  kill -9 "$_flu_spinner_pid" 2>/dev/null
+  wait "$_flu_spinner_pid" 2>/dev/null || true
 
   if [ "$_tui_use_tui" = "false" ]; then
     # Move to next line after the carriage-return-overwritten spinner text
