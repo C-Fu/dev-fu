@@ -355,33 +355,50 @@ _flu_menu_render() {
   # === Render visible items ===
   _fr_end=$((_fm_scroll + _fm_page_size - 1))
   [ "$_fr_end" -gt "$_fm_children_count" ] && _fr_end=$_fm_children_count
-  _fr_maxlab=$((_fr_inner - 6))
+  _fr_maxlab=$((_fr_inner - 10))
   [ "$_fr_maxlab" -lt 5 ] && _fr_maxlab=5
   _fr_i=$_fm_scroll
   while [ "$_fr_i" -le "$_fr_end" ]; do
     # shellcheck disable=SC2086
     eval "_fr_lab=\$_fm_child_$_fr_i"
+    if [ -z "$_fm_path" ]; then
+      _fr_item_path="$_fr_lab"
+    else
+      _fr_item_path="${_fm_path}|${_fr_lab}"
+    fi
+    if flu_menu_is_leaf "$_fr_item_path"; then
+      _fr_item_action=$(flu_menu_get_action "$_fr_item_path")
+      if _flu_menu_queue_has "$_fr_item_action"; then
+        _fr_chk="${TUI_GREEN}[x]${TUI_RESET} "
+      else
+        _fr_chk='[ ] '
+      fi
+      unset _fr_item_action
+    else
+      _fr_chk='    '
+    fi
     # shellcheck disable=SC2154
     _fr_trunc=$(printf '%s' "$_fr_lab" | awk -v L="$_fr_maxlab" '{print substr($0,1,L)}')
     move_cursor "$_fr_r" "$_fr_x"
     printf '%s' "$TUI_BOX_V"
     if [ "$_fr_i" -eq "$_fm_cursor" ]; then
-      # Highlighted row: reverse video on number + label, fill rest with spaces in reverse
+      printf '%s%s' "$TUI_REV" "$_fr_chk"
+      printf '%s' "$TUI_RESET"
       printf '%s%3d) %s' "$TUI_REV" "$_fr_i" "$_fr_trunc"
-      _fr_used=$((5 + ${#_fr_trunc}))
+      _fr_used=$((10 + ${#_fr_trunc}))
       _fr_fill=$((_fr_inner - _fr_used))
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
       printf '%s' "$TUI_RESET"
     else
-      # Normal row
-      printf '%3d) %s' "$_fr_i" "$_fr_trunc"
-      _fr_used=$((5 + ${#_fr_trunc}))
+      printf '%s%3d) %s%s' "$_fr_chk" "$_fr_i" "$_fr_trunc"
+      _fr_used=$((10 + ${#_fr_trunc}))
       _fr_fill=$((_fr_inner - _fr_used))
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
     fi
     printf '%s' "$TUI_BOX_V"
     _fr_r=$((_fr_r + 1))
     _fr_i=$((_fr_i + 1))
+    unset _fr_item_path _fr_chk
   done
 
   # === Fill remaining body rows with empty space ===
@@ -420,10 +437,14 @@ _flu_menu_render() {
 
   # === Footer row ===
   move_cursor "$_fr_footer_row" "$_fr_x"
+  _fr_qc=$(_flu_menu_queue_count)
   if [ "$_fm_show_help" = "true" ]; then
-    _fr_ft='Up/Dn Move  Enter Select  Esc/← Back  PgUp/PgDn Page  Home/End  j/k Vi  ? Keys'
+    _fr_ft='Up/Dn Move  Space Toggle  Enter Run  Esc/← Back  PgUp/PgDn  Home/End  j/k Vi  ? Keys'
   else
-    _fr_ft='Up/Dn Move  Enter Select  Esc Back  ? Keys'
+    _fr_ft='Up/Dn  Space Toggle  Enter Run  Esc Back  ? Keys'
+  fi
+  if [ "$_fr_qc" -gt 0 ]; then
+    _fr_ft="$_fr_ft  ${TUI_GREEN}${_fr_qc} selected${TUI_RESET}"
   fi
   printf '%s%s%s' "$TUI_DIM" "$_fr_ft" "$TUI_RESET"
 
@@ -449,23 +470,58 @@ _flu_menu_render() {
 # Returns:
 #   Exit 0: Prints "L1|L2|L3|action" to stdout, sets TUI_RESULT
 #   Exit 1: User cancelled at root level
+_flu_menu_queue_has() {
+  case " $_fm_queue " in
+    *" $1 "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+_flu_menu_queue_add() {
+  if _flu_menu_queue_has "$1"; then
+    _fm_q_tmp=""
+    for _fm_q_i in $_fm_queue; do
+      [ "$_fm_q_i" = "$1" ] && continue
+      _fm_q_tmp="$_fm_q_tmp $_fm_q_i"
+    done
+    _fm_queue="${_fm_q_tmp# }"
+  else
+    if [ -z "$_fm_queue" ]; then
+      _fm_queue="$1"
+    else
+      _fm_queue="$_fm_queue $1"
+    fi
+  fi
+  unset _fm_q_tmp _fm_q_i
+}
+
+_flu_menu_queue_count() {
+  if [ -z "$_fm_queue" ]; then
+    printf '0'
+  else
+    printf '%s\n' "$_fm_queue" | wc -w | awk '{print $1}'
+  fi
+}
+
 # shellcheck disable=SC2034,SC2154
 flu_menu_navigate() {
   _fm_dsl_file=$1
   flu_menu_load "$_fm_dsl_file" || return 1
 
-  _fm_path=""        # Current position: "" = root, "Dev Tools" = L1, etc.
+  _fm_path=""
   _fm_cursor=1
   _fm_scroll=1
   _fm_show_help=false
   _fm_error_msg=''
   _fm_page_size=1
+  _fm_queue=""
 
   # --- Non-TTY fallback ---
   if [ "$_tui_use_tui" = "false" ]; then
     _flu_menu_navigate_fallback
     _fm_fb_rc=$?
     unset _fm_dsl_file _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
+    unset _fm_queue
     return $_fm_fb_rc
   fi
 
@@ -481,6 +537,8 @@ flu_menu_navigate() {
       printf 'Error: No menu items at path: %s\n' "$_fm_path" >&2
       unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
       unset _fm_dsl_file _fm_key _fm_bottom _fm_max_scroll _fm_new_path _fm_selected
+      unset _fm_queue
+      TUI_QUEUE=""
       return 1
     fi
 
@@ -542,8 +600,33 @@ flu_menu_navigate() {
         _fm_scroll=$_fm_max_scroll
         _fm_error_msg=''
         ;;
+      "$TUI_KEY_SPACE")
+        eval "_fm_selected=\$_fm_child_$_fm_cursor"
+        if [ -z "$_fm_path" ]; then
+          _fm_new_path="$_fm_selected"
+        else
+          _fm_new_path="${_fm_path}|${_fm_selected}"
+        fi
+        if flu_menu_is_leaf "$_fm_new_path"; then
+          _fm_space_action=$(flu_menu_get_action "$_fm_new_path")
+          if [ -n "$_fm_space_action" ]; then
+            _flu_menu_queue_add "$_fm_space_action"
+          fi
+          unset _fm_space_action
+        fi
+        unset _fm_new_path
+        ;;
       "$TUI_KEY_ENTER")
-        # Get selected child label
+        if [ -n "$_fm_queue" ]; then
+          tui_restore
+          TUI_RESULT=""
+          TUI_QUEUE="$_fm_queue"
+          unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg
+          unset _fm_page_size _fm_dsl_file _fm_key _fm_bottom _fm_max_scroll
+          unset _fm_new_path _fm_selected _fm_queue
+          return 0
+        fi
+
         eval "_fm_selected=\$_fm_child_$_fm_cursor"
         if [ -z "$_fm_path" ]; then
           _fm_new_path="$_fm_selected"
@@ -551,15 +634,13 @@ flu_menu_navigate() {
           _fm_new_path="${_fm_path}|${_fm_selected}"
         fi
 
-        # Check if leaf
         if flu_menu_is_leaf "$_fm_new_path"; then
-          # Leaf selected — return path via TUI_RESULT (caller extracts action)
           tui_restore
           TUI_RESULT="$_fm_new_path"
-          # Cleanup all _fm_* variables
+          TUI_QUEUE=""
           unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
           unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
-          unset _fm_key _fm_bottom _fm_max_scroll
+          unset _fm_key _fm_bottom _fm_max_scroll _fm_queue
           return 0
         fi
 
@@ -598,9 +679,10 @@ flu_menu_navigate() {
           if flu_menu_is_leaf "$_fm_new_path"; then
             tui_restore
             TUI_RESULT="$_fm_new_path"
+            TUI_QUEUE=""
             unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
             unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
-            unset _fm_key _fm_bottom _fm_max_scroll
+            unset _fm_key _fm_bottom _fm_max_scroll _fm_queue
             unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
             return 0
           fi
@@ -628,9 +710,10 @@ flu_menu_navigate() {
         if [ -z "$_fm_path" ]; then
           tui_restore
           TUI_RESULT=''
+          TUI_QUEUE=""
           unset _fm_path _fm_cursor _fm_scroll _fm_show_help _fm_error_msg _fm_page_size
           unset _fm_dsl_file _fm_key _fm_bottom _fm_max_scroll _fm_new_path _fm_selected
-          unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
+          unset _fm_queue _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
           return 1
         fi
         _fm_path=$(printf '%s' "$_fm_path" | awk -F'|' '{for(i=1;i<NF;i++) printf "%s%s", (i>1?"|":""), $i}')

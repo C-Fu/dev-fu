@@ -315,34 +315,32 @@ while [ "$_flu_running" = "true" ]; do
         continue
     fi
 
-    # --- Step 2: Extract Action ID ---
-    # TUI_RESULT is set by flu_menu_navigate on leaf selection
-    # Example: "Developer Tools|Languages|Python"
-    # flu_menu_get_action extracts the action field from menu.db
+    # --- Step 2: Extract Action ID(s) ---
     # shellcheck disable=SC2154
-    _flu_action=$(flu_menu_get_action "$TUI_RESULT")
-
-    if [ -z "$_flu_action" ]; then
-        # No action defined for this path — edge case, return to menu
-        continue
+    if [ -n "${TUI_QUEUE:-}" ]; then
+        _flu_actions=$TUI_QUEUE
+    else
+        _flu_action=$(flu_menu_get_action "$TUI_RESULT")
+        if [ -z "$_flu_action" ]; then
+            continue
+        fi
+        _flu_actions=$_flu_action
     fi
 
     # --- Step 3: Module Execution ---
-    # Re-register signal trap — tui_restore() in flu_menu_navigate clears it
     trap '_flu_cleanup_exit' INT TERM HUP QUIT
-    printf '\033[?25l'       # hide cursor
-    printf '\n  Running %s...\n' "$_flu_action"
-    flu_module_execute "$_flu_action"
-    _flu_mod_rc=$?
-
-    # --- Error Recovery (D-07, INTG-02) ---
-    if [ "$_flu_mod_rc" -ne 0 ]; then
-        # Module execution failed — display orchestrator-level recovery hint
-        # This supplements the subsystem-level hints shown in the result modal
-        _flu_map_exit_code "$_flu_mod_rc" "$_flu_action"
-        printf '\n%sPress any key to return to menu%s' "$TUI_DIM" "$TUI_RESET"
-        _tui_read_key
-    fi
+    printf '\033[?25l'
+    for _flu_action in $_flu_actions; do
+        printf '\n  Running %s...\n' "$_flu_action"
+        flu_module_execute "$_flu_action"
+        _flu_mod_rc=$?
+        if [ "$_flu_mod_rc" -ne 0 ]; then
+            _flu_map_exit_code "$_flu_mod_rc" "$_flu_action"
+            printf '\n%sPress any key to continue%s' "$TUI_DIM" "$TUI_RESET"
+            _tui_read_key
+        fi
+    done
+    unset _flu_actions
 
     # --- Step 4: Post-Execution ---
     clear_screen
