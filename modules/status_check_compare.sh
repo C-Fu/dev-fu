@@ -94,21 +94,21 @@ _compare_row() {
     _lat="${_latest}"
 
     if [ -z "$_local_raw" ]; then
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "not installed" "${_lat:-N/A}" "—"
+        printf '  %s | %s | %s | %s\n' "$_name" "not installed" "${_lat:-N/A}" "—" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     elif [ -z "$_latest" ] || [ "$_latest" = "N/A" ]; then
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "${_local_ver:-?}" "N/A" "?"
+        printf '  %s | %s | %s | %s\n' "$_name" "${_local_ver:-?}" "N/A" "?" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     elif [ "$_local_ver" = "$_latest" ]; then
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "up to date"
+        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "up to date" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     else
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "update available"
+        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "update available" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     fi
 }
 
 printf 'Compare With Latest — Installed vs Online\n'
 printf '==========================================\n'
 printf '\n'
-printf '  %-14s %-24s %-18s %s\n' "Tool" "Installed" "Latest" "Status"
-printf '  %s\n' "$(printf '%.0s-' $(seq 1 72))"
+printf '  %s | %s | %s | %s\n' "Tool" "Installed" "Latest" "Status" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+printf '  ------------------------------------------------------------------------\n'
 
 # Go
 _compare_row "Go" \

@@ -16,20 +16,29 @@ if [ -s "${HOME}/.nvm/nvm.sh" ]; then
     . "${HOME}/.nvm/nvm.sh" 2>/dev/null || true
 fi
 
+_pad_name() {
+    _pn_name="$1"
+    _pn_pad="            "  # 12 spaces
+    _pn_out="${_pn_name}${_pn_pad}"
+    printf '%s' "$_pn_out" | awk '{print substr($0,1,12)}'
+    unset _pn_name _pn_pad _pn_out
+}
+
 # Helper: check a command's version
 check_cmd_version() {
     _name="$1"
     _cmd="$2"
     _flag="$3"
+    _padded=$(_pad_name "$_name")
     if command -v "$_cmd" >/dev/null 2>&1; then
         if command -v timeout >/dev/null 2>&1; then
             _ver=$(echo "y" | timeout 5 "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ')
         else
             _ver=$(echo "y" | "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ')
         fi
-        printf '  [OK]   %-12s : %s\n' "$_name" "${_ver:-installed}"
+        printf '  [OK]   %s : %s\n' "$_padded" "${_ver:-installed}"
     else
-        printf '  [MISS] %-12s : NOT installed\n' "$_name"
+        printf '  [MISS] %s : NOT installed\n' "$_padded"
     fi
 }
 
@@ -64,9 +73,9 @@ check_cmd_version "Bun" "bun" "--version"
 # NVM
 if command -v nvm >/dev/null 2>&1; then
     _nvm_ver=$(nvm --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   %-12s : %s\n' "NVM" "${_nvm_ver}"
+    printf '  [OK]   %s : %s\n' "NVM         " "${_nvm_ver}"
 else
-    printf '  [MISS] %-12s : NOT installed\n' "NVM"
+    printf '  [MISS] NVM         : NOT installed\n'
 fi
 
 check_cmd_version "Node.js" "node" "--version"
@@ -86,21 +95,21 @@ check_cmd_version "Tailscale" "tailscale" "version"
 # OpenChamber
 if command -v openchamber >/dev/null 2>&1; then
     _oc_ver=$(openchamber --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   %-12s : %s\n' "OpenChamber" "$_oc_ver"
+    printf '  [OK]   OpenChamber : %s\n' "$_oc_ver"
 elif npm list -g @openchamber/web >/dev/null 2>&1; then
-    printf '  [OK]   %-12s : %s\n' "OpenChamber" "npm global"
+    printf '  [OK]   OpenChamber : %s\n' "npm global"
 else
-    printf '  [MISS] %-12s : NOT installed\n' "OpenChamber"
+    printf '  [MISS] OpenChamber : NOT installed\n'
 fi
 
 # OpenCode
 if command -v opencode >/dev/null 2>&1; then
     _op_ver=$(opencode --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   %-12s : %s\n' "OpenCode" "$_op_ver"
+    printf '  [OK]   OpenCode    : %s\n' "$_op_ver"
 elif npm list -g opencode-ai >/dev/null 2>&1; then
-    printf '  [OK]   %-12s : %s\n' "OpenCode" "npm global"
+    printf '  [OK]   OpenCode    : %s\n' "npm global"
 else
-    printf '  [MISS] %-12s : NOT installed\n' "OpenCode"
+    printf '  [MISS] OpenCode    : NOT installed\n'
 fi
 
 # GSD
@@ -117,9 +126,9 @@ elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
     _gsd_ver=$(npx --yes gsd-opencode --version 2>/dev/null | head -1)
 fi
 if [ "$_gsd_found" = "1" ]; then
-    printf '  [OK]   %-12s : %s\n' "GSD" "${_gsd_ver:-installed}"
+    printf '  [OK]   GSD         : %s\n' "${_gsd_ver:-installed}"
 else
-    printf '  [MISS] %-12s : NOT installed\n' "GSD"
+    printf '  [MISS] GSD         : NOT installed\n'
 fi
 
 printf '\n'
