@@ -1,16 +1,45 @@
-# menu.db — Menu definition for flu.sh
-# Format: Level1|Level2|Level3|action
+# menu.db — Menu definition for flu.sh v1.1
+# Format: Category|Subcategory|Label|action_id
 # Lines starting with # are comments. Empty lines are ignored.
-# Level1 = top category, Level2 = sub-category, Level3 = leaf item, action = future Phase 4 hook
-Developer Tools|Languages|Python|install_python
-Developer Tools|Languages|Node.js|install_node
-Developer Tools|Languages|Go|install_go
-Developer Tools|Editors|VS Code|install_vscode
-Developer Tools|Editors|Neovim|install_neovim
-Developer Tools|Shell|Zsh|install_zsh
-Developer Tools|Shell|Fish|install_fish
-System|Monitoring|htop|install_htop
-System|Monitoring|btop|install_btop
-System|Networking|curl|install_curl
-System|Networking|wget|install_wget
-Media|FFmpeg|Install|install_ffmpeg
+# Action IDs map 1:1 to module script filenames in modules/<action_id>.sh
+
+# ── 🔍 Diagnostics ──
+Diagnostics|System|🔍 Status Check|status_check
+Diagnostics|System|🔄 Compare With Latest|status_check_compare
+Diagnostics|Updates|⬆️ Upgrade All Tools|upgrade_all
+
+# ── 🐹 Languages & Runtimes ──
+Languages & Runtimes|Go|🐹 Install Go|install_go
+Languages & Runtimes|Go|🗑 Remove Go|remove_go
+Languages & Runtimes|Rust|🦀 Install Rust|install_rust
+Languages & Runtimes|Rust|🗑 Remove Rust|remove_rust
+Languages & Runtimes|Python|🐍 Install Python + Pip + UV + Pipx|install_python
+Languages & Runtimes|Python|🗑 Remove Python|remove_python
+Languages & Runtimes|Node.js|💚 Install NVM + Node LTS|install_nvm_node
+Languages & Runtimes|Node.js|🗑 Remove NVM + Node|remove_nvm_node
+Languages & Runtimes|Bun|🥟 Install Bun|install_bun
+Languages & Runtimes|Bun|🗑 Remove Bun|remove_bun
+Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
+Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
+
+# ── 🛠 Tools ──
+Tools|Yarn|🧶 Install Yarn|install_yarn
+Tools|Yarn|🗑 Remove Yarn|remove_yarn
+Tools|Docker|🐳 Install Docker|install_docker
+Tools|Docker|🗑 Remove Docker|remove_docker
+Tools|Tailscale|🛜 Install Tailscale|install_tailscale
+Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
+Tools|OpenCode|🤖 Install OpenCode + GSD + OpenChamber|install_opencode_gsd
+
+# ── 🐚 Shell ──
+Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
+Shell|Prompts|🗑 Remove Fancy Prompt (Purple-Pink)|remove_fancy_prompt
+Shell|Prompts|💙 Fancy Prompt (Shades of Blue)|create_fancy_prompt_blue
+Shell|Prompts|🗑 Remove Fancy Prompt (Blue)|remove_fancy_prompt_blue
+Shell|Network|🏠 Hostname Discovery (Linux)|install_avahi
+Shell|Network|🗑 Remove Hostname Discovery|remove_avahi
+
+# ── ⚙️ Settings ──
+Settings|GitHub|🔑 Set GitHub Token|set_github_token
+Settings|Mouse|🖱 Disable Mouse Reporting|configure_mouse_disable
+Settings|Mouse|🖱 Enable Mouse Reporting|configure_mouse_enable
