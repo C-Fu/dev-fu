@@ -204,14 +204,6 @@ flu_module_parse_metadata() {
     return 1
   fi
 
-  # Output parsed metadata to stdout — one field per line
-  printf '%s\n' "$_fmp_name"
-  printf '%s\n' "$_fmp_params"
-  printf '%s\n' "$_fmp_platforms"
-  printf '%s\n' "$_fmp_version"
-  printf '%s\n' "$_fmp_deps"
-  printf '%s\n' "$_fmp_timeout"
-
   # Cleanup internal temporaries but keep _fmp_* globals for caller use
   unset _fmp_out _fmp_os _fmp_saved_ifs _fmp_p _fmp_plat_match
   return 0
