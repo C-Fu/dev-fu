@@ -560,7 +560,6 @@ _flu_execute_with_timeout() {
     timeout "$_fet_timeout" sh -c '
       trap "exit 130" INT TERM
       trap '\''_fe_trap_rc=$?'\'' EXIT
-      stty echo icanon 2>/dev/null < /dev/tty || true
       set -eu
       _fet_script="$1"; shift
       sh "$_fet_script" -- "$@"
@@ -572,7 +571,6 @@ _flu_execute_with_timeout() {
     (
       trap 'exit 130' INT TERM
       trap '_fe_trap_rc=$?' EXIT
-      stty echo icanon 2>/dev/null < /dev/tty || true
       set -eu
       sh "$_fet_script" -- "$@"
     ) &
@@ -677,6 +675,8 @@ flu_module_execute() {
   fi
 
   # Step 6: Execute module with timeout enforcement, capture outputs
+  # Normalize terminal before execution so sudo/ssh/etc work properly
+  stty echo icanon 2>/dev/null < /dev/tty || true
   _fme_timeout="${_fmp_timeout:-300}"
   _fme_out="/tmp/flu_module_out_$$"
   _fme_err="/tmp/flu_module_err_$$"
