@@ -553,43 +553,30 @@ flu_module_collect_params() {
 _flu_execute_with_timeout() {
   _fet_timeout="$1"; shift
   _fet_script="$1"; shift
-  # Remaining args ("$@") are module arguments (--key value pairs)
 
-  if command -v timeout >/dev/null 2>&1; then
-    # Preferred path: use timeout command
-    timeout "$_fet_timeout" sh -c '
-      trap "exit 130" INT TERM
-      trap '\''_fe_trap_rc=$?'\'' EXIT
-      set -eu
-      _fet_script="$1"; shift
-      sh "$_fet_script" -- "$@"
-    ' _fet_wrapper "$_fet_script" "$@"
-    _fet_rc=$?
-  else
-    # Fallback: background process + watchdog kill pattern
-    # POSIX-compatible — no `timeout` command needed
-    (
-      trap 'exit 130' INT TERM
-      trap '_fe_trap_rc=$?' EXIT
-      set -eu
-      sh "$_fet_script" -- "$@"
-    ) &
-    _fet_pid=$!
-    (
-      sleep "$_fet_timeout"
-      kill "$_fet_pid" 2>/dev/null || true
-    ) &
-    _fet_watchdog=$!
-    wait "$_fet_pid" 2>/dev/null
-    _fet_rc=$?
-    # Kill the watchdog if still running
-    kill "$_fet_watchdog" 2>/dev/null || true
-    wait "$_fet_watchdog" 2>/dev/null || true
+  # Use background+watchdog pattern primarily — timeout(1) creates
+  # a new process group which causes SIGTTIN when the child (sudo)
+  # tries to read from /dev/tty. Background processes don't have
+  # this limitation.
+  (
+    trap 'exit 130' INT TERM
+    trap '_fe_trap_rc=$?' EXIT
+    set -eu
+    sh "$_fet_script" -- "$@"
+  ) &
+  _fet_pid=$!
+  (
+    sleep "$_fet_timeout"
+    kill -9 "$_fet_pid" 2>/dev/null || true
+  ) &
+  _fet_watchdog=$!
+  wait "$_fet_pid" 2>/dev/null
+  _fet_rc=$?
+  kill -9 "$_fet_watchdog" 2>/dev/null || true
+  wait "$_fet_watchdog" 2>/dev/null || true
 
-    # If killed by signal (rc > 128), treat as timeout (D-15)
-    if [ "$_fet_rc" -gt 128 ] 2>/dev/null; then
-      _fet_rc=124
-    fi
+  if [ "$_fet_rc" -gt 128 ] 2>/dev/null; then
+    _fet_rc=124
   fi
 
   _flu_exit_code=${_fet_rc:-1}
