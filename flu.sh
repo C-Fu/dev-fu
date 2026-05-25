@@ -153,15 +153,22 @@ if [ "$_tui_use_tui" = "true" ]; then
     tui_init
     clear_screen
 
-    # Calculate centered positions
+    # Render the ASCII dev-fu logo centered on screen (POLISH-01)
+    _flu_render_logo
+
+    # Calculate centered positions — note: logo is 6 lines tall,
+    # so the platform box starts below the logo with a small gap
     _flu_su_cols=$(tput cols 2>/dev/null || printf '80')
     _flu_su_rows=$(tput lines 2>/dev/null || printf '24')
     _flu_su_box_w=50
     [ "$_flu_su_box_w" -gt "$_flu_su_cols" ] && _flu_su_box_w=$((_flu_su_cols - 4))
     _flu_su_box_x=$(( (_flu_su_cols - _flu_su_box_w) / 2 ))
     [ "$_flu_su_box_x" -lt 1 ] && _flu_su_box_x=1
-    _flu_su_box_y=$(( (_flu_su_rows - 9) / 2 ))
-    [ "$_flu_su_box_y" -lt 1 ] && _flu_su_box_y=1
+    # Box starts 7 lines below top (6 logo lines + 1 line gap)
+    _flu_su_box_y=7
+    # If terminal is short, push box down a bit more for visual balance
+    # on very tall terminals, keep it closer to the logo
+    [ "$_flu_su_rows" -lt 20 ] && _flu_su_box_y=7
 
     # Build platform info lines
     _flu_su_os_info="OS: ${FLU_OS}"
@@ -204,7 +211,11 @@ if [ "$_tui_use_tui" = "true" ]; then
     # Re-register orchestrator safety-net trap (overwritten by tui_init)
     trap '_flu_cleanup_exit' INT TERM HUP QUIT
 else
-    # Non-TUI: print plain text platform summary
+    # Non-TUI: print logo in plain text (no ANSI colors — terminal may not support)
+    printf '%s\n' "=============================================="
+    printf '%s\n' "  dev-fu — Environment Setup Utility"
+    printf '%s\n' "=============================================="
+    printf '\n'
     printf 'flu.sh v0.1.0\n'
     printf 'OS: %s | Distro: %s | Package Manager: %s | Arch: %s\n\n' \
         "$FLU_OS" "$FLU_DISTRO" "$FLU_PKG_MGR" "$FLU_ARCH"
