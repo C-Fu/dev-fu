@@ -366,17 +366,17 @@ _flu_menu_render() {
     else
       _fr_item_path="${_fm_path}|${_fr_lab}"
     fi
-    if flu_menu_is_leaf "$_fr_item_path"; then
-      _fr_item_action=$(flu_menu_get_action "$_fr_item_path")
-      if _flu_menu_queue_has "$_fr_item_action"; then
+    _fr_action=$(_flu_menu_lookup "$_fr_item_path") || true
+    if [ -n "$_fr_action" ]; then
+      if _flu_menu_queue_has "$_fr_action"; then
         _fr_chk="${TUI_GREEN}[x]${TUI_RESET} "
       else
         _fr_chk='[ ] '
       fi
-      unset _fr_item_action
     else
       _fr_chk='    '
     fi
+    unset _fr_action
     # shellcheck disable=SC2154
     _fr_trunc=$(printf '%s' "$_fr_lab" | awk -v L="$_fr_maxlab" '{print substr($0,1,L)}')
     move_cursor "$_fr_r" "$_fr_x"
@@ -475,6 +475,49 @@ _flu_menu_queue_has() {
     *" $1 "*) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+_flu_menu_queue_add() {
+  if _flu_menu_queue_has "$1"; then
+    _fmq_tmp=""
+    for _fmq_i in $_fm_queue; do
+      [ "$_fmq_i" = "$1" ] && continue
+      _fmq_tmp="$_fmq_tmp $_fmq_i"
+    done
+    _fm_queue="${_fmq_tmp# }"
+  else
+    if [ -z "$_fm_queue" ]; then
+      _fm_queue="$1"
+    else
+      _fm_queue="$_fm_queue $1"
+    fi
+  fi
+  unset _fmq_tmp _fmq_i
+}
+
+_flu_menu_queue_count() {
+  if [ -z "$_fm_queue" ]; then
+    printf '0'
+  else
+    printf '%s\n' "$_fm_queue" | wc -w | awk '{print $1}'
+  fi
+}
+
+_flu_menu_lookup() {
+  _fmlu_path=$1
+  _fmlu_i=1
+  while [ "$_fmlu_i" -le "$_fm_count" ]; do
+    eval "_fmlu_line=\$_fm_line_$_fmlu_i"
+    _fmlu_pfx=$(printf '%s' "$_fmlu_line" | awk -F'|' '{print $1 "|" $2 "|" $3}')
+    if [ "$_fmlu_pfx" = "$_fmlu_path" ]; then
+      printf '%s' "$_fmlu_line" | awk -F'|' '{print $4}'
+      unset _fmlu_path _fmlu_i _fmlu_line _fmlu_pfx
+      return 0
+    fi
+    _fmlu_i=$((_fmlu_i + 1))
+  done
+  unset _fmlu_path _fmlu_i _fmlu_line _fmlu_pfx
+  return 1
 }
 
 _flu_menu_queue_add() {
@@ -607,14 +650,11 @@ flu_menu_navigate() {
         else
           _fm_new_path="${_fm_path}|${_fm_selected}"
         fi
-        if flu_menu_is_leaf "$_fm_new_path"; then
-          _fm_space_action=$(flu_menu_get_action "$_fm_new_path")
-          if [ -n "$_fm_space_action" ]; then
-            _flu_menu_queue_add "$_fm_space_action"
-          fi
-          unset _fm_space_action
+        _fm_space_action=$(_flu_menu_lookup "$_fm_new_path") || true
+        if [ -n "$_fm_space_action" ]; then
+          _flu_menu_queue_add "$_fm_space_action"
         fi
-        unset _fm_new_path
+        unset _fm_space_action _fm_new_path
         ;;
       "$TUI_KEY_ENTER")
         if [ -n "$_fm_queue" ]; then
