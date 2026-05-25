@@ -753,9 +753,9 @@ flu_module_display_result() {
   _fdr_rows=$(tput lines 2>/dev/null || printf '24')
   _fdr_cols=$(tput cols 2>/dev/null || printf '80')
 
-  # Calculate box dimensions
-  _fdr_box_w=70
-  [ "$_fdr_box_w" -gt $((_fdr_cols - 4)) ] && _fdr_box_w=$((_fdr_cols - 4))
+  # Calculate box dimensions — use full terminal width
+  _fdr_box_w=$((_fdr_cols - 4))
+  [ "$_fdr_box_w" -lt 40 ] && _fdr_box_w=40
   _fdr_box_h=$((_fdr_rows - 4))
   _fdr_x=$(( (_fdr_cols - _fdr_box_w) / 2 ))
   [ "$_fdr_x" -lt 1 ] && _fdr_x=1
