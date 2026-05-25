@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: Feature Parity & Polish
 status: executing
 stopped_at: Milestone v1.1 roadmap created — Phase 7 ready to plan
-last_updated: "2026-05-25T13:16:48.241Z"
-last_activity: 2026-05-25
+last_updated: "2026-05-25T14:59:40.271Z"
+last_activity: 2026-05-25 -- Phase 8 execution started
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
+  total_plans: 4
   completed_plans: 3
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-25)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 7 — Feature Parity
+**Current focus:** Phase 8 — Intro Polish
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Executing Phase 7
-Last activity: 2026-05-25
+Phase: 8 (Intro Polish) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 8
+Last activity: 2026-05-25 -- Phase 8 execution started
 
 Progress: [████████░░░░] 67% (6 of 9 phases complete)
 
