@@ -64,7 +64,7 @@ printf '  System:  %s | %s | %s\n' "$_distro" "$_kernel" "$_arch"
 printf '\n'
 
 # Languages & Runtimes
-printf '--- Languages & Runtimes ---\n'
+printf '%s\n' '--- Languages & Runtimes ---'
 check_cmd_version "Go" "go" "version"
 check_cmd_version "Rustc" "rustc" "--version"
 check_cmd_version "Cargo" "cargo" "--version"
@@ -88,7 +88,7 @@ check_cmd_version "Yarn" "yarn" "--version"
 check_cmd_version "Composer" "composer" "--version"
 
 printf '\n'
-printf '--- Tools ---\n'
+printf '%s\n' '--- Tools ---'
 check_cmd_version "Docker" "docker" "--version"
 check_cmd_version "Tailscale" "tailscale" "version"
 
@@ -132,7 +132,7 @@ else
 fi
 
 printf '\n'
-printf '--- Utilities ---\n'
+printf '%s\n' '--- Utilities ---'
 check_cmd_version "curl" "curl" "--version"
 check_cmd_version "wget" "wget" "--version"
 check_cmd_version "git" "git" "--version"
