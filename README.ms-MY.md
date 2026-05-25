@@ -1,426 +1,245 @@
-# dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang
+# dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang ([English](README.md))
 
-Dua skrip, satu matlamat. **`fu.sh`** adalah pemasang monolitik yang teruji. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash.
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu.sh)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. **`fu.sh`** adalah pemasang monolitik yang teruji. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
+
+> **`fu.sh`** (skrip monolitik asal) masih tersedia — lihat [README-Fu.ms-MY.md](README-Fu.ms-MY.md) untuk dokumentasi `fu.sh`.
+
+## Mula Pantas flu.sh
 
 ```bash
-# fu.sh — monolithic (bash / zsh)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
-```
-
-```bash
-# flu.sh — TUI modular (bash / zsh / sh / dash / ash / busybox)
+# Option 1: curl-pipe-bash (bash / zsh / mana-mana shell POSIX)
 bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
 ```
 
 ```sh
-# sh / ash / BusyBox (tiada process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
+# Option 1 alt: BusyBox / dash / ash (tiada process substitution)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
-
-```powershell
-# Windows (PowerShell) - bypasses execution policy for unsigned scripts
-Set-ExecutionPolicy Bypass -Scope Process -Force
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-```
-
-## Skrinshot
-
-```
-://─────────────── System Info ────────────────║
-│ Architecture: x86_64
-│ OS: alpine
-│ Package Mgr: apk
-│ Shell: bash
-│ WAN IP:
-│ LAN IP:
-│ Hostname:
-│ User: root (0:0)
-▉════════════════by═C-Fu════════════════
-
-
-        ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗
- ██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║
- ╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║
- ██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║
- ╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝
-    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝ 
-
-://─────────────────────────────║
-│ Environment Setup Utility
-▉══════════════════════════
-
-│ 1)  🔍  Status Check
-│ 2)  🔄  Compare With Latest
-│ 3)  ⬆️  Upgrade All Tools
-│ 4)  🔑  Set GitHub Token
-│ 5)  🐳  Install Docker
-│ 6)  ✨  Create Fancy Prompt (Purple-Pink)
-│ 7)  💎  Create Fancy Prompt (Shades of Blue)
-│ 8)  🌐  Install Hostname Discovery (Linux only)
-│ 9)  🐹  Install Go
-│ 10) ☢️  Install Rust
-│ 11) 🐍  Install Python + Pip + UV + Pipx
-│ 12) 📦  Install NVM + Node LTS
-│ 13) 🥟  Install Bun
-│ 14) ⚡  Install Yarn
-│ 15) 🐁  Disable Mouse Reporting in Terminal
-│ 16) 🐘  Install PHP + Laravel
-│ 17) 🔒  Install Tailscale
-│ 18) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
-
-  Enter your selected options, split by commas or spaces (1,2 3 4)
-  Enter -N to remove (e.g. -3 removes Docker)
-
-://─────────────────────────║
-│  Press u to upgrade all
-│  Press q to quit
-▉══════════════════
-▸ Choice: 
-```
-
-## flu.sh — Menu TUI Modular
-
-`flu.sh` adalah versi generasi seterusnya dengan UI terminal profesional, submenu bersarang, dan seni bina modul jauh. Setiap pilihan menu mengambil dan melaksanakan skrip pemasangan kendiri dari GitHub atas permintaan. Kedua-dua skrip wujud bersama — `fu.sh` adalah versi ringkas/legasi, `flu.sh` adalah sistem modular yang kaya ciri.
-
-### Mula Pantas
 
 ```bash
-# Option 1: Klon dan jalankan secara tempatan
+# Option 2: Klon dan jalankan secara tempatan (tiada rangkaian diperlukan selepas klon)
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
 ./flu.sh
 ```
 
-```bash
-# Option 2: curl-pipe-bash (mana-mana shell POSIX)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
-```
+> **Windows:** Gunakan `flu.ps1` untuk PowerShell asli. POSIX `flu.sh` berfungsi dalam WSL2 (jalankan di dalam pengedaran Linux, bukan PowerShell).
 
-```sh
-# Option 2: BusyBox / dash / ash (tiada process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
-```
+## Ciri-ciri flu.sh
 
-### Struktur Menu
+- **Tiada kebergantungan** — POSIX `sh` tulen. Tiada Python, tiada Node, tiada rangka kerja diperlukan untuk menjalankan skrip itu sendiri.
+- **ANSI TUI** — Navigasi anak panah dengan jejak breadcrumb dan logo ASCII dev-fu magenta semasa permulaan.
+- **Submenu bersarang 3 peringkat** — Kategori → Subkategori → Pilihan, dengan pintasan papan kekunci (`q` keluar, `b` kembali).
+- **Seni bina modular jauh** — Setiap pilihan menu mengambil dan melaksanakan skrip `sh` POSIX kendiri dari GitHub atas permintaan. Dalam mod tempatan (`git clone`), modul dijalankan dari cakera — tiada rangkaian diperlukan.
+- **Serasi POSIX sh** — Diuji pada bash 4+, zsh, dash, ash (Alpine/BusyBox).
+- **Pengesanan platform** — Auto-kesan OS, distro, pengurus pakej, dan seni bina CPU semasa permulaan.
+- **19 operasi merentasi 5 kategori** — Kebanyakan operasi pemasangan mempunyai pilihan keluarkan yang sepadan.
 
-```
-flu.sh v0.1.0
-├── Developer Tools
-│   ├── Languages
-│   │   ├── Python
-│   │   ├── Node.js
-│   │   └── Go
-│   ├── Editors
-│   │   ├── VS Code
-│   │   └── Neovim
-│   └── Shell
-│       ├── Zsh
-│       └── Fish
-├── System
-│   ├── Monitoring
-│   │   ├── htop
-│   │   └── btop
-│   └── Networking
-│       ├── curl
-│       └── wget
-└── Media
-    └── FFmpeg
-```
-
-### Seni Bina Modul
-
-Setiap item menu dipetakan kepada skrip sh POSIX kendiri di bawah `modules/`:
+## Struktur Menu flu.sh
 
 ```
-modules/
-├── install_python.sh
-├── install_node.sh
-├── install_go.sh
-├── install_vscode.sh
-├── install_neovim.sh
-├── install_zsh.sh
-├── install_fish.sh
-├── install_htop.sh
-├── install_btop.sh
-├── install_curl.sh
-├── install_wget.sh
-└── install_ffmpeg.sh
+flu.sh v1.1
+├── 🔍 Diagnostics
+│   ├── 🔍 Status Check
+│   ├── 🔄 Compare With Latest
+│   └── ⬆️  Upgrade All Tools
+├── 🐹 Languages & Runtimes
+│   ├── 🐹 Go (install/remove)
+│   ├── 🦀 Rust (install/remove)
+│   ├── 🐍 Python + Pip + UV + Pipx (install/remove)
+│   ├── 💚 NVM + Node LTS (install/remove)
+│   ├── 🥟 Bun (install/remove)
+│   └── 🐘 PHP + Laravel (install/remove)
+├── 🛠 Tools
+│   ├── 🧶 Yarn (install/remove)
+│   ├── 🐳 Docker (install/remove)
+│   ├── 🛜 Tailscale (install/remove)
+│   └── 🤖 OpenCode + GSD + OpenChamber
+├── 🐚 Shell
+│   ├── 💜 Fancy Prompt (Purple-Pink) (create/remove)
+│   ├── 💙 Fancy Prompt (Shades of Blue) (create/remove)
+│   └── 🏠 Hostname Discovery — Linux (install/remove)
+└── ⚙️ Settings
+    ├── 🔑 Set GitHub Token
+    ├── 🖱  Disable Mouse Reporting
+    └── 🖱  Enable Mouse Reporting
 ```
 
-Modul adalah kendiri, menggunakan pemboleh ubah persekitaran `FLU_*` untuk konteks platform, dan diambil atas permintaan dari GitHub apabila dijalankan dari jauh. Apabila dijalankan secara tempatan, `flu.sh` menggunakan modul dari cakera — tiada akses rangkaian diperlukan.
+## Seni Bina Modul
 
-### fu.sh vs flu.sh
+flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipetakan kepada skrip `sh` POSIX kendiri di bawah `modules/`. Apabila flu.sh dijalankan:
 
-| Ciri | `fu.sh` | `flu.sh` |
-|------|---------|----------|
-| Shell | Bash 4+ | POSIX sh (bash, zsh, dash, ash, busybox) |
-| UI | Prompt senarai bernombor | TUI ANSI dengan navigasi anak panah |
-| Kedalaman Menu | Rata (18 pilihan) | Submenu bersarang 3 peringkat |
-| Seni Bina | Monolitik | Modular (skrip jauh atas permintaan) |
-| Sumber Modul | Sebaris dalam skrip | Direktori `modules/` (tempatan) atau GitHub (jauh) |
-| Alat terkenal | Docker, Rust, PHP, Tailscale, Fancy Prompt | Python, Node.js, Go, VS Code, Neovim, dll. |
-| Jumlah pemasangan | 18 operasi | 12 modul (berkembang) |
+1. **`tui.sh`** — Primitif paparan terminal ANSI (kedudukan kursor, warna, input papan kekunci)
+2. **`menu.sh`** — Menghurai `menu.db` (DSL menu dipisahkan paip) dan memaparkan TUI interaktif
+3. **`modules.sh`** — Mengendalikan pengambilan skrip jauh dari GitHub dan pelaksanaan tempatan
+
+### Bagaimana Modul Berfungsi
+
+- **Mod tempatan:** `git clone` dan jalankan — modul diambil dari cakera dalam `modules/`, tiada rangkaian diperlukan
+- **Mod jauh:** `curl-pipe-bash` — modul diambil atas permintaan dari URL mentah GitHub dengan 3 kali cuba semula (kelewatan 2s)
+- **Persekitaran:** Modul menggunakan `FLU_OS`, `FLU_DISTRO`, `FLU_PKG_MGR`, `FLU_ARCH` untuk pemasangan mengikut platform
+- **Keselamatan:** Semua modul menggunakan `set -eu`, pengawal idempoten (`command -v`), dan `_maybe_sudo()` untuk peningkatan keistimewaan hanya apabila diperlukan
+- **Kontrak:** Setiap skrip modul mengandungi pengepala metadata terhurai (`@name`, `@platforms`, `@deps`, `@timeout`) dan mengikuti konvensyen kod keluar yang ketat (0 = berjaya, 1 = gagal)
+
+### Kategori Modul
+
+| Kategori | Skrip Modul | Bilangan |
+|----------|-------------|----------|
+| Bahasa & Runtimes | `install_go.sh`, `install_rust.sh`, `install_python.sh`, `install_nvm_node.sh`, `install_bun.sh`, `install_php_laravel.sh` (+ skrip keluarkan sepadan) | 12 |
+| Alatan | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh` (+ skrip keluarkan sepadan) | 7 |
+| Shell | `create_fancy_prompt.sh`, `create_fancy_prompt_blue.sh`, `install_avahi.sh` (+ skrip keluarkan sepadan) | 6 |
+| Diagnostik | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
+| Tetapan | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
+
+**Jumlah: 31 skrip modul.** Lihat [modules/README.md](modules/README.md) untuk pendaftaran ID tindakan penuh dan spesifikasi kontrak modul.
+
+### Gambarajah Seni Bina
+
+```
+curl-pipe-bash / git clone
+        │
+        ▼
+    flu.sh ─── pengaturcara
+        │
+   ┌────┼────────────┐
+   ▼    ▼            ▼
+tui.sh  menu.sh  modules.sh
+   │     │           │
+   │     ▼           ▼
+   │  menu.db    modules/*.sh
+   │  (DSL)    (pengambilan atas permintaan)
+   ▼
+   Paparan TTY
+   (kod escape ANSI)
+```
+
+## fu.sh — Skrip Monolitik Legasi
+
+flu.sh adalah sistem TUI modular generasi seterusnya. Skrip monolitik asal `fu.sh` masih tersedia dengan 18 operasi menu rata dan didokumenkan secara berasingan — lihat **[README-Fu.ms-MY.md](README-Fu.ms-MY.md)** untuk dokumentasi `fu.sh`, termasuk antara muka prompt bernombor, mod CLI tidak interaktif, dan nota mengikut platform.
+
+| Ciri | `flu.sh` | `fu.sh` |
+|------|----------|---------|
+| Shell | POSIX `sh` (bash, zsh, dash, ash, busybox) | Bash 4+ |
+| UI | TUI ANSI dengan navigasi anak panah | Prompt senarai bernombor |
+| Kedalaman Menu | Submenu bersarang 3 peringkat | Rata (18 pilihan) |
+| Seni Bina | Modular (skrip jauh atas permintaan) | Monolitik (semua logik dalam satu fail) |
+| Sumber Modul | Direktori `modules/` (tempatan) atau GitHub (jauh) | Fungsi sebaris |
+| Operasi | 19 merentasi 5 kategori | 18 operasi rata |
+| Keserasian POSIX | Penuh (dash, ash, busybox) | Bash sahaja |
 
 ## Mengapa dev-fu
 
-- **Tiada kebergantungan** - Hanya Bash 4+ dan PowerShell 5.1+. Tiada Python, tiada Node, tiada rangka kerja diperlukan untuk menjalankan skrip itu sendiri. Semua yang dipasang diambil dari sumber rasmi.
-- **Boleh dijalankan di mana-mana** - Skrip yang sama berfungsi pada WSL2, Linux, macOS, Chromebook, Android (Termux) dan Windows (PowerShell). Menyokong x86, x64, ARM (Raspberry Pi, Apple Silicon) dan pelayan fizikal. Diuji dalam bekas LXC, mesin maya dan ChromeOS Crostini. Serasi dengan Bash dan ZSH pada Unix, PowerShell pada Windows.
-- **Multi-distro** - Mengesan pengurus pakej anda secara automatik (apk, apt, dnf, pacman, zypper, brew, winget, choco). Berfungsi pada Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, ChromeOS, Android (Termux) dan Windows.
-- **Menu multi-pilih** - Pilih beberapa operasi dalam satu langkah. Pasang Go, Rust dan Python tanpa perlu jalankan skrip semula.
-- **Operasi atomik** - Setiap pemasangan mempunyai pilihan keluarkan yang sepadan. Setiap operasi mengesahkan sebelum meneruskan.
+- **Tiada kebergantungan** — POSIX `sh` tulen dan PowerShell 5.1+. Semua yang dipasang diambil dari sumber rasmi.
+- **Boleh dijalankan di mana-mana** — Skrip yang sama merentasi 10+ distro Linux, macOS, WSL2, Chromebook, Android (Termux), dan Windows (PowerShell). Diuji dalam bekas LXC, mesin maya, dan ChromeOS Crostini.
+- **Multi-distro** — Auto-kesan 6 pengurus pakej (apk, apt, dnf, pacman, zypper, brew). Berfungsi pada Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, dan Termux.
+- **Seni bina modular** — Skrip jauh atas permintaan dalam `flu.sh`. Klon dan jalankan secara tempatan untuk operasi tanpa rangkaian.
+- **Operasi kelompok** — `upgrade_all.sh` menatar semua alat yang dipasang dalam satu laluan. Status Check menunjukkan semua versi yang dipasang. Compare With Latest menyemak kemas kini.
 
-## Platform yang disokong
+## Platform yang Disokong
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
-  <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
-  <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
-  <img src="https://img.shields.io/badge/WSL2-4A4A4A?style=for-the-badge&logo=windows-terminal&logoColor=white" alt="WSL2">
-  <img src="https://img.shields.io/badge/Chromebook-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Chromebook">
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
-  <br>
-  <img src="https://img.shields.io/badge/Alpine-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white" alt="Alpine">
-  <img src="https://img.shields.io/badge/Debian-A80030?style=for-the-badge&logo=debian&logoColor=white" alt="Debian">
-  <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Ubuntu">
-  <img src="https://img.shields.io/badge/Fedora-294172?style=for-the-badge&logo=fedora&logoColor=white" alt="Fedora">
-  <img src="https://img.shields.io/badge/Arch-1793D1?style=for-the-badge&logo=arch-linux&logoColor=white" alt="Arch">
-  <br>
-  <img src="https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="Bash">
-  <img src="https://img.shields.io/badge/ZSH-4EAA25?style=for-the-badge&logo=zsh&logoColor=white" alt="ZSH">
-  <img src="https://img.shields.io/badge/PowerShell-5391FE?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell">
-  <img src="https://img.shields.io/badge/BusyBox-293E5A?style=for-the-badge&logo=buzzfeed&logoColor=white" alt="BusyBox">
-  <img src="https://img.shields.io/badge/ash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="ash">
-  <br>
-  <img src="https://img.shields.io/badge/x86__64-6DB33F?style=for-the-badge&logo=amd&logoColor=white" alt="x86_64">
-  <img src="https://img.shields.io/badge/ARM64-00C1DE?style=for-the-badge&logo=arm&logoColor=white" alt="ARM64">
-  <img src="https://img.shields.io/badge/Raspberry_Pi-C51A4A?style=for-the-badge&logo=raspberry-pi&logoColor=white" alt="Raspberry Pi">
-  <img src="https://img.shields.io/badge/LXC-4A4A4A?style=for-the-badge&logo=linux-containers&logoColor=white" alt="LXC">
-</p>
+flu.sh serasi POSIX `sh` dan diuji pada:
 
-| Platform | Seni Bina | Pengurus Pakej | Skrip |
-|----------|-----------|----------------|-------|
-| Alpine Linux | x86_64, ARM | apk | `fu.sh` |
-| Debian / Ubuntu | x86_64, ARM | apt | `fu.sh` |
-| Fedora / RHEL | x86_64, ARM | dnf | `fu.sh` |
-| Arch Linux | x86_64, ARM | pacman | `fu.sh` |
-| openSUSE | x86_64, ARM | zypper | `fu.sh` |
-| macOS (Intel & Apple Silicon) | x64, ARM | Homebrew | `fu.sh` |
-| WSL2 (Ubuntu, Debian) | x86_64, ARM | apt | `fu.sh` |
-| LXC / LXD containers | x86_64, ARM | auto-detected | `fu.sh` |
-| Bare metal servers | x86_64, ARM | auto-detected | `fu.sh` |
-| Raspberry Pi (Pi OS, Ubuntu) | ARM | apt | `fu.sh` |
-| Chromebook (Crostini) | x86_64, ARM | apt (auto-detected) | `fu.sh` |
-| Android / Termux | ARM, x86_64 | pkg (apt) | `fu.sh` |
-| Windows (native) | x64, ARM | winget / choco | `fu.ps1` |
+| Shell | Sokongan TUI |
+|-------|-------------|
+| bash 4+ | Penuh |
+| zsh | Penuh |
+| dash (lalai Debian) | Penuh |
+| ash (Alpine/BusyBox) | Penuh |
 
-## Apa Yang Boleh Dipasang
+| Platform | Pengurus Pakej | Seni Bina |
+|----------|----------------|-----------|
+| Alpine Linux | apk | x86_64, ARM |
+| Debian / Ubuntu | apt | x86_64, ARM |
+| Fedora / RHEL | dnf | x86_64, ARM |
+| Arch Linux | pacman | x86_64, ARM |
+| openSUSE | zypper | x86_64, ARM |
+| macOS (Intel & Apple Silicon) | Homebrew | x64, ARM |
+| WSL2 (Ubuntu, Debian) | apt | x86_64, ARM |
+| Chromebook (Crostini) | apt | x86_64, ARM |
+| Android (Termux) | pkg | ARM, x86_64 |
+| Raspberry Pi (Pi OS, Ubuntu) | apt | ARM |
 
-| Kategori | Alat |
-|----------|------|
-| **Containers** | Docker |
-| **Rangkaian** | Avahi Daemon + systemd-resolved - mDNS/NSS penemuan nama hos dan DNS (Linux sahaja) |
-| **Bahasa** | Go, Rust, Python (dengan pip, pipx, uv), Node.js (LTS melalui nvm), PHP |
-| **Runtimes** | Bun |
-| **Pengurus Pakej** | Yarn, Composer (PHP), npm |
-| **Pembangunan Web** | Pemasang Laravel (melalui Composer) |
-| **Alat AI** | OpenCode, GSD (Rokicool), OpenChamber |
-| **Produktiviti** | Fancy Prompt - penambahbaikan shell pilihan |
-| **Terminal** | Lumpuhkan pelaporan tetikus - mengelakkan acara tetikus mengganggu alat baris arahan |
-| **Diagnostik** | Status Check - tunjuk alat dan versi yang dipasang; Compare With Latest - ambil versi terkini dari GitHub/npm/go.dev/nodejs.org dan tunjuk alat mana perlu dikemas kini |
-
-## Prasyarat
-
-- Shell yang serasi POSIX (bash, zsh, ash, sh) - atau PowerShell 5.1+ pada Windows  
-- curl atau wget untuk muat turun  
-- Keistimewaan sudo (untuk pemasangan pakej sistem)  
-- Sambungan Internet
-
-**NOTA:** Untuk WSL2, jalankan di dalam pengedaran Linux, bukan PowerShell.
-
-## Mula Pantas
-
-```bash
-# Option 1: Klon dan jalankan
-git clone https://github.com/C-Fu/dev-fu.git
-cd dev-fu
-bash fu.sh
-```
-
-```bash
-# Option 2: bash (Linux / macOS / WSL2)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
-```
-
-```zsh
-# Option 2: zsh (lalai macOS)
-zsh -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
-```
-
-```sh
-# Option 2: sh / dash (lalai Debian)
-sh -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
-```
-
-```sh
-# Option 2: ash / BusyBox (lalai Alpine)
-ash -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
-```
-
-```fish
-# Option 2: fish
-bash -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
-```
-
-```powershell
-# Windows (PowerShell) - bypasses execution policy
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-```
-
-## Cara Guna
-
-Jalankan `./fu.sh` dan pilih pilihan dari menu interaktif:
-
-```
- 1)  Status Check
- 2)  Compare With Latest
- 3)  Upgrade All Tools
- 4)  Set GitHub Token
- 5)  Install Docker
- 6)  Create Fancy Prompt (Purple-Pink)
- 7)  Create Fancy Prompt (Shades of Blue)
- 8)  Install Hostname Discovery (Linux only)
- 9)  Install Go
-10)  Install Rust
-11)  Install Python + Pip + UV + Pipx
-12)  Install NVM + Node LTS
-13)  Install Bun
-14)  Install Yarn
-15)  Disable Mouse Reporting in Terminal
-16)  Install PHP + Laravel
-17)  Install Tailscale
-18)  Install OpenCode + GSD (Rokicool) + OpenChamber
-```
-
-- **Multi-select:** Masukkan nombor yang dipisahkan koma atau ruang (contoh `7,8 9` untuk pasang Go, Rust dan Python bersama)  
-- **Remove:** Awalkan dengan `-` (contoh `-4` untuk keluarkan Docker)  
-- **Banding versi:** Pilihan 2 mengambil versi terkini dari internet dan membandingkannya dengan pemasangan tempatan anda
-- **Upgrade all:** Tekan `u` pada prompt
-- **Quit:** Tekan `q`
-
-Pilihan yang perlu dipilih sendiri sahaja (Hostname Discovery, OpenCode+GSD) mesti digunakan bersendirian.
-
-## Mod Tidak Interaktif (CLI)
-
-Lepas nombor pilihan sebagai argumen untuk jalankan tanpa menu interaktif:
-
-```bash
-# Tatar semua alat
-bash fu.sh u
-
-# Pasang Docker dan Python, keluarkan Go
-bash fu.sh 5 11 -9
-
-# Satu baris dari jauh
-bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh) 5 11 -9
-```
-
-```powershell
-# Windows: Tatar semua alat
-.\fu.ps1 u
-
-# Pasang Docker dan Python, keluarkan Go
-.\fu.ps1 5 11 -9
-```
+> **Windows asli:** Gunakan `flu.ps1` (PowerShell). Untuk WSL2, jalankan `flu.sh` di dalam pengedaran Linux.
 
 ## Nota Mengikut Platform
 
-### Linux
-
-Semua pengurus pakej disokong. Skrip mengesan pengurus pakej anda secara automatik.
-
-Pilihan 7 (Hostname Discovery) memasang `avahi-daemon` untuk mDNS/NSS dan `systemd-resolved` untuk resolusi DNS, kemudian membuat pautan simbolik `/etc/resolv.conf` ke stub systemd-resolved. Pilihan ini adalah untuk Linux sahaja dan tidak tersedia pada macOS, Windows atau WSL.
-
 ### Alpine / BusyBox
 
-- Pilihan 12 (NVM + Node LTS) memasang Node.js terus melalui `apk add nodejs npm` dan bukannya NVM. Perpustakaan musl libc pada Alpine tidak serasi dengan binari Node pra-binaan NVM, dan kompilasi dari sumber sering gagal kerana kekurangan kebergantungan binaan.
-- Pilihan 5 (Docker) menggunakan `apk add docker docker-cli-compose` kerana skrip pemasangan rasmi Docker tidak menyokong Alpine.
+- **NVM + Node LTS** memasang Node.js terus melalui `apk add nodejs npm` dan bukannya NVM. Perpustakaan musl libc pada Alpine tidak serasi dengan binari Node pra-binaan NVM.
+- **Docker** menggunakan `apk add docker docker-cli-compose` kerana skrip pemasangan rasmi Docker tidak menyokong Alpine.
 
 ### macOS
 
-- Memerlukan Homebrew: `brew install bash`  
-- Node melalui nvm, bukan Node sistem
+- Memerlukan [Homebrew](https://brew.sh/) — skrip auto-kesan `brew` sebagai pengurus pakej.
+- Node dipasang melalui NVM, bukan Node sistem.
 
 ### WSL2
 
-- Jalankan di dalam persekitaran Linux, bukan PowerShell  
-- Berfungsi dengan Docker Desktop WSL2 backend
-
-### Windows (PowerShell)
-
-Untuk Windows asli, gunakan `fu.ps1`:
-
-```powershell
-# Option 1: Clone and run locally
-git clone https://github.com/C-Fu/dev-fu.git
-cd dev-fu
-.\fu.ps1
-
-# Option 2: Run directly from remote (bypasses execution policy)
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-
-# Option 3: Bypass execution policy for local script
-powershell -ExecutionPolicy Bypass -File .\fu.ps1
-```
-
-**Nota:** Jika anda melihat ralat "not digitally signed", gunakan Option 2 atau 3 di atas.
-
-### ARM (Apple Silicon, Raspberry Pi)
-
-- Sokongan binaan ARM untuk semua alat  
-- Bun, Go, Rust mempunyai binari ARM asli
+- Jalankan `flu.sh` di dalam pengedaran Linux WSL, bukan dari PowerShell.
+- Berfungsi dengan Docker Desktop WSL2 backend.
 
 ### Chromebook (ChromeOS Crostini)
 
-- Aktifkan Linux (Crostini) dalam Tetapan ChromeOS > Advanced > Developers  
-- Bekas berasaskan Debian dengan `apt` - semua alat berfungsi  
-- Docker berjalan dalam VM Crostini (tiada virtualisasi bersarang diperlukan)  
-- Pilihan 7 mungkin tidak berfungsi jika systemd tidak tersedia
+- Aktifkan Linux (Crostini) dalam **Settings > Advanced > Developers** ChromeOS.
+- Bekas berasaskan Debian dengan `apt` — semua alat berfungsi.
+- Docker berjalan dalam VM Crostini (tiada virtualisasi bersarang diperlukan).
+- Hostname Discovery mungkin tidak berfungsi jika systemd tidak tersedia.
 
 ### Android (Termux)
 
-- Pasang Termux dari F-Droid atau keluaran GitHub  
-- Menggunakan `pkg` (apt-based) sebagai pengurus pakej  
-- Tiada `sudo` diperlukan - Termux berjalan sebagai satu pengguna  
-- Pilihan 7 tidak tersedia (tiada systemd)  
-- Sesetengah alat (Docker, PHP) mempunyai sokongan terhad pada Android
+- Pasang [Termux](https://termux.dev/) dari F-Droid atau keluaran GitHub.
+- Menggunakan `pkg` (berasaskan apt). Tiada `sudo` diperlukan — Termux berjalan sebagai pengguna tunggal.
+- Hostname Discovery tidak tersedia (tiada systemd).
+- Sesetengah alat (Docker, PHP) mempunyai sokongan terhad pada Android.
 
-## FAQ - Penyelesaian Masalah
+### ARM (Apple Silicon, Raspberry Pi)
 
-### "command not found"
+- Sokongan binaan ARM untuk semua alat. Bun, Go, Rust mempunyai binari ARM asli.
 
-Sesetengah alat dipasang ke `~/.cargo/bin`, `~/.bun/bin` atau `~/.nvm/versions/node/`. Tambah ke PATH:
+## Penyelesaian Masalah
+
+### "command not found" selepas pemasangan
+
+Sesetengah alat dipasang ke laluan tidak standard. Tambah ke profil shell anda:
 
 ```bash
-source ~/.cargo/env    # Rust
-export PATH="$HOME/.bun/bin:$PATH"  # Bun
-source ~/.nvm/nvm.sh   # Node
+export PATH="$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.local/bin:$PATH"
+source ~/.cargo/env     # Rust
+source ~/.nvm/nvm.sh    # Node.js (NVM)
+```
+
+### Terminal tidak dipulihkan selepas keluar
+
+Tekan `Ctrl+C` atau jalankan `reset`. flu.sh mempunyai pembersihan selamat isyarat melalui `_flu_cleanup_exit()` yang memulihkan tetapan terminal pada setiap laluan keluar (normal, ralat, atau isyarat).
+
+### Pengambilan modul gagal (ralat rangkaian)
+
+flu.sh cuba semula 3 kali dengan kelewatan 2 saat. Untuk persekitaran dengan rangkaian tidak stabil, klon repositori dan jalankan secara tempatan:
+
+```bash
+git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu.sh
+```
+
+### "No such file" pada curl-pipe-bash
+
+BusyBox dan dash tidak menyokong process substitution (`<(curl ...)`). Gunakan bentuk alternatif:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Permission denied
 
 ```bash
-chmod +x fu.sh
+chmod +x flu.sh
 ```
 
-### Network issues
+### TUI tidak dipaparkan (teks berselerak)
 
-Skrip termasuk logik cuba semula (3 attempts, 2s delay). Untuk pemasangan manual, rujuk dokumentasi pemasangan alat masing-masing.
-
-## Exit Codes
-
-- 0 - Success
-- 1 - Error (check error message kalau nak tau sebab dia)
-- 2 - Option salah
+Pastikan terminal anda menyokong kod escape ANSI. Kebanyakan terminal moden menyokongnya — cuba `xterm-256color` atau `screen-256color` sebagai tetapan `TERM` anda. Untuk persekitaran sangat minimal (bare `dash` tanpa TTY), flu.sh beralih kepada prompt bernombor teks biasa.
 
 ## License
 
