@@ -281,7 +281,7 @@ _flu_parse_params() {
 
   _fpp_rc=$?
   unset _fpp_input
-  return $_fpp_rc
+  return "$_fpp_rc"
 }
 
 # ---------------------------------------------------------------------------
@@ -602,7 +602,7 @@ _flu_execute_with_timeout() {
 
   _flu_exit_code=${_fet_rc:-1}
   unset _fet_timeout _fet_script _fet_pid _fet_watchdog _fet_rc
-  return $_flu_exit_code
+  return "$_flu_exit_code"
 }
 
 # ---------------------------------------------------------------------------
@@ -710,10 +710,13 @@ flu_module_execute() {
 
   # Cleanup temp files
   rm -f "$_fetmp" "$_fme_out" "$_fme_err" 2>/dev/null
+  
+  # Save exit code before unsetting the variable
+  _fme_ret=${_fme_exit_code:-1}
   unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
   unset _fme_timeout _fme_exit_code _fme_out _fme_err
   unset _flu_module_output _flu_module_stderr
-  return "$_fme_exit_code"
+  return "$_fme_ret"
 }
 
 # ---------------------------------------------------------------------------
