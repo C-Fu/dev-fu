@@ -128,7 +128,7 @@ _compare_row "Bun" \
 # Node.js
 _compare_row "Node.js" \
     "$(_local_ver node --version)" \
-    "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '\"version\"' | head -1 | sed 's/.*\"version\"[[:space:]]*:[[:space:]]*\"v\\([^\"]*\\)\".*/\\1/')"
+    "$(curl -fsSL --max-time 5 'https://nodejs.org/dist/index.json' 2>/dev/null | grep '\"version\"' | head -1 | awk -F'"' '{print $4}' | sed 's/^v//')"
 
 # Python
 _compare_row "Python" \

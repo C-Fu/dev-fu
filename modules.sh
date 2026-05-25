@@ -558,6 +558,7 @@ _flu_execute_with_timeout() {
   if command -v timeout >/dev/null 2>&1; then
     # Preferred path: use timeout command
     timeout "$_fet_timeout" sh -c '
+      trap "exit 130" INT TERM
       trap '\''_fe_trap_rc=$?'\'' EXIT
       # Module execution with strict error handling (set -euo pipefail equivalent)
       set -eu
@@ -569,6 +570,7 @@ _flu_execute_with_timeout() {
     # Fallback: background process + watchdog kill pattern
     # POSIX-compatible — no `timeout` command needed
     (
+      trap 'exit 130' INT TERM
       trap '_fe_trap_rc=$?' EXIT
       # Module execution with strict error handling (set -euo pipefail equivalent)
       set -eu
