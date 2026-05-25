@@ -553,15 +553,13 @@ flu_menu_navigate() {
 
         # Check if leaf
         if flu_menu_is_leaf "$_fm_new_path"; then
-          # Leaf selected — return path + action
+          # Leaf selected — return path via TUI_RESULT (caller extracts action)
           tui_restore
-          _fm_action=$(flu_menu_get_action "$_fm_new_path")
-          printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
           TUI_RESULT="$_fm_new_path"
           # Cleanup all _fm_* variables
           unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
           unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
-          unset _fm_key _fm_bottom _fm_max_scroll _fm_action
+          unset _fm_key _fm_bottom _fm_max_scroll
           return 0
         fi
 
@@ -599,12 +597,10 @@ flu_menu_navigate() {
           fi
           if flu_menu_is_leaf "$_fm_new_path"; then
             tui_restore
-            _fm_action=$(flu_menu_get_action "$_fm_new_path")
-            printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
             TUI_RESULT="$_fm_new_path"
             unset _fm_path _fm_new_path _fm_selected _fm_cursor _fm_scroll
             unset _fm_show_help _fm_error_msg _fm_page_size _fm_dsl_file
-            unset _fm_key _fm_bottom _fm_max_scroll _fm_action
+            unset _fm_key _fm_bottom _fm_max_scroll
             unset _flu_menu_esc_result _flu_menu_b1 _flu_menu_b2
             return 0
           fi
@@ -728,10 +724,8 @@ _flu_menu_navigate_fallback() {
           fi
 
           if flu_menu_is_leaf "$_fm_new_path"; then
-            _fm_action=$(flu_menu_get_action "$_fm_new_path")
-            printf '%s|%s\n' "$_fm_new_path" "$_fm_action"
             TUI_RESULT="$_fm_new_path"
-            unset _fm_path _fm_new_path _fm_selected _fm_breadcrumb _fm_i _fm_choice _fm_choice_num _fm_action
+            unset _fm_path _fm_new_path _fm_selected _fm_breadcrumb _fm_i _fm_choice _fm_choice_num
             return 0
           fi
 
