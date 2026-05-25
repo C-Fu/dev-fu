@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 7: Feature Parity** — All 18 fu.sh menu options in flu.sh TUI with emoji labels, category submenus, and working module scripts with install/remove and CLI params (completed 2026-05-25)
 - [x] **Phase 8: Intro Polish** — ASCII dev-fu logo and platform detection info on flu.sh startup (completed 2026-05-25)
-- [ ] **Phase 9: Documentation** — README restructured with flu.sh as primary, fu.sh docs moved to README-Fu.md
+- [x] **Phase 9: Documentation** — README restructured with flu.sh as primary, fu.sh docs moved to README-Fu.md (completed 2026-05-25)
 
 ## Phase Details
 
@@ -81,9 +81,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Restructure README.md with flu.sh as primary: quick-start, features, menu structure, module architecture, supported platforms, troubleshooting
-- [ ] 09-02-PLAN.md — Create README-Fu.md with fu.sh documentation: screenshot, usage, CLI mode, platform notes, troubleshooting, cross-reference back to README.md
-- [ ] 09-03-PLAN.md — Update README.ms-MY.md and create README-Fu.ms-MY.md (Bahasa Melayu translations matching English counterparts)
+- [x] 09-01-PLAN.md — Restructure README.md with flu.sh as primary: quick-start, features, menu structure, module architecture, supported platforms, troubleshooting
+- [x] 09-02-PLAN.md — Create README-Fu.md with fu.sh documentation: screenshot, usage, CLI mode, platform notes, troubleshooting, cross-reference back to README.md
+- [x] 09-03-PLAN.md — Update README.ms-MY.md and create README-Fu.ms-MY.md (Bahasa Melayu translations matching English counterparts)
 
 ## Progress
 
@@ -100,4 +100,4 @@ Phases execute in numeric order: 7 → 8 → 9
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
 | 7. Feature Parity | v1.1 | 3/3 | Complete    | 2026-05-25 |
 | 8. Intro Polish | v1.1 | 1/1 | Complete    | 2026-05-25 |
-| 9. Documentation | v1.1 | 0/3 | Ready to execute | - |
+| 9. Documentation | v1.1 | 3/3 | Complete    | 2026-05-25 |
