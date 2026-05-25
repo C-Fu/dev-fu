@@ -78,7 +78,12 @@ Plans:
   1. README.md focuses on flu.sh with clear sections for curl-pipe-bash usage, features, menu structure, module architecture, supported platforms, and troubleshooting
   2. README-Fu.md contains all fu.sh-specific documentation with a prominent cross-reference link back to README.md
   3. Malaysian translations (README.ms-MY.md, README-Fu.ms-MY.md) match their English counterparts
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Restructure README.md with flu.sh as primary: quick-start, features, menu structure, module architecture, supported platforms, troubleshooting
+- [ ] 09-02-PLAN.md — Create README-Fu.md with fu.sh documentation: screenshot, usage, CLI mode, platform notes, troubleshooting, cross-reference back to README.md
+- [ ] 09-03-PLAN.md — Update README.ms-MY.md and create README-Fu.ms-MY.md (Bahasa Melayu translations matching English counterparts)
 
 ## Progress
 
@@ -95,4 +100,4 @@ Phases execute in numeric order: 7 → 8 → 9
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
 | 7. Feature Parity | v1.1 | 3/3 | Complete    | 2026-05-25 |
 | 8. Intro Polish | v1.1 | 1/1 | Complete    | 2026-05-25 |
-| 9. Documentation | v1.1 | 0/0 | Not started | - |
+| 9. Documentation | v1.1 | 0/3 | Ready to execute | - |
