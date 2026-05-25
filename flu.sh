@@ -44,12 +44,13 @@ FLU_SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # Subsystems (tui.sh, menu.sh, modules.sh) set their own traps during
 # TUI operations, but this trap covers gaps between TUI sessions.
 _flu_cleanup_exit() {
-    # Attempt terminal restoration — safe to call even if already restored
-    # tui_restore is idempotent: if _tui_saved_stty is empty, it's a no-op
-    tui_restore 2>/dev/null || true
-
-    # Clear any remaining spinner
+    # Kill the spinner background process (don't wait — may hang)
     flu_spinner_stop 2>/dev/null || true
+
+    # Force terminal restoration — restore cooked mode even if stty -g failed
+    stty echo icanon 2>/dev/null || true
+    stty sane 2>/dev/null || true
+    tui_restore 2>/dev/null || true
 
     printf '\nflu.sh — Goodbye!\n'
     exit 130
