@@ -559,6 +559,7 @@ _flu_execute_with_timeout() {
   # tries to read from /dev/tty. Background processes don't have
   # this limitation.
   (
+    stty sane 2>/dev/null < /dev/tty || true
     trap 'exit 130' INT TERM
     trap '_fe_trap_rc=$?' EXIT
     set -eu
@@ -662,8 +663,6 @@ flu_module_execute() {
   fi
 
   # Step 6: Execute module with timeout enforcement, capture outputs
-  # Reset terminal to sane cooked mode so sudo/ssh work properly
-  stty sane 2>/dev/null < /dev/tty || true
   _fme_timeout="${_fmp_timeout:-300}"
   _fme_out="/tmp/flu_module_out_$$"
   _fme_err="/tmp/flu_module_err_$$"
