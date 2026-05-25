@@ -1,13 +1,13 @@
 #!/usr/bin/env sh
-# @name: Install Go
+# @name: Install Yarn
 # @params:
 # @platforms: linux, darwin
 # @version: 1.0.0
-# @deps:
+# @deps: npm
 # @timeout: 300
 #
-# Installs the Go programming language via the system package manager.
-# golang-go on apt/dnf/pacman/zypper, go on apk.
+# Installs Yarn package manager. Uses npm global install as primary method,
+# with package manager fallback for systems without npm.
 
 set -eu
 
@@ -42,29 +42,30 @@ _pkg_install() {
     esac
 }
 
-_pkg_update() {
-    case "${FLU_PKG_MGR:-apt}" in
-        apt)    _maybe_sudo apt-get update ;;
-        apk)    _maybe_sudo apk update ;;
-        dnf)    _maybe_sudo dnf check-update || true ;;
-        pacman) _maybe_sudo pacman -Sy ;;
-        zypper) _maybe_sudo zypper refresh ;;
-        brew)   brew update ;;
-    esac
-}
-
-if command -v go >/dev/null 2>&1; then
-    printf 'Go already installed: %s\n' "$(go version)"
+if command -v yarn >/dev/null 2>&1; then
+    printf 'Yarn already installed: %s\n' "$(yarn --version)"
     exit 0
 fi
 
-_pkg_update || { printf 'Package update failed\n' >&2; exit 1; }
-
-GO_PKG="golang-go"
-if [ "${FLU_PKG_MGR:-}" = "apk" ]; then
-    GO_PKG="go"
+# Try npm global install first (primary method)
+if command -v npm >/dev/null 2>&1; then
+    printf 'Installing Yarn via npm...\n'
+    npm install -g yarn 2>/dev/null && {
+        printf 'Yarn installed successfully\n'
+        exit 0
+    }
+    printf 'npm install failed, trying package manager...\n'
 fi
 
-_pkg_install "$GO_PKG" || { printf 'Go install failed\n' >&2; exit 1; }
+# Fallback to package manager
+case "${FLU_PKG_MGR:-apt}" in
+    apt)    _pkg_install yarn ;;
+    apk)    _pkg_install yarn ;;
+    dnf)    _pkg_install yarnpkg ;;
+    pacman) _pkg_install yarn ;;
+    zypper) _pkg_install yarn ;;
+    brew)   brew install yarn ;;
+    *)      printf 'No install method available for Yarn\n' >&2; exit 1 ;;
+esac
 
-printf 'Go installed successfully\n'
+printf 'Yarn installed successfully\n'
