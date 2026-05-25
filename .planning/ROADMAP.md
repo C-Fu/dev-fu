@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Milestone Goal:** flu.sh reaches full feature parity with fu.sh (all 18 operations), gets a polished intro screen, and README restructuring makes flu.sh the primary project face.
 
 - [x] **Phase 7: Feature Parity** — All 18 fu.sh menu options in flu.sh TUI with emoji labels, category submenus, and working module scripts with install/remove and CLI params (completed 2026-05-25)
-- [ ] **Phase 8: Intro Polish** — ASCII dev-fu logo and platform detection info on flu.sh startup
+- [x] **Phase 8: Intro Polish** — ASCII dev-fu logo and platform detection info on flu.sh startup (completed 2026-05-25)
 - [ ] **Phase 9: Documentation** — README restructured with flu.sh as primary, fu.sh docs moved to README-Fu.md
 
 ## Phase Details
@@ -66,7 +66,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md — ASCII dev-fu logo rendered in magenta via _flu_render_logo() with platform info box below
+- [x] 08-01-PLAN.md — ASCII dev-fu logo rendered in magenta via _flu_render_logo() with platform info box below
 
 **UI hint**: yes
 
@@ -94,5 +94,5 @@ Phases execute in numeric order: 7 → 8 → 9
 | 5. Integration & Orchestrator | v1.0 | 0/3 | Complete | 2026-05-24 |
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
 | 7. Feature Parity | v1.1 | 3/3 | Complete    | 2026-05-25 |
-| 8. Intro Polish | v1.1 | 0/1 | Planned | - |
+| 8. Intro Polish | v1.1 | 1/1 | Complete    | 2026-05-25 |
 | 9. Documentation | v1.1 | 0/0 | Not started | - |
