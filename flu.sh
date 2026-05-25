@@ -328,19 +328,8 @@ while [ "$_flu_running" = "true" ]; do
     fi
 
     # --- Step 3: Module Execution with Spinner (INTG-01, D-05) ---
-    # Start the spinner BEFORE flu_module_execute so it's visible
-    # during the network fetch phase (flu_module_fetch uses curl/wget).
-    # The spinner renders via background process.
-    # flu_module_execute internally:
-    #   1. flu_module_fetch() — network call (spinner visible)
-    #   2. flu_module_parse_metadata()
-    #   3. flu_module_set_env()
-    #   4. Platform compatibility check
-    #   5. flu_module_collect_params() — TUI prompts
-    #   6. Execute module in subshell
-    #   7. flu_module_display_result() — TUI modal
-    # After flu_module_display_result, tui_restore() is called
-    # internally, returning terminal to cooked mode.
+    # Re-register signal trap — tui_restore() in flu_menu_navigate clears it
+    trap '_flu_cleanup_exit' INT TERM HUP QUIT
     flu_spinner_start
     flu_module_execute "$_flu_action"
     _flu_mod_rc=$?
