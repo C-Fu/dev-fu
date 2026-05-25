@@ -600,7 +600,7 @@ _flu_execute_with_timeout() {
     fi
   fi
 
-  _flu_exit_code=$_fet_rc
+  _flu_exit_code=${_fet_rc:-1}
   unset _fet_timeout _fet_script _fet_pid _fet_watchdog _fet_rc
   return $_flu_exit_code
 }
