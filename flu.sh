@@ -328,13 +328,13 @@ while [ "$_flu_running" = "true" ]; do
         continue
     fi
 
-    # --- Step 3: Module Execution with Spinner (INTG-01, D-05) ---
+    # --- Step 3: Module Execution ---
     # Re-register signal trap — tui_restore() in flu_menu_navigate clears it
     trap '_flu_cleanup_exit' INT TERM HUP QUIT
-    flu_spinner_start
+    printf '\033[?25l'       # hide cursor
+    printf '\n  Running %s...\n' "$_flu_action"
     flu_module_execute "$_flu_action"
     _flu_mod_rc=$?
-    flu_spinner_stop
 
     # --- Error Recovery (D-07, INTG-02) ---
     if [ "$_flu_mod_rc" -ne 0 ]; then

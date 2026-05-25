@@ -676,12 +676,7 @@ flu_module_execute() {
     }
   fi
 
-  # Step 6: Stop spinner before module execution
-  # The spinner fights with sudo prompts and other /dev/tty I/O.
-  # Spinner is useful during fetch (step 1) but detrimental during script execution.
-  flu_spinner_stop 2>/dev/null || true
-
-  # Execute module with timeout enforcement, capture outputs
+  # Step 6: Execute module with timeout enforcement, capture outputs
   _fme_timeout="${_fmp_timeout:-300}"
   _fme_out="/tmp/flu_module_out_$$"
   _fme_err="/tmp/flu_module_err_$$"
