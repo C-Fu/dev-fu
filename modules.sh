@@ -554,34 +554,27 @@ _flu_execute_with_timeout() {
   _fet_timeout="$1"; shift
   _fet_script="$1"; shift
 
-  # Use background+watchdog pattern primarily — timeout(1) creates
-  # a new process group which causes SIGTTIN when the child (sudo)
-  # tries to read from /dev/tty. Background processes don't have
-  # this limitation.
-  (
-    stty sane 2>/dev/null < /dev/tty || true
-    trap 'exit 130' INT TERM
-    trap '_fe_trap_rc=$?' EXIT
-    set -eu
-    sh "$_fet_script" -- "$@"
-  ) &
-  _fet_pid=$!
-  (
-    sleep "$_fet_timeout"
-    kill -9 "$_fet_pid" 2>/dev/null || true
-  ) &
-  _fet_watchdog=$!
-  wait "$_fet_pid" 2>/dev/null
-  _fet_rc=$?
-  kill -9 "$_fet_watchdog" 2>/dev/null || true
-  wait "$_fet_watchdog" 2>/dev/null || true
+  stty sane 2>/dev/null < /dev/tty || true
 
-  if [ "$_fet_rc" -gt 128 ] 2>/dev/null; then
+  # Foreground subshell: stays in the foreground process group so
+  # sudo/ssh can read from /dev/tty without SIGTTIN.  A watchdog
+  # process enforces the timeout by killing the subshell's real PID
+  # (discovered via the $PPID trick inside a command substitution).
+  set +e
+  (
+    _fet_me=$(exec sh -c 'printf "%s" "$PPID"')
+    ( sleep "$_fet_timeout"; kill -9 "$_fet_me" 2>/dev/null ) &
+    exec sh "$_fet_script" -- "$@"
+  )
+  _fet_rc=$?
+  set -e
+
+  if [ "$_fet_rc" -eq 137 ]; then
     _fet_rc=124
   fi
 
   _flu_exit_code=${_fet_rc:-1}
-  unset _fet_timeout _fet_script _fet_pid _fet_watchdog _fet_rc
+  unset _fet_timeout _fet_script _fet_rc
   return "$_flu_exit_code"
 }
 
