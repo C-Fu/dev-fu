@@ -676,7 +676,12 @@ flu_module_execute() {
     }
   fi
 
-  # Step 6: Execute module with timeout enforcement, capture outputs
+  # Step 6: Stop spinner before module execution
+  # The spinner fights with sudo prompts and other /dev/tty I/O.
+  # Spinner is useful during fetch (step 1) but detrimental during script execution.
+  flu_spinner_stop 2>/dev/null || true
+
+  # Execute module with timeout enforcement, capture outputs
   _fme_timeout="${_fmp_timeout:-300}"
   _fme_out="/tmp/flu_module_out_$$"
   _fme_err="/tmp/flu_module_err_$$"
@@ -688,11 +693,6 @@ flu_module_execute() {
   _flu_module_output=$(cat "$_fme_out" 2>/dev/null)
   _flu_module_stderr=$(cat "$_fme_err" 2>/dev/null)
   rm -f "$_fme_out" "$_fme_err"
-
-  # Step 7: Stop spinner BEFORE displaying results (D-12, D-13)
-  # Spinner must stop before clear_screen in the result modal, otherwise
-  # the background process keeps writing "Loading" on top of the display.
-  flu_spinner_stop 2>/dev/null || true
 
   # Display results in box-rendered modal
   # On success: show module stdout. On failure: show stderr + recovery hints.
