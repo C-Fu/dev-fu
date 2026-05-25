@@ -63,7 +63,11 @@ Plans:
   1. User launching flu.sh sees the ASCII "dev-fu" LEGO-style block art centered on screen before the menu loads
   2. The intro screen displays detected platform information (OS, distro, package manager, architecture) alongside the logo
   3. Logo and platform info render correctly across bash, zsh, dash, ash (all POSIX shells)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — ASCII dev-fu logo rendered in magenta via _flu_render_logo() with platform info box below
+
 **UI hint**: yes
 
 ### Phase 9: Documentation
@@ -90,5 +94,5 @@ Phases execute in numeric order: 7 → 8 → 9
 | 5. Integration & Orchestrator | v1.0 | 0/3 | Complete | 2026-05-24 |
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
 | 7. Feature Parity | v1.1 | 3/3 | Complete    | 2026-05-25 |
-| 8. Intro Polish | v1.1 | 0/0 | Not started | - |
+| 8. Intro Polish | v1.1 | 0/1 | Planned | - |
 | 9. Documentation | v1.1 | 0/0 | Not started | - |
