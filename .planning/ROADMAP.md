@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Milestone Goal:** flu.sh reaches full feature parity with fu.sh (all 18 operations), gets a polished intro screen, and README restructuring makes flu.sh the primary project face.
 
-- [ ] **Phase 7: Feature Parity** — All 18 fu.sh menu options in flu.sh TUI with emoji labels, category submenus, and working module scripts with install/remove and CLI params
+- [x] **Phase 7: Feature Parity** — All 18 fu.sh menu options in flu.sh TUI with emoji labels, category submenus, and working module scripts with install/remove and CLI params (completed 2026-05-25)
 - [ ] **Phase 8: Intro Polish** — ASCII dev-fu logo and platform detection info on flu.sh startup
 - [ ] **Phase 9: Documentation** — README restructured with flu.sh as primary, fu.sh docs moved to README-Fu.md
 
@@ -50,8 +50,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 07-01-PLAN.md — menu.db expansion with all 18 fu.sh operations across 6 categories, action ID registry
-- [ ] 07-02-PLAN.md — 18 module scripts for package-manager-based tools (Go, Rust, Python, NVM+Node, Bun, PHP+Laravel, Yarn, Docker, Tailscale) — install + remove
-- [ ] 07-03-PLAN.md — 13 module scripts for shell config, settings, diagnostics (Fancy Prompts, Avahi, OpenCode+GSD, GitHub Token, Mouse Reporting, Status Check, Compare, Upgrade All)
+- [x] 07-02-PLAN.md — 18 module scripts for package-manager-based tools (Go, Rust, Python, NVM+Node, Bun, PHP+Laravel, Yarn, Docker, Tailscale) — install + remove
+- [x] 07-03-PLAN.md — 13 module scripts for shell config, settings, diagnostics (Fancy Prompts, Avahi, OpenCode+GSD, GitHub Token, Mouse Reporting, Status Check, Compare, Upgrade All)
 
 **UI hint**: yes
 
@@ -89,6 +89,6 @@ Phases execute in numeric order: 7 → 8 → 9
 | 4. Module Architecture | v1.0 | 3/3 | Complete | 2026-05-24 |
 | 5. Integration & Orchestrator | v1.0 | 0/3 | Complete | 2026-05-24 |
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
-| 7. Feature Parity | v1.1 | 1/3 | In Progress|  |
+| 7. Feature Parity | v1.1 | 3/3 | Complete    | 2026-05-25 |
 | 8. Intro Polish | v1.1 | 0/0 | Not started | - |
 | 9. Documentation | v1.1 | 0/0 | Not started | - |
