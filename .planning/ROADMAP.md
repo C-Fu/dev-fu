@@ -49,7 +49,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — menu.db expansion with all 18 fu.sh operations across 6 categories, action ID registry
+- [x] 07-01-PLAN.md — menu.db expansion with all 18 fu.sh operations across 6 categories, action ID registry
 - [ ] 07-02-PLAN.md — 18 module scripts for package-manager-based tools (Go, Rust, Python, NVM+Node, Bun, PHP+Laravel, Yarn, Docker, Tailscale) — install + remove
 - [ ] 07-03-PLAN.md — 13 module scripts for shell config, settings, diagnostics (Fancy Prompts, Avahi, OpenCode+GSD, GitHub Token, Mouse Reporting, Status Check, Compare, Upgrade All)
 
@@ -89,6 +89,6 @@ Phases execute in numeric order: 7 → 8 → 9
 | 4. Module Architecture | v1.0 | 3/3 | Complete | 2026-05-24 |
 | 5. Integration & Orchestrator | v1.0 | 0/3 | Complete | 2026-05-24 |
 | 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
-| 7. Feature Parity | v1.1 | 0/3 | Planned | - |
+| 7. Feature Parity | v1.1 | 1/3 | In Progress|  |
 | 8. Intro Polish | v1.1 | 0/0 | Not started | - |
 | 9. Documentation | v1.1 | 0/0 | Not started | - |
