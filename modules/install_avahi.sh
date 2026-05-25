@@ -16,7 +16,7 @@ _maybe_sudo() {
     if [ "${FLU_IS_ROOT:-0}" = "1" ] || ! command -v sudo >/dev/null 2>&1; then
         "$@"
     else
-        sudo "$@"
+        sudo -n "$@" 2>/dev/null || { printf 'sudo password required\n' >&2; return 1; }
     fi
 }
 
