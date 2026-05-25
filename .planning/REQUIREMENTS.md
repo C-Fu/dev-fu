@@ -54,21 +54,21 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| MENU-05 | — | Pending |
-| MENU-06 | — | Pending |
-| MENU-07 | — | Pending |
-| MODL-06 | — | Pending |
-| MODL-07 | — | Pending |
-| MODL-08 | — | Pending |
-| POLISH-01 | — | Pending |
-| POLISH-02 | — | Pending |
+| DOC-01 | Phase 9 | Pending |
+| DOC-02 | Phase 9 | Pending |
+| MENU-05 | Phase 7 | Pending |
+| MENU-06 | Phase 7 | Pending |
+| MENU-07 | Phase 7 | Pending |
+| MODL-06 | Phase 7 | Pending |
+| MODL-07 | Phase 7 | Pending |
+| MODL-08 | Phase 7 | Pending |
+| POLISH-01 | Phase 8 | Pending |
+| POLISH-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 10 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-25*
