@@ -29,6 +29,7 @@ TUI_GREEN="${ESC}[32m"
 TUI_YELLOW="${ESC}[33m"
 TUI_CYAN="${ESC}[36m"
 TUI_WHITE="${ESC}[37m"
+TUI_MAGENTA="${ESC}[35m"
 
 # ---------------------------------------------------------------------------
 # Section 3: Box-drawing character auto-detection

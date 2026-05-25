@@ -71,6 +71,80 @@ trap '_flu_cleanup_exit' INT TERM HUP QUIT
 flu_module_set_env
 
 # ──────────────
+# 🎨 Logo Art — ASCII "dev-fu" LEGO-style block characters
+# ──────────────
+# Renders the branded dev-fu logo centered on screen.
+# Uses TUI_MAGENTA for color matching fu.sh branding.
+# Logo is 6 lines tall, ~62 chars wide (including border chars).
+# Requires: tui_init() already called, _tui_use_tui=true.
+_flu_render_logo() {
+    # Get terminal dimensions
+    _flu_logo_cols=$(tput cols 2>/dev/null || printf '80')
+    _flu_logo_rows=$(tput lines 2>/dev/null || printf '24')
+
+    # Logo width: 60 characters of visual content
+    _flu_logo_width=60
+    _flu_logo_start_col=$(( (_flu_logo_cols - _flu_logo_width) / 2 ))
+    # Ensure minimum column of 1
+    [ "$_flu_logo_start_col" -lt 1 ] && _flu_logo_start_col=1
+
+    # Position logo: start at row 1-3 for visual centering
+    # If terminal is short, start at row 1; otherwise center vertically
+    _flu_logo_start_row=$(( (_flu_logo_rows - 6) / 3 ))
+    [ "$_flu_logo_start_row" -lt 1 ] && _flu_logo_start_row=1
+
+    # Render each line of the logo using _tui_printf_at
+    # Each line is left-trimmed of its leading whitespace from fu.sh,
+    # so we rely on _flu_logo_start_col for horizontal centering.
+    _flu_logo_row=$_flu_logo_start_row
+
+    # Line 1: "    ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s    ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    _flu_logo_row=$((_flu_logo_row + 1))
+    # Line 2: "██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    _flu_logo_row=$((_flu_logo_row + 1))
+    # Line 3: "╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    _flu_logo_row=$((_flu_logo_row + 1))
+    # Line 4: "██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    _flu_logo_row=$((_flu_logo_row + 1))
+    # Line 5: "╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    _flu_logo_row=$((_flu_logo_row + 1))
+    # Line 6: "    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝"
+    # shellcheck disable=SC2059
+    _tui_printf_at "$_flu_logo_row" "$_flu_logo_start_col" \
+        "%s    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝%s" \
+        "$TUI_MAGENTA" "$TUI_RESET"
+
+    # Cleanup locals
+    unset _flu_logo_cols _flu_logo_rows _flu_logo_width _flu_logo_start_col
+    unset _flu_logo_start_row _flu_logo_row
+}
+
+# ──────────────
 # 🖥 Startup Platform Display
 # ──────────────
 # Show detected platform info before entering menu
