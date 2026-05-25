@@ -306,7 +306,7 @@ while [ "$_flu_running" = "true" ]; do
     #     before returning (leaf select)
     # Returns 0 on leaf selection (TUI_RESULT set to "L1|L2|L3" path)
     # Returns 1 on cancel at root level
-    flu_menu_navigate "$FLU_MENU_FILE"
+    flu_menu_navigate "$FLU_MENU_FILE" >/dev/null
     _flu_nav_rc=$?
 
     if [ "$_flu_nav_rc" -ne 0 ]; then

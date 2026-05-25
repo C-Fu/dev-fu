@@ -695,7 +695,12 @@ flu_module_execute() {
   _flu_module_stderr=$(cat "$_fme_err" 2>/dev/null)
   rm -f "$_fme_out" "$_fme_err"
 
-  # Step 7: Display results in box-rendered modal (D-12, D-13)
+  # Step 7: Stop spinner BEFORE displaying results (D-12, D-13)
+  # Spinner must stop before clear_screen in the result modal, otherwise
+  # the background process keeps writing "Loading" on top of the display.
+  flu_spinner_stop 2>/dev/null || true
+
+  # Display results in box-rendered modal
   # On success: show module stdout. On failure: show stderr + recovery hints.
   if [ "$_fme_exit_code" -eq 0 ]; then
     flu_module_display_result 0 "$_flu_module_output" "${_fmp_name:-Module}"
