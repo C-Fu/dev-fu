@@ -563,17 +563,16 @@ _flu_execute_with_timeout() {
   printf '2. entering subshell\n' >> "$_fet_log"
   set +e
   (
-    printf '3. inside subshell pid=%s\n' "$$" >> "${_fet_log}"
     _fet_me=$(exec sh -c 'printf "%s" "$PPID"')
-    printf '4. _fet_me=%s\n' "$_fet_me" >> "${_fet_log}"
+    printf '3. _fet_me=%s\n' "$_fet_me" >> "${_fet_log}"
     ( sleep "$_fet_timeout"; kill -9 "$_fet_me" 2>/dev/null ) &
-    printf '5. about to exec module\n' >> "${_fet_log}"
-    exec sh "$_fet_script" -- "$@"
+    printf '4. about to exec module\n' >> "${_fet_log}"
+    exec sh -x "$_fet_script" -- "$@" >> "${_fet_log}" 2>&1
   )
   _fet_rc=$?
   set -e
 
-  printf '6. subshell done rc=%s\n' "$_fet_rc" >> "$_fet_log"
+  printf '5. subshell done rc=%s\n' "$_fet_rc" >> "$_fet_log"
 
   if [ "$_fet_rc" -eq 137 ]; then
     _fet_rc=124
