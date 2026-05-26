@@ -556,21 +556,29 @@ _flu_execute_with_timeout() {
 
   stty sane 2>/dev/null < /dev/tty || true
 
+  _flu_module_outfile="/tmp/flu_module_out_$$"
+  _fet_rcfile="/tmp/flu_module_rc_$$"
+  : > "$_flu_module_outfile"
+
   set +e
   (
     _fet_me=$(exec sh -c 'printf "%s" "$PPID"')
-    ( sleep "$_fet_timeout"; kill -9 "$_fet_me" 2>/dev/null ) &
-    exec sh "$_fet_script" -- "$@"
-  )
-  _fet_rc=$?
+    ( sleep "$_fet_timeout"; kill -9 "$_fet_me" 2>/dev/null && printf '124' > "$_fet_rcfile" ) &
+    sh "$_fet_script" -- "$@" 2>&1
+    printf '%s' "$?" > "$_fet_rcfile"
+  ) | tee "$_flu_module_outfile"
+  _fet_pipe_rc=$?
   set -e
 
-  if [ "$_fet_rc" -eq 137 ]; then
-    _fet_rc=124
+  if [ -f "$_fet_rcfile" ]; then
+    read _fet_rc < "$_fet_rcfile" 2>/dev/null || _fet_rc=$_fet_pipe_rc
+    rm -f "$_fet_rcfile"
+  else
+    _fet_rc=$_fet_pipe_rc
   fi
 
   _flu_exit_code=${_fet_rc:-1}
-  unset _fet_timeout _fet_script _fet_rc
+  unset _fet_timeout _fet_script _fet_rc _fet_pipe_rc _fet_rcfile
   return "$_flu_exit_code"
 }
 
@@ -652,8 +660,7 @@ flu_module_execute() {
   fi
 
   # Step 6: Execute module with timeout enforcement
-  # Output goes directly to the terminal so the user sees progress
-  # (sudo password prompts, apt output, etc.)
+  # Output shown live via tee AND captured for result modal
   _fme_timeout="${_fmp_timeout:-300}"
   # shellcheck disable=SC2086  # _flu_module_args must split into multiple --key value pairs
   _flu_execute_with_timeout "$_fme_timeout" "$_fetmp" $_flu_module_args
@@ -661,11 +668,17 @@ flu_module_execute() {
 
   printf '\n'
 
+  _fme_output=""
+  if [ -f "$_flu_module_outfile" ]; then
+    _fme_output=$(cat "$_flu_module_outfile" 2>/dev/null)
+    rm -f "$_flu_module_outfile"
+  fi
+
   # Display results in box-rendered modal
   if [ "$_fme_exit_code" -eq 0 ]; then
-    flu_module_display_result 0 "" "${_fmp_name:-Module}"
+    flu_module_display_result 0 "$_fme_output" "${_fmp_name:-Module}"
   else
-    flu_module_display_result "$_fme_exit_code" "" "${_fmp_name:-Module}"
+    flu_module_display_result "$_fme_exit_code" "$_fme_output" "${_fmp_name:-Module}"
   fi
 
   # Cleanup temp files
@@ -674,7 +687,7 @@ flu_module_execute() {
   # Save exit code before unsetting the variable
   _fme_ret=${_fme_exit_code:-1}
   unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
-  unset _fme_timeout _fme_exit_code
+  unset _fme_timeout _fme_exit_code _fme_output
   return "$_fme_ret"
 }
 
