@@ -355,7 +355,7 @@ _flu_menu_render() {
   # === Render visible items ===
   _fr_end=$((_fm_scroll + _fm_page_size - 1))
   [ "$_fr_end" -gt "$_fm_children_count" ] && _fr_end=$_fm_children_count
-  _fr_maxlab=$((_fr_inner - 10))
+  _fr_maxlab=$((_fr_inner - 9))
   [ "$_fr_maxlab" -lt 5 ] && _fr_maxlab=5
   _fr_i=$_fm_scroll
   while [ "$_fr_i" -le "$_fr_end" ]; do
@@ -385,13 +385,13 @@ _flu_menu_render() {
       printf '%s%s' "$TUI_REV" "$_fr_chk"
       printf '%s' "$TUI_RESET"
       printf '%s%3d) %s' "$TUI_REV" "$_fr_i" "$_fr_trunc"
-      _fr_used=$((10 + ${#_fr_trunc}))
+      _fr_used=$((9 + ${#_fr_trunc}))
       _fr_fill=$((_fr_inner - _fr_used))
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
       printf '%s' "$TUI_RESET"
     else
       printf '%s%3d) %s%s' "$_fr_chk" "$_fr_i" "$_fr_trunc"
-      _fr_used=$((10 + ${#_fr_trunc}))
+      _fr_used=$((9 + ${#_fr_trunc}))
       _fr_fill=$((_fr_inner - _fr_used))
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
     fi
@@ -762,7 +762,7 @@ flu_menu_navigate() {
         _fm_error_msg=''
         ;;
 
-      "$TUI_KEY_LEFT")
+      "$TUI_KEY_LEFT"|"$TUI_KEY_BACKSPACE")
         if [ -z "$_fm_path" ]; then
           continue
         fi
