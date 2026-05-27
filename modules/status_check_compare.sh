@@ -10,6 +10,11 @@
 # versions by querying online registries (GitHub API, npm, PyPI, etc.).
 # Falls back gracefully on network errors or rate limiting.
 
+_SC_GREEN='\033[32m'
+_SC_RED='\033[31m'
+_SC_YELLOW='\033[33m'
+_SC_RESET='\033[0m'
+
 set -eu
 
 # Source NVM if available
@@ -94,13 +99,13 @@ _compare_row() {
     _lat="${_latest}"
 
     if [ -z "$_local_raw" ]; then
-        printf '  %s | %s | %s | %s\n' "$_name" "not installed" "${_lat:-N/A}" "—" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %s | %s | %s | %s\n' "$_name" "${_SC_RED}not installed${_SC_RESET}" "${_lat:-N/A}" "—" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     elif [ -z "$_latest" ] || [ "$_latest" = "N/A" ]; then
         printf '  %s | %s | %s | %s\n' "$_name" "${_local_ver:-?}" "N/A" "?" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     elif [ "$_local_ver" = "$_latest" ]; then
-        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "up to date" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_GREEN}up to date${_SC_RESET}" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     else
-        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "update available" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_YELLOW}update available${_SC_RESET}" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
     fi
 }
 
