@@ -32,9 +32,9 @@ check_cmd_version() {
     _padded=$(_pad_name "$_name")
     if command -v "$_cmd" >/dev/null 2>&1; then
         if command -v timeout >/dev/null 2>&1; then
-            _ver=$(echo "y" | timeout 5 "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ')
+            _ver=$(echo "y" | timeout 5 "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ' | awk '{print $1, $2}')
         else
-            _ver=$(echo "y" | "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ')
+            _ver=$(echo "y" | "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ' | awk '{print $1, $2}')
         fi
         printf '  [OK]   %s : %s\n' "$_padded" "${_ver:-installed}"
     else
