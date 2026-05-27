@@ -12,7 +12,23 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 
 **Shipped:** v1.1 Feature Parity & Polish (2026-05-25)
 **Total LOC:** 7,766 across flu.sh core (4,414) + 46 module scripts (3,352)
-**Next:** Planning v1.2 or v2.0
+**Next:** v2.0 Modular Ecosystem
+
+## Current Milestone: v2.0 Modular Ecosystem
+
+**Goal:** Transform flu.sh from a functional TUI into a production-grade modular ecosystem — hardened module pipeline, modern CLI tool suite, and cross-platform PowerShell parity.
+
+**Target features:**
+- SHA256 checksums for fetched module scripts (security)
+- Module caching with TTL (performance)
+- CLI batch mode for non-interactive execution
+- Module registry with auto-discovery
+- Color themes via FLU_THEME env var
+- Progress bar for downloads
+- Module execution logging
+- Terminal resize handling
+- Modern CLI tools: lazygit, starship, zoxide, eza
+- PowerShell parity update (flu.ps1 mirrors all v1.1 + v2.0 changes)
 
 ## Requirements
 
@@ -46,7 +62,16 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 
 ### Active
 
-(None — awaiting next milestone planning)
+- [ ] SHA256 checksum verification for fetched module scripts
+- [ ] Module caching with TTL to avoid re-fetching
+- [ ] CLI batch mode for non-interactive execution
+- [ ] Module registry with auto-discovery
+- [ ] Color themes via FLU_THEME env var
+- [ ] Progress bar for downloads
+- [ ] Module execution logging
+- [ ] Terminal resize handling
+- [ ] Modern CLI tools: lazygit, starship, zoxide, eza
+- [ ] PowerShell parity update for flu.ps1
 
 ### Out of Scope
 
@@ -110,4 +135,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-28 after v1.1 milestone*
+*Last updated: 2026-05-28 — v2.0 milestone start*

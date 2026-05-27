@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Feature Parity & Polish
-status: complete
-stopped_at: Milestone v1.1 shipped — ready for next milestone
-last_updated: "2026-05-28T01:20:00.000Z"
+milestone: v2.0
+milestone_name: Modular Ecosystem
+status: planning
+stopped_at: Milestone v2.0 started — defining requirements
+last_updated: "2026-05-28T01:30:00.000Z"
 last_activity: 2026-05-28
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Planning next milestone
+**Current focus:** Planning v2.0 Modular Ecosystem
 
 ## Current Position
 
-Phase: 9 (last completed)
-Plan: All complete
-Status: Milestone v1.1 shipped
-Last activity: 2026-05-28
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-28 — Milestone v2.0 started
 
-Progress: [████████████████████] 100% (9 of 9 phases complete)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v2.0 not started)
 
 ## Performance Metrics
 
