@@ -645,6 +645,49 @@ _flu_execute_with_timeout() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 8.5: _flu_log_execution() — TSV execution logging
+# ---------------------------------------------------------------------------
+
+# _flu_classify_operation <action_id>
+# Extracts operation type from action_id prefix per D-10.
+_flu_classify_operation() {
+  case "$1" in
+    install_*)   printf 'install' ;;
+    remove_*)    printf 'remove' ;;
+    create_*)    printf 'create' ;;
+    configure_*) printf 'configure' ;;
+    set_*)       printf 'set' ;;
+    status_*)    printf 'status' ;;
+    upgrade_*)   printf 'upgrade' ;;
+    *)           printf 'other' ;;
+  esac
+}
+
+# _flu_log_execution <action_id> <operation> <result> <version> <duration>
+# Appends execution record to TSV log file per D-10/D-11/D-12.
+_flu_log_execution() {
+  _fle_action="$1"
+  _fle_operation="$2"
+  _fle_result="$3"
+  _fle_version="${4:--}"
+  _fle_duration="${5:--}"
+  _fle_ts=$(date +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date +%Y-%m-%dT%H:%M:%S)
+  _fle_logfile="${FLU_DATA_DIR}/execution.log"
+
+  mkdir -p "${FLU_DATA_DIR}" 2>/dev/null || true
+
+  if [ ! -f "$_fle_logfile" ] || [ ! -s "$_fle_logfile" ]; then
+    printf 'timestamp\taction_id\toperation\tresult\tversion\tduration_seconds\n' > "$_fle_logfile"
+  fi
+
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$_fle_ts" "$_fle_action" "$_fle_operation" "$_fle_result" "$_fle_version" "$_fle_duration" \
+    >> "$_fle_logfile"
+
+  unset _fle_action _fle_operation _fle_result _fle_version _fle_duration _fle_ts _fle_logfile
+}
+
+# ---------------------------------------------------------------------------
 # Section 9: flu_module_execute() — Module execution orchestrator
 # ---------------------------------------------------------------------------
 
@@ -723,9 +766,21 @@ flu_module_execute() {
 
   # Step 6: Execute module with timeout enforcement
   _fme_timeout="${_fmp_timeout:-300}"
+  _fme_start=$(date +%s)
   # shellcheck disable=SC2086  # _flu_module_args must split into multiple --key value pairs
   _flu_execute_with_timeout "$_fme_timeout" "$_fetmp" $_flu_module_args
   _fme_exit_code=$?
+  _fme_end=$(date +%s)
+  _fme_duration=$((_fme_end - _fme_start))
+
+  # Log execution result
+  _fme_op=$(_flu_classify_operation "$_fme_action")
+  if [ "$_fme_exit_code" -eq 0 ]; then
+    _fme_result="success"
+  else
+    _fme_result="fail"
+  fi
+  _flu_log_execution "$_fme_action" "$_fme_op" "$_fme_result" "${_fmp_version:-}" "$_fme_duration" 2>/dev/null || true
 
   # Step 7: Show completion status and wait for keypress
   stty sane 2>/dev/null < /dev/tty || true
@@ -743,7 +798,7 @@ flu_module_execute() {
 
   _fme_ret=${_fme_exit_code:-1}
   unset _fme_action _fetmp _fme_os_match _fme_saved_ifs _fme_p
-  unset _fme_timeout _fme_exit_code
+  unset _fme_timeout _fme_exit_code _fme_start _fme_end _fme_duration _fme_op _fme_result
   return "$_fme_ret"
 }
 
