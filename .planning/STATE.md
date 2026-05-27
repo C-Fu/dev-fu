@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Feature Parity & Polish
-status: executing
-stopped_at: Milestone v1.1 roadmap created — Phase 7 ready to plan
-last_updated: "2026-05-25T15:27:49.536Z"
-last_activity: 2026-05-25
+status: complete
+stopped_at: Milestone v1.1 shipped — ready for next milestone
+last_updated: "2026-05-28T01:20:00.000Z"
+last_activity: 2026-05-28
 progress:
   total_phases: 3
   completed_phases: 3
@@ -18,26 +18,26 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-25)
+See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 9 — Documentation
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Executing Phase 9
-Last activity: 2026-05-25
+Phase: 9 (last completed)
+Plan: All complete
+Status: Milestone v1.1 shipped
+Last activity: 2026-05-28
 
-Progress: [████████░░░░] 67% (6 of 9 phases complete)
+Progress: [████████████████████] 100% (9 of 9 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 24
-- Total execution time: ~11 hours (v1.0 milestone)
+- Total plans completed: 24 (17 v1.0 + 7 v1.1)
+- Total execution time: ~12 hours across both milestones
 
 **By Phase:**
 
@@ -49,17 +49,14 @@ Progress: [████████░░░░] 67% (6 of 9 phases complete)
 | 4. Module Architecture | 3 | — | — |
 | 5. Integration & Orchestrator | 3 | — | — |
 | 6. PowerShell Port | 5 | — | — |
-| 7-9 | — | — | — |
-| 7 | 3 | - | - |
-| 8 | 1 | - | - |
-| 9 | 3 | - | - |
+| 7. Feature Parity | 3 | — | — |
+| 8. Intro Polish | 1 | — | — |
+| 9. Documentation | 3 | — | — |
 
 **Recent Trend:**
 
 - v1.0: 17 plans in ~11 hours, stable velocity
-- v1.1: Starting fresh
-
-*Updated after each plan completion*
+- v1.1: 7 plans in 1 day, rapid execution (established patterns)
 
 ## Accumulated Context
 
@@ -68,21 +65,21 @@ Progress: [████████░░░░] 67% (6 of 9 phases complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.0 Phase 5]: flu.sh coexists with fu.sh (not a replacement) — fu.sh is simple and battle-tested
-- [v1.0 Phase 4]: Remote on-demand module fetching — single-file curl-pipe deployment
-- [v1.0 Phase 3]: 3-level max submenu depth — Menu → Category → Option
+- [v1.1 Phase 7]: Standardized module contract — `set -eu`, `_maybe_sudo()`, FLU_PKG_MGR fallback
+- [v1.1 Phase 7]: 6-category menu grouping (later refined to 5)
+- [v1.1 Phase 9]: Menu.db as authoritative source for README documentation
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and carried forward from milestone closures:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
@@ -97,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-25
-Stopped at: Milestone v1.1 roadmap created — Phase 7 ready to plan
+Last session: 2026-05-28
+Stopped at: Milestone v1.1 shipped — ready for next milestone
 Resume file: None

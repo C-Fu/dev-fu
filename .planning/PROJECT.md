@@ -8,15 +8,11 @@ A cross-platform environment setup utility that installs, configures, and manage
 
 A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
 
-## Current Milestone: v1.1 Feature Parity & Polish
+## Current State
 
-**Goal:** flu.sh reaches full feature parity with fu.sh (all 18 operations), gets a polished intro screen, and README restructuring makes flu.sh the primary project face.
-
-**Target features:**
-- Prettier flu.sh intro screen reusing the big ASCII dev-fu logo with platform info
-- Extend menu.db with all 18 fu.sh menu options
-- Create module scripts for each new menu item (Docker, Go, Rust, Bun, etc.)
-- Restructure README — move fu.sh docs to README-Fu.md, create flu.sh-focused README
+**Shipped:** v1.1 Feature Parity & Polish (2026-05-25)
+**Total LOC:** 7,766 across flu.sh core (4,414) + 46 module scripts (3,352)
+**Next:** Planning v1.2 or v2.0
 
 ## Requirements
 
@@ -24,31 +20,33 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 
 - ✓ Cross-platform platform detection — v1.0
 - ✓ Multi-package-manager abstraction (8 managers) — v1.0
-- ✓ Interactive numbered menu with install/remove — existing (`fu.sh`)
-- ✓ CLI mode for non-interactive execution — existing
-- ✓ 18 install/remove operations for dev tools — existing (`fu.sh`)
-- ✓ Fancy prompt installation — existing
-- ✓ Status check and version comparison — existing
-- ✓ GitHub token support — existing
-- ✓ Upgrade-all batch operation — existing
+- ✓ Interactive numbered menu with install/remove — v1.0
+- ✓ CLI mode for non-interactive execution — v1.0
+- ✓ 18 install/remove operations for dev tools — v1.0
+- ✓ Fancy prompt installation — v1.0
+- ✓ Status check and version comparison — v1.0
+- ✓ GitHub token support — v1.0
+- ✓ Upgrade-all batch operation — v1.0
 - ✓ PowerShell port (`fu.ps1` / `flu.ps1`) — v1.0
-- ✓ POSIX sh checklist widget (`checklist.sh`) — existing
+- ✓ POSIX sh checklist widget (`checklist.sh`) — v1.0
 - ✓ TTY reattachment for curl-pipe-bash — v1.0
-- ✓ sudo detection and validation — existing
-- ✓ Portable TUI engine (2261 lines) — v1.0 Phase 1
-- ✓ 3-level nested submenu with breadcrumbs — v1.0 Phase 3
-- ✓ Modular remote script architecture — v1.0 Phase 4
-- ✓ Inline prompts for module script parameters — v1.0 Phase 4
-- ✓ PowerShell parity for all TUI features in `flu.ps1` — v1.0 Phase 6
+- ✓ sudo detection and validation — v1.0
+- ✓ Portable TUI engine (2261 lines) — v1.0
+- ✓ 3-level nested submenu with breadcrumbs — v1.0
+- ✓ Modular remote script architecture — v1.0
+- ✓ Inline prompts for module script parameters — v1.0
+- ✓ PowerShell parity for all TUI features in `flu.ps1` — v1.0
 - ✓ POSIX shell compatibility (bash, zsh, ash, dash, busybox) — v1.0
-- ✓ flu.sh development branch — v1.0 Phase 5
+- ✓ flu.sh development branch — v1.0
+- ✓ flu.sh feature parity — all 18 fu.sh options in TUI menu — v1.1
+- ✓ 46 module scripts with real install/remove logic — v1.1
+- ✓ ASCII dev-fu logo with platform info on startup — v1.1
+- ✓ README restructured — flu.sh primary, fu.sh in README-Fu.md — v1.1
+- ✓ Bahasa Melayu translations with bidirectional cross-references — v1.1
 
 ### Active
 
-- [ ] flu.sh feature parity — all 18 fu.sh options available in the TUI menu
-- [ ] Module scripts for each tool (Docker, Go, Rust, Bun, NVM, PHP, Tailscale, etc.)
-- [ ] Prettier flu.sh intro screen with dev-fu ASCII logo
-- [ ] Restructured README — flu.sh as primary, fu.sh docs in README-Fu.md
+(None — awaiting next milestone planning)
 
 ### Out of Scope
 
@@ -57,14 +55,17 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 - Auto-update for flu.sh — manual curl-pipe-bash or git pull
 - Configuration file / state persistence — stateless design
 - Localization beyond README translations — English only
+- New tools not in fu.sh — feature parity milestone complete; new tools for future milestones
+- flu.ps1 feature parity update — PowerShell port already complete at parity
 
 ## Context
 
-- Shipped v1.0 with 7,442 LOC across POSIX shell (4,266) and PowerShell (3,176)
-- 6 phases, 17 plans completed in ~11 hours
-- Full TUI engine, menu system, module pipeline, and orchestrator working
-- flu.sh currently has 12 demo menu items — needs expansion to match fu.sh's 18 options
-- Module scripts exist as stubs — need real install logic extracted from fu.sh
+- Shipped v1.0 (7,442 LOC) and v1.1 (+46 module scripts, 7,766 total LOC)
+- v1.0: 6 phases, 17 plans in ~11 hours
+- v1.1: 3 phases, 7 plans in 1 day
+- Full TUI engine, menu system, module pipeline, orchestrator, intro screen, and docs
+- 31 menu entries across 5 categories, 46 module scripts covering all 18+ tools
+- All READMEs restructured with Bahasa Melayu translations
 
 ## Constraints
 
@@ -86,6 +87,10 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 | flu.sh branch for development | Isolated development, merge to main when validated | ✓ Good |
 | Source+function API for subsystems | Library-first design, demo-second — all subsystems sourceable | ✓ Good |
 | Pipe-delimited menu DSL with awk | Same parsing pattern as menu.db, zero dependencies | ✓ Good |
+| 6-category menu grouping (later 5) | Groups 31 entries into logical navigation tiers | ✓ Good |
+| Standardized module contract (`set -eu`, `_maybe_sudo()`, FLU_PKG_MGR) | Consistent pattern across all 46 module scripts | ✓ Good |
+| Menu.db as authoritative source for docs | Single source of truth, README matches menu exactly | ✓ Good |
+| Plain-text fallback for ASCII logo | POSIX compatibility in non-TUI terminals | ✓ Good |
 
 ## Evolution
 
@@ -105,4 +110,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-25 — v1.1 milestone start*
+*Last updated: 2026-05-28 after v1.1 milestone*

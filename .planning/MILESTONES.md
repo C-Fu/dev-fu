@@ -1,5 +1,32 @@
 # Project Milestones: dev-fu / flu.sh
 
+## v1.1 Feature Parity & Polish (Shipped: 2026-05-25)
+
+**Delivered:** flu.sh reaches full feature parity with fu.sh — 46 module scripts, ASCII logo intro, README restructured with flu.sh as primary.
+
+**Phases completed:** 7-9 (7 plans total)
+
+**Key accomplishments:**
+- 31-entry menu database across 5 categories covering all 18 fu.sh operations
+- 46 POSIX sh module scripts with install/remove pairs, platform-aware package manager dispatch
+- ASCII dev-fu logo with magenta centering and platform info box on startup
+- README restructured — flu.sh as primary, fu.sh docs in README-Fu.md
+- Bahasa Melayu translations with bidirectional cross-references
+
+**Stats:**
+- 51 files changed (+5,857/-770 lines)
+- 7,766 total LOC (core + modules)
+- 3 phases, 7 plans
+- 1 day from first commit to milestone completion
+
+**Git range:** `35d707f` → `a7dac3c`
+
+**Deferred items at close:** 8 (see STATE.md Deferred Items)
+
+---
+
+*Archives: `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`*
+
 ## v1.0 flu.sh (Shipped: 2026-05-25)
 
 **Delivered:** Zero-dependency, curl-pipe-bash TUI menu system that fetches and executes modular developer environment scripts — POSIX shell + PowerShell, 6 phases, 17 plans.
@@ -20,8 +47,6 @@
 - ~11 hours from first commit to milestone completion
 
 **Git range:** `feat(01-01)` → `docs(phase-6): complete phase execution`
-
-**What's next:** Next milestone — run `/gsd-new-milestone`
 
 ---
 
