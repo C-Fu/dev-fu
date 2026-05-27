@@ -33,7 +33,7 @@ System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
 # ── 🤖 AI Tools ──
 AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
 AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
-AI Tools|GSD|🛠 Install GSD (Rokicool)|install_gsd_rokicool
+AI Tools|GSD (Rokicool)|🛠 Install GSD (Rokicool)|install_gsd_rokicool
 AI Tools|GSD (Redux)|🛠 Install GSD (Redux)|install_gsd_redux
 AI Tools|Hermes Agent|🤖 Install Hermes Agent|install_hermes_agent
 AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
@@ -50,3 +50,9 @@ Shell|Network|🗑 Remove Hostname Discovery|remove_avahi
 Settings|GitHub|🔑 Set GitHub Token|set_github_token
 Settings|Mouse|🖱 Disable Mouse Reporting|configure_mouse_disable
 Settings|Mouse|🖱 Enable Mouse Reporting|configure_mouse_enable
+
+# ── 🚀 Modern CLI ──
+Modern CLI|lazygit|📦 Install lazygit|install_lazygit
+Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
+Modern CLI|Starship|🚀 Install Starship|install_starship
+Modern CLI|Starship|🗑 Remove Starship|remove_starship
