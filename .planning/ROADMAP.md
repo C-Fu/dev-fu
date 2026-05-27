@@ -84,11 +84,11 @@ Plans:
   1. User can run `flu.sh --install go,rust,starship --yes` and have all three tools installed without entering the TUI
   2. User can run `flu.sh --list` to see all available modules including community-contributed ones from the registry
   3. User can discover and install a community-contributed module not bundled with flu.sh by default
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md — CLI batch mode: --install, --remove, --list, --yes flags (ADVN-01)
+- [ ] 12-02-PLAN.md — Module registry with auto-discovery and community modules (ADVN-02)
 
 ### Phase 13: UI & Terminal Polish
 **Goal**: Users can customize flu.sh's appearance with color themes and the menu stays usable when the terminal is resized
@@ -133,6 +133,6 @@ Plans:
 | 9. Documentation | v1.1 | 3/3 | Complete | 2026-05-25 |
 | 10. Module Pipeline Hardening | v2.0 | 0/2 | Planned | - |
 | 11. Modern CLI Tools | v2.0 | 0/2 | Planned | - |
-| 12. Advanced Module System | v2.0 | 0/? | Not started | - |
+| 12. Advanced Module System | v2.0 | 0/2 | Planned | - |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
