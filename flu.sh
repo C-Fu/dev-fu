@@ -51,6 +51,9 @@ _flu_cleanup_exit() {
     stty sane 2>/dev/null < /dev/tty || true
     tui_restore 2>/dev/null || true
 
+    # Clean up temp files
+    rm -f /tmp/flu_menu_merged_$$.db /tmp/flu_registry_$$.json 2>/dev/null
+
     printf '\nflu.sh — Goodbye!\n'
     exit 130
 }
@@ -152,6 +155,58 @@ fi
 # No CLI flags — proceed to TUI main loop
 unset _flu_cli_mode _flu_cli_install _flu_cli_remove
 unset _flu_cli_list _flu_cli_yes _flu_cli_json
+
+# ──────────────
+# 🌐 Registry Pre-fetch
+# ──────────────
+# Fetch community module registry for TUI startup.
+# Failure is non-blocking — TUI works fine with official modules only.
+_flu_registry_cache="/tmp/flu_registry_$$.json"
+flu_registry_fetch > "$_flu_registry_cache" 2>/dev/null || {
+    rm -f "$_flu_registry_cache" 2>/dev/null
+    # Registry unavailable — TUI shows official modules only
+}
+
+# ──────────────
+# 🔀 Dynamic Menu Assembly
+# ──────────────
+# Build merged menu: official menu.db + community modules from registry
+FLU_MENU_FILE_MERGED="/tmp/flu_menu_merged_$$.db"
+
+# Start with official menu
+cat "$FLU_SCRIPT_DIR/menu.db" > "$FLU_MENU_FILE_MERGED"
+
+# Append community modules if registry was fetched
+if [ -f "$_flu_registry_cache" ] && [ -s "$_flu_registry_cache" ]; then
+    _flu_cm_entries=$(awk '
+        /"action_id"/ {
+            gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
+            id = $0
+        }
+        /"name"/ {
+            gsub(/.*"name": *"/, ""); gsub(/".*/, "")
+            name = $0
+        }
+        /"category"/ {
+            gsub(/.*"category": *"/, ""); gsub(/".*/, "")
+            cat = $0
+        }
+        /\}/ && id != "" {
+            printf "Community Modules|%s|%s|community/%s\n", cat, name, id
+            id = ""; name = ""; cat = ""
+        }
+        /\}/ { id = "" }
+    ' "$_flu_registry_cache" 2>/dev/null)
+
+    if [ -n "$_flu_cm_entries" ]; then
+        printf '\n# ── 🌐 Community Modules (from registry) ──\n' >> "$FLU_MENU_FILE_MERGED"
+        printf '%s\n' "$_flu_cm_entries" >> "$FLU_MENU_FILE_MERGED"
+    fi
+    unset _flu_cm_entries
+fi
+
+# Point menu to merged file
+FLU_MENU_FILE="$FLU_MENU_FILE_MERGED"
 
 # ──────────────
 # 🎨 Logo Art — ASCII "dev-fu" LEGO-style block characters
@@ -364,7 +419,7 @@ _flu_map_exit_code() {
 # ──────────────
 # 📋 Menu Definition
 # ──────────────
-FLU_MENU_FILE="$FLU_SCRIPT_DIR/menu.db"
+# FLU_MENU_FILE is set by Dynamic Menu Assembly above (merged menu.db + community modules)
 
 # Verify menu file exists
 if [ ! -f "$FLU_MENU_FILE" ]; then
@@ -433,8 +488,13 @@ done
 
 # --- Step 5: Clean Exit ---
 tui_restore
+
+# Clean up temp files
+rm -f "$FLU_MENU_FILE_MERGED" 2>/dev/null
+rm -f "$_flu_registry_cache" 2>/dev/null
+
 printf '%sflu.sh — Goodbye!%s\n' "$TUI_GREEN" "$TUI_RESET"
 
 # Cleanup globals
 unset _flu_action _flu_nav_rc _flu_mod_rc _flu_running
-unset FLU_SCRIPT_DIR FLU_MENU_FILE
+unset FLU_SCRIPT_DIR FLU_MENU_FILE FLU_MENU_FILE_MERGED _flu_registry_cache
