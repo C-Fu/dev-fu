@@ -11,20 +11,22 @@
 
 set -eu
 
-# Source NVM if available (for node/npm version detection)
+_SC_GREEN='\033[32m'
+_SC_RED='\033[31m'
+_SC_RESET='\033[0m'
+
 if [ -s "${HOME}/.nvm/nvm.sh" ]; then
     . "${HOME}/.nvm/nvm.sh" 2>/dev/null || true
 fi
 
 _pad_name() {
     _pn_name="$1"
-    _pn_pad="            "  # 12 spaces
+    _pn_pad="            "
     _pn_out="${_pn_name}${_pn_pad}"
     printf '%s' "$_pn_out" | awk '{print substr($0,1,12)}'
     unset _pn_name _pn_pad _pn_out
 }
 
-# Helper: check a command's version
 check_cmd_version() {
     _name="$1"
     _cmd="$2"
@@ -36,9 +38,9 @@ check_cmd_version() {
         else
             _ver=$(echo "y" | "$_cmd" $_flag 2>/dev/null | head -1 | tr -s ' ' | awk '{print $1, $2}')
         fi
-        printf '  [OK]   %s : %s\n' "$_padded" "${_ver:-installed}"
+        printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_padded" "${_ver:-installed}"
     else
-        printf '  [MISS] %s : NOT installed\n' "$_padded"
+        printf '  %b[MISS]%b %s : NOT installed\n' "$_SC_RED" "$_SC_RESET" "$_padded"
     fi
 }
 
@@ -46,7 +48,6 @@ printf 'Status Check — Developer Tools\n'
 printf '==============================\n'
 printf '\n'
 
-# System info
 if [ "${FLU_OS:-}" = "linux" ]; then
     _distro="${FLU_DISTRO:-unknown}"
     _kernel=$(uname -r 2>/dev/null || printf 'unknown')
@@ -71,11 +72,12 @@ check_cmd_version "Cargo" "cargo" "--version"
 check_cmd_version "Bun" "bun" "--version"
 
 # NVM
+_nvm_padded=$(_pad_name "NVM")
 if command -v nvm >/dev/null 2>&1; then
     _nvm_ver=$(nvm --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   %s : %s\n' "NVM         " "${_nvm_ver}"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_nvm_padded" "$_nvm_ver"
 else
-    printf '  [MISS] NVM         : NOT installed\n'
+    printf '  %b[MISS]%b %s : NOT installed\n' "$_SC_RED" "$_SC_RESET" "$_nvm_padded"
 fi
 
 check_cmd_version "Node.js" "node" "--version"
@@ -93,26 +95,29 @@ check_cmd_version "Docker" "docker" "--version"
 check_cmd_version "Tailscale" "tailscale" "version"
 
 # OpenChamber
+_oc_padded=$(_pad_name "OpenChamber")
 if command -v openchamber >/dev/null 2>&1; then
     _oc_ver=$(openchamber --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   OpenChamber : %s\n' "$_oc_ver"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_oc_padded" "$_oc_ver"
 elif npm list -g @openchamber/web >/dev/null 2>&1; then
-    printf '  [OK]   OpenChamber : %s\n' "npm global"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_oc_padded" "npm global"
 else
-    printf '  [MISS] OpenChamber : NOT installed\n'
+    printf '  %b[MISS]%b %s : NOT installed\n' "$_SC_RED" "$_SC_RESET" "$_oc_padded"
 fi
 
 # OpenCode
+_op_padded=$(_pad_name "OpenCode")
 if command -v opencode >/dev/null 2>&1; then
     _op_ver=$(opencode --version 2>/dev/null || printf 'installed')
-    printf '  [OK]   OpenCode    : %s\n' "$_op_ver"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_op_padded" "$_op_ver"
 elif npm list -g opencode-ai >/dev/null 2>&1; then
-    printf '  [OK]   OpenCode    : %s\n' "npm global"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_op_padded" "npm global"
 else
-    printf '  [MISS] OpenCode    : NOT installed\n'
+    printf '  %b[MISS]%b %s : NOT installed\n' "$_SC_RED" "$_SC_RESET" "$_op_padded"
 fi
 
 # GSD
+_gsd_padded=$(_pad_name "GSD")
 _gsd_found=0
 _gsd_ver=""
 if command -v gsd-opencode >/dev/null 2>&1; then
@@ -126,9 +131,9 @@ elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
     _gsd_ver=$(npx --yes gsd-opencode --version 2>/dev/null | head -1)
 fi
 if [ "$_gsd_found" = "1" ]; then
-    printf '  [OK]   GSD         : %s\n' "${_gsd_ver:-installed}"
+    printf '  %b[OK]%b   %s : %s\n' "$_SC_GREEN" "$_SC_RESET" "$_gsd_padded" "${_gsd_ver:-installed}"
 else
-    printf '  [MISS] GSD         : NOT installed\n'
+    printf '  %b[MISS]%b %s : NOT installed\n' "$_SC_RED" "$_SC_RESET" "$_gsd_padded"
 fi
 
 printf '\n'
