@@ -11,9 +11,9 @@
 
 set -eu
 
-_SC_GREEN='\033[32m'
-_SC_RED='\033[31m'
-_SC_RESET='\033[0m'
+_SC_GREEN=$(printf '\033[32m')
+_SC_RED=$(printf '\033[31m')
+_SC_RESET=$(printf '\033[0m')
 
 if [ -s "${HOME}/.nvm/nvm.sh" ]; then
     . "${HOME}/.nvm/nvm.sh" 2>/dev/null || true

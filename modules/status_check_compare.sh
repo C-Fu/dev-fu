@@ -10,10 +10,10 @@
 # versions by querying online registries (GitHub API, npm, PyPI, etc.).
 # Falls back gracefully on network errors or rate limiting.
 
-_SC_GREEN='\033[32m'
-_SC_RED='\033[31m'
-_SC_YELLOW='\033[33m'
-_SC_RESET='\033[0m'
+_SC_GREEN=$(printf '\033[32m')
+_SC_RED=$(printf '\033[31m')
+_SC_YELLOW=$(printf '\033[33m')
+_SC_RESET=$(printf '\033[0m')
 
 set -eu
 
