@@ -117,7 +117,7 @@ else
 fi
 
 # GSD
-_gsd_padded=$(_pad_name "GSD")
+_gsd_padded=$(_pad_name "GSD (Rokicool)")
 _gsd_found=0
 _gsd_ver=""
 if command -v gsd-opencode >/dev/null 2>&1; then

@@ -213,8 +213,8 @@ fi
 
 # ─── GSD ───────────────────────────
 if npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
-    printf 'Upgrading GSD...\n'
-    npx gsd-opencode@latest 2>/dev/null || { printf '  GSD upgrade failed\n' >&2; failures=$((failures + 1)); }
+    printf 'Upgrading GSD (Rokicool)...\n'
+    npx gsd-opencode@latest 2>/dev/null || { printf '  GSD (Rokicool) upgrade failed\n' >&2; failures=$((failures + 1)); }
     upgraded=1
 fi
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# @name: Install OpenCode + GSD + OpenChamber
+# @name: Install OpenCode + GSD (Rokicool) + OpenChamber
 # @params:
 # @platforms: linux, darwin
 # @version: 1.0.0
@@ -13,7 +13,7 @@ set -eu
 
 # Check npm is available
 if ! command -v npm >/dev/null 2>&1; then
-    printf 'npm is required to install OpenCode + GSD + OpenChamber.\n' >&2
+    printf 'npm is required to install OpenCode + GSD (Rokicool) + OpenChamber.\n' >&2
     printf 'Please install Node.js first (use "Install NVM + Node LTS" from the Languages menu).\n' >&2
     exit 1
 fi
@@ -33,11 +33,11 @@ fi
 
 if command -v gsd-opencode >/dev/null 2>&1; then
     gsd_ver=$(gsd-opencode --version 2>/dev/null | head -1 || printf 'installed')
-    printf 'GSD already installed [%s]\n' "$gsd_ver"
+    printf 'GSD (Rokicool) already installed [%s]\n' "$gsd_ver"
 elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
-    printf 'GSD already available (via npx)\n'
+    printf 'GSD (Rokicool) already available (via npx)\n'
 else
-    printf 'GSD will be installed\n'
+    printf 'GSD (Rokicool) will be installed\n'
     need_gsd=1
 fi
 
@@ -69,13 +69,13 @@ if [ "$need_opencode" = "1" ]; then
     fi
 fi
 
-# Install GSD
+# Install GSD (Rokicool)
 if [ "$need_gsd" = "1" ]; then
-    printf 'Installing GSD...\n'
+    printf 'Installing GSD (Rokicool)...\n'
     if npx --yes gsd-opencode@latest 2>/dev/null || npm install -g gsd-opencode 2>/dev/null; then
-        printf 'GSD installed successfully\n'
+        printf 'GSD (Rokicool) installed successfully\n'
     else
-        printf 'GSD install failed\n' >&2
+        printf 'GSD (Rokicool) install failed\n' >&2
         install_errors=$((install_errors + 1))
     fi
 fi

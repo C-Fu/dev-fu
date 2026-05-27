@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# @name: Install GSD
+# @name: Install GSD (Rokicool)
 # @params:
 # @platforms: linux, darwin
 # @version: 1.0.0
@@ -18,17 +18,17 @@ fi
 
 if command -v gsd-opencode >/dev/null 2>&1; then
     _ver=$(gsd-opencode --version 2>/dev/null | head -1 || printf 'installed')
-    printf 'GSD already installed [%s]\n' "$_ver"
+    printf 'GSD (Rokicool) already installed [%s]\n' "$_ver"
     printf 'Updating...\n'
     npm update -g gsd-opencode 2>/dev/null || true
 elif npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then
-    printf 'GSD already available (via npx)\n'
+    printf 'GSD (Rokicool) already available (via npx)\n'
 else
-    printf 'Installing GSD...\n'
+    printf 'Installing GSD (Rokicool)...\n'
     if npx --yes gsd-opencode@latest 2>/dev/null || npm install -g gsd-opencode 2>/dev/null; then
-        printf 'GSD installed successfully\n'
+        printf 'GSD (Rokicool) installed successfully\n'
     else
-        printf 'GSD install failed\n' >&2
+        printf 'GSD (Rokicool) install failed\n' >&2
         exit 1
     fi
 fi
