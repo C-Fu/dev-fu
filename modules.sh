@@ -28,6 +28,11 @@ if [ -z "${TUI_RESET:-}" ]; then
   unset _mod_script_dir
 fi
 
+# Cache and checksum configuration
+FLU_CACHE_DIR="${FLU_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/flu.sh}"
+FLU_CACHE_TTL="${FLU_CACHE_TTL:-86400}"
+FLU_DATA_DIR="${FLU_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/flu.sh}"
+
 # ---------------------------------------------------------------------------
 # Section 2: flu_module_resolve_url() — Action ID to GitHub URL
 # ---------------------------------------------------------------------------
@@ -46,14 +51,35 @@ flu_module_resolve_url() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 2.5: _flu_fetch_manifest() — Fetch SHA256 checksum manifest
+# ---------------------------------------------------------------------------
+
+# _flu_fetch_manifest
+# Fetches MANIFEST.sha256 from the same base URL as modules.
+# Outputs manifest content to stdout on success.
+# Returns 0 on success, 1 on failure (soft-fail per D-03).
+_flu_fetch_manifest() {
+  _ffm_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/}"
+  _ffm_url="${_ffm_base}MANIFEST.sha256"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL --connect-timeout 5 "$_ffm_url" 2>/dev/null
+  else
+    wget -qO- --timeout=5 "$_ffm_url" 2>/dev/null
+  fi
+  _ffm_rc=$?
+  unset _ffm_base _ffm_url
+  return $_ffm_rc
+}
+
+# ---------------------------------------------------------------------------
 # Section 3: flu_module_fetch() — Fetch module script from GitHub
 # ---------------------------------------------------------------------------
 
 # flu_module_fetch <action_id>
-# Fetches a module script from GitHub using curl (or wget fallback).
-# Retries up to 3 times with 2-second delay on failure.
+# Fetches a module script with caching, SHA256 verification, and progress.
+# Flow: local check → cache check → remote fetch → checksum verify → cache store.
 # Outputs script content to stdout on success.
-# Prints actionable error messages to stderr on failure.
+# Progress and status messages go to stderr.
 # Returns 0 on success, 1 on failure.
 flu_module_fetch() {
   _fmf_action="$1"
@@ -65,50 +91,94 @@ flu_module_fetch() {
     return 0
   fi
 
-  _fmf_url=$(flu_module_resolve_url "$_fmf_action")
-  _fmf_attempt=1
-
-  while [ "$_fmf_attempt" -le 3 ]; do
-    if command -v curl >/dev/null 2>&1; then
-      _fmf_content=$(curl -fsSL --connect-timeout 10 "$_fmf_url" 2>/dev/null)
-      _fmf_rc=$?
-    else
-      _fmf_content=$(wget -qO- --timeout=10 "$_fmf_url" 2>/dev/null)
-      _fmf_rc=$?
-    fi
-
-    if [ "$_fmf_rc" -eq 0 ]; then
-      printf '%s\n' "$_fmf_content"
-      unset _fmf_action _fmf_url _fmf_attempt _fmf_rc _fmf_content
+  # Check cache
+  _fmf_cache_file="${FLU_CACHE_DIR}/${_fmf_action}"
+  if [ -f "$_fmf_cache_file" ] && [ -s "$_fmf_cache_file" ]; then
+    _fmf_now=$(date +%s)
+    _fmf_mtime=$(stat -c %Y "$_fmf_cache_file" 2>/dev/null || echo 0)
+    _fmf_age=$((_fmf_now - _fmf_mtime))
+    if [ "$_fmf_age" -lt "${FLU_CACHE_TTL:-86400}" ] 2>/dev/null; then
+      printf '  %s[cached]%s %s (age: %ds)\n' \
+        "$TUI_DIM" "$TUI_RESET" "$_fmf_action" "$_fmf_age" >&2
+      cat "$_fmf_cache_file"
+      unset _fmf_action _fmf_cache_file _fmf_now _fmf_mtime _fmf_age
       return 0
     fi
+  fi
+
+  _fmf_url=$(flu_module_resolve_url "$_fmf_action")
+  _fmf_attempt=1
+  _fmf_content=''
+  _fmf_rc=1
+
+  while [ "$_fmf_attempt" -le 3 ]; do
+    printf '  Downloading %s.sh... ' "$_fmf_action" >&2
+    _fmf_tmp_dl="${TMPDIR:-/tmp}/flu_dl_$$_${_fmf_action}"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fL --connect-timeout 10 --progress-bar "$_fmf_url" -o "$_fmf_tmp_dl" 2>&2
+      _fmf_rc=$?
+    else
+      wget -q --show-progress -O "$_fmf_tmp_dl" "$_fmf_url" 2>&2
+      _fmf_rc=$?
+    fi
+
+    if [ "$_fmf_rc" -eq 0 ] && [ -f "$_fmf_tmp_dl" ] && [ -s "$_fmf_tmp_dl" ]; then
+      _fmf_content=$(cat "$_fmf_tmp_dl")
+      _fmf_size=$(wc -c < "$_fmf_tmp_dl")
+      rm -f "$_fmf_tmp_dl"
+      printf 'done (%s bytes)\n' "$_fmf_size" >&2
+      break
+    fi
+
+    rm -f "$_fmf_tmp_dl" 2>/dev/null
+    printf 'failed\n' >&2
 
     if [ "$_fmf_attempt" -lt 3 ]; then
+      printf '  Retrying (%d/3)...\n' "$((_fmf_attempt + 1))" >&2
       sleep 2
     fi
     _fmf_attempt=$((_fmf_attempt + 1))
   done
 
-  # All retries exhausted — report error to stderr
-  printf '%s[ERROR]%s Failed to fetch module: %s (exit: %d)\n' \
-    "$TUI_RED" "$TUI_RESET" "$_fmf_url" "$_fmf_rc" >&2
-  case "$_fmf_rc" in
-    6|7|28)
-      printf '%s [HINT]%s  Check internet connection\n' \
-        "$TUI_YELLOW" "$TUI_RESET" >&2
-      ;;
-    22)
-      printf '%s [HINT]%s  Module not found — might be renamed\n' \
-        "$TUI_YELLOW" "$TUI_RESET" >&2
-      ;;
-    *)
-      printf '%s [HINT]%s  Unknown network error\n' \
-        "$TUI_YELLOW" "$TUI_RESET" >&2
-      ;;
-  esac
+  if [ -z "$_fmf_content" ]; then
+    printf '%s[ERROR]%s Failed to fetch module: %s (exit: %d)\n' \
+      "$TUI_RED" "$TUI_RESET" "$_fmf_url" "$_fmf_rc" >&2
+    unset _fmf_action _fmf_url _fmf_attempt _fmf_rc _fmf_content _fmf_cache_file _fmf_tmp_dl _fmf_size
+    return 1
+  fi
 
-  unset _fmf_action _fmf_url _fmf_attempt _fmf_rc _fmf_content
-  return 1
+  # SHA256 verification against MANIFEST.sha256
+  _fmf_manifest=$(_flu_fetch_manifest 2>/dev/null) || true
+  if [ -n "$_fmf_manifest" ]; then
+    _fmf_expected_hash=$(printf '%s\n' "$_fmf_manifest" | grep "  ${_fmf_action}.sh$" | awk '{print $1}')
+    if [ -n "$_fmf_expected_hash" ]; then
+      _fmf_actual_hash=$(printf '%s\n' "$_fmf_content" | sha256sum | awk '{print $1}')
+      if [ "$_fmf_actual_hash" != "$_fmf_expected_hash" ]; then
+        printf '%s[ERROR]%s Checksum mismatch for %s — possible tampering or corruption\n' \
+          "$TUI_RED" "$TUI_RESET" "${_fmf_action}.sh" >&2
+        unset _fmf_action _fmf_url _fmf_attempt _fmf_rc _fmf_content _fmf_cache_file \
+          _fmf_manifest _fmf_expected_hash _fmf_actual_hash _fmf_size
+        return 1
+      fi
+      printf '  %s[verified]%s SHA256 checksum OK\n' "$TUI_GREEN" "$TUI_RESET" >&2
+    fi
+  else
+    printf '  %s[WARN]%s Cannot verify checksum — manifest unavailable\n' \
+      "$TUI_YELLOW" "$TUI_RESET" >&2
+  fi
+
+  # Store to cache
+  mkdir -p "$FLU_CACHE_DIR" 2>/dev/null || true
+  if [ -d "$FLU_CACHE_DIR" ]; then
+    _fmf_cache_tmp="${FLU_CACHE_DIR}/.tmp_$$_${_fmf_action}"
+    printf '%s\n' "$_fmf_content" > "$_fmf_cache_tmp"
+    mv "$_fmf_cache_tmp" "$_fmf_cache_file" 2>/dev/null || rm -f "$_fmf_cache_tmp" 2>/dev/null
+  fi
+
+  printf '%s\n' "$_fmf_content"
+  unset _fmf_action _fmf_url _fmf_attempt _fmf_rc _fmf_content _fmf_cache_file \
+    _fmf_manifest _fmf_expected_hash _fmf_actual_hash _fmf_size _fmf_cache_tmp
+  return 0
 }
 
 # ---------------------------------------------------------------------------
