@@ -22,17 +22,19 @@ Languages & Runtimes|Bun|🗑 Remove Bun|remove_bun
 Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
 Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
 
-# ── 🛠 Tools ──
-Tools|Yarn|🧶 Install Yarn|install_yarn
-Tools|Yarn|🗑 Remove Yarn|remove_yarn
-Tools|Docker|🐳 Install Docker|install_docker
-Tools|Docker|🗑 Remove Docker|remove_docker
-Tools|Tailscale|🛜 Install Tailscale|install_tailscale
-Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
- Tools|OpenCode|🤖 Install OpenCode|install_opencode
- Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
- Tools|GSD|🛠 Install GSD (Rokicool)|install_gsd
- Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
+# ── 🛠 System Tools ──
+System Tools|Yarn|🧶 Install Yarn|install_yarn
+System Tools|Yarn|🗑 Remove Yarn|remove_yarn
+System Tools|Docker|🐳 Install Docker|install_docker
+System Tools|Docker|🗑 Remove Docker|remove_docker
+System Tools|Tailscale|🛜 Install Tailscale|install_tailscale
+System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
+
+# ── 🤖 AI Tools ──
+AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
+AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
+AI Tools|GSD|🛠 Install GSD (Rokicool)|install_gsd
+AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
 
 # ── 🐚 Shell ──
 Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
