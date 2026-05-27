@@ -99,20 +99,20 @@ _compare_row() {
     _lat="${_latest}"
 
     if [ -z "$_local_raw" ]; then
-        printf '  %s | %s | %s | %s\n' "$_name" "${_SC_RED}not installed${_SC_RESET}" "${_lat:-N/A}" "—" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %-14s %-24s %-18s %s\n' "$_name" "${_SC_RED}not installed${_SC_RESET}" "${_lat:-N/A}" "—"
     elif [ -z "$_latest" ] || [ "$_latest" = "N/A" ]; then
-        printf '  %s | %s | %s | %s\n' "$_name" "${_local_ver:-?}" "N/A" "?" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %-14s %-24s %-18s %s\n' "$_name" "${_local_ver:-?}" "N/A" "?"
     elif [ "$_local_ver" = "$_latest" ]; then
-        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_GREEN}up to date${_SC_RESET}" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_GREEN}up to date${_SC_RESET}"
     else
-        printf '  %s | %s | %s | %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_YELLOW}update available${_SC_RESET}" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_YELLOW}update available${_SC_RESET}"
     fi
 }
 
 printf 'Compare With Latest — Installed vs Online\n'
 printf '==========================================\n'
 printf '\n'
-printf '  %s | %s | %s | %s\n' "Tool" "Installed" "Latest" "Status" | awk -F'|' '{printf "  %-14s %-24s %-18s %s\n", $1, $2, $3, $4}'
+  printf '  %-14s %-24s %-18s %s\n' "Tool" "Installed" "Latest" "Status"
 printf '  ------------------------------------------------------------------------\n'
 
 # Go
