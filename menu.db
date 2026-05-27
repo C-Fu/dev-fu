@@ -33,7 +33,7 @@ System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
 # ── 🤖 AI Tools ──
 AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
 AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
-AI Tools|GSD|🛠 Install GSD (Rokicool)|install_gsd
+AI Tools|GSD (Rokicool)|🛠 Install GSD (Rokicool)|install_gsd
 AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
 
 # ── 🐚 Shell ──
