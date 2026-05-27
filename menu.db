@@ -29,7 +29,10 @@ Tools|Docker|🐳 Install Docker|install_docker
 Tools|Docker|🗑 Remove Docker|remove_docker
 Tools|Tailscale|🛜 Install Tailscale|install_tailscale
 Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
-Tools|OpenCode|🤖 Install OpenCode + GSD + OpenChamber|install_opencode_gsd
+ Tools|OpenCode|🤖 Install OpenCode|install_opencode
+ Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
+ Tools|GSD|🛠 Install GSD (Rokicool)|install_gsd
+ Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
 
 # ── 🐚 Shell ──
 Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
