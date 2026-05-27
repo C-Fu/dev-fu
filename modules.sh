@@ -32,6 +32,7 @@ fi
 FLU_CACHE_DIR="${FLU_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/flu.sh}"
 FLU_CACHE_TTL="${FLU_CACHE_TTL:-86400}"
 FLU_DATA_DIR="${FLU_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/flu.sh}"
+FLU_REGISTRY_URL="${FLU_REGISTRY_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu-registry/main/registry.json}"
 
 # ---------------------------------------------------------------------------
 # Section 2: flu_module_resolve_url() — Action ID to GitHub URL
@@ -44,6 +45,17 @@ FLU_DATA_DIR="${FLU_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/flu.sh}"
 # Prints the full URL to stdout. Returns 0 on success.
 flu_module_resolve_url() {
   _fmr_action="$1"
+  # Community modules — delegate to registry lookup
+  case "$_fmr_action" in
+    community/*)
+      _fmr_reg_id="${_fmr_action#community/}"
+      flu_registry_lookup "$_fmr_reg_id" || { unset _fmr_action _fmr_reg_id; return 1; }
+      printf '%s%s.sh\n' "$_freg_base_url" "$_fmr_reg_id"
+      unset _fmr_action _fmr_reg_id
+      return 0
+      ;;
+  esac
+  # Official modules — standard base URL
   _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/}"
   printf '%s%s.sh\n' "$_fmr_base" "$_fmr_action"
   unset _fmr_action _fmr_base
@@ -83,6 +95,14 @@ _flu_fetch_manifest() {
 # Returns 0 on success, 1 on failure.
 flu_module_fetch() {
   _fmf_action="$1"
+
+  # Community modules — use registry fetch pipeline
+  case "$_fmf_action" in
+    community/*)
+      flu_registry_fetch_module "${_fmf_action#community/}"
+      return $?
+      ;;
+  esac
 
   # Check for local module first — co-located with flu.sh in modules/
   if [ -n "${FLU_SCRIPT_DIR:-}" ] && [ -f "${FLU_SCRIPT_DIR}/modules/${_fmf_action}.sh" ]; then
@@ -744,23 +764,28 @@ flu_batch_run() {
     _br_aid=$(printf '%s' "$_br_aid" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [ -z "$_br_aid" ] && continue
 
-    # T-12-01: Validate action_id exists in menu.db
-    if [ -f "$_br_menu" ]; then
-      _br_valid=$(grep -v '^#' "$_br_menu" | grep -v '^$' \
-        | cut -d'|' -f4 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
-        | grep -xF "$_br_aid" || true)
-      if [ -z "$_br_valid" ]; then
-        if [ "$_br_is_tty" = "true" ]; then
-          printf '%s✗ %s — Unknown action ID%s\n' "$TUI_RED" "$_br_aid" "$TUI_RESET"
-        else
-          printf '✗ %s — Unknown action ID\n' "$_br_aid"
+    # T-12-01: Validate action_id exists in menu.db (skip for community/* modules)
+    case "$_br_aid" in
+      community/*) ;;
+      *)
+        if [ -f "$_br_menu" ]; then
+          _br_valid=$(grep -v '^#' "$_br_menu" | grep -v '^$' \
+            | cut -d'|' -f4 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep -xF "$_br_aid" || true)
+          if [ -z "$_br_valid" ]; then
+            if [ "$_br_is_tty" = "true" ]; then
+              printf '%s✗ %s — Unknown action ID%s\n' "$TUI_RED" "$_br_aid" "$TUI_RESET"
+            else
+              printf '✗ %s — Unknown action ID\n' "$_br_aid"
+            fi
+            _br_fail=$((_br_fail + 1))
+            unset _br_valid
+            continue
+          fi
+          unset _br_valid
         fi
-        _br_fail=$((_br_fail + 1))
-        unset _br_valid
-        continue
-      fi
-      unset _br_valid
-    fi
+        ;;
+    esac
 
     # Print status line
     if [ "$_br_is_tty" = "true" ]; then
@@ -963,6 +988,34 @@ flu_batch_list() {
       printf '  {"category":"%s","subcategory":"%s","name":"%s","action_id":"%s"}' \
         "$_bl_cat" "$_bl_subcat" "$_bl_label" "$_bl_aid"
     done < "$_bl_menu"
+    # Append community modules from registry
+    _bl_reg_json=$(flu_registry_fetch 2>/dev/null) || true
+    if [ -n "$_bl_reg_json" ]; then
+      _bl_comm=$(printf '%s\n' "$_bl_reg_json" | awk '
+        /"action_id"/ {
+          gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
+          id = $0
+        }
+        /"name"/ {
+          gsub(/.*"name": *"/, ""); gsub(/".*/, "")
+          name = $0
+        }
+        /"category"/ {
+          gsub(/.*"category": *"/, ""); gsub(/".*/, "")
+          cat = $0
+        }
+        /\}/ && id != "" {
+          if (first != 0) printf ","
+          printf "\n  {\"category\":\"Community Modules\",\"subcategory\":\"%s\",\"name\":\"%s\",\"action_id\":\"community/%s\"}", cat, name, id
+          id = ""; name = ""; cat = ""
+          first = 0
+        }
+        /\}/ { id = "" }
+      ' first=1)
+      if [ -n "$_bl_comm" ]; then
+        printf '%s' "$_bl_comm"
+      fi
+    fi
     printf '\n]\n'
   else
     # Plain text table — sorted by category, subcategory, label
@@ -977,9 +1030,33 @@ flu_batch_list() {
       _bl_aid=$(printf '%s' "$_bl_aid" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
       printf '%-20s %-16s %-40s %s\n' "$_bl_cat" "$_bl_subcat" "$_bl_label" "$_bl_aid"
     done
+    # Append community modules from registry
+    _bl_reg_json=$(flu_registry_fetch 2>/dev/null) || true
+    if [ -n "$_bl_reg_json" ]; then
+      printf '%s\n' "$_bl_reg_json" | awk '
+        /"action_id"/ {
+          gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
+          id = $0
+        }
+        /"name"/ {
+          gsub(/.*"name": *"/, ""); gsub(/".*/, "")
+          name = $0
+        }
+        /"category"/ {
+          gsub(/.*"category": *"/, ""); gsub(/".*/, "")
+          cat = $0
+        }
+        /\}/ && id != "" {
+          printf "%-20s %-16s %-40s community/%s\n", "Community Modules", cat, name, id
+          id = ""; name = ""; cat = ""
+        }
+        /\}/ { id = "" }
+      '
+    fi
   fi
 
   unset _bl_json _bl_menu _bl_cat _bl_subcat _bl_label _bl_aid _bl_first
+  unset _bl_reg_json _bl_comm
 }
 
 # ---------------------------------------------------------------------------
@@ -1220,6 +1297,300 @@ flu_module_display_result() {
   unset _fdr_title _fdr_title_color _fdr_inner _fdr_tmp
   unset _fdr_content_row _fdr_max_row _fdr_line_count _fdr_line _fdr_truncated
   unset _fdr_footer_row
+}
+
+# ---------------------------------------------------------------------------
+# Section 12: flu_registry_fetch() — Fetch and cache registry index
+# ---------------------------------------------------------------------------
+
+# flu_registry_fetch
+# Fetches the community module registry JSON index, using cache when available.
+# Merges official registry + FLU_REGISTRIES env var URLs (space-separated).
+# Caches merged result to $FLU_CACHE_DIR/registry.json with TTL expiry.
+# Prints merged JSON to stdout. Returns 0 on success, 1 if official registry
+# fails AND no cache exists. Individual third-party registry failures are
+# soft-fail (warning to stderr, continue).
+flu_registry_fetch() {
+  _frf_cache="${FLU_CACHE_DIR}/registry.json"
+  _frf_merged=''
+
+  # Check for cached registry with TTL
+  if [ -f "$_frf_cache" ] && [ -s "$_frf_cache" ]; then
+    _frf_now=$(date +%s)
+    _frf_mtime=$(stat -c %Y "$_frf_cache" 2>/dev/null || echo 0)
+    _frf_age=$((_frf_now - _frf_mtime))
+    if [ "$_frf_age" -lt "${FLU_CACHE_TTL:-86400}" ] 2>/dev/null; then
+      cat "$_frf_cache"
+      unset _frf_cache _frf_now _frf_mtime _frf_age _frf_merged
+      return 0
+    fi
+  fi
+
+  # Fetch official registry
+  _frf_official=''
+  if command -v curl >/dev/null 2>&1; then
+    _frf_official=$(curl -fsSL --connect-timeout 5 "$FLU_REGISTRY_URL" 2>/dev/null) || true
+  else
+    _frf_official=$(wget -qO- --timeout=5 "$FLU_REGISTRY_URL" 2>/dev/null) || true
+  fi
+
+  # If official fetch failed, try using stale cache
+  if [ -z "$_frf_official" ]; then
+    if [ -f "$_frf_cache" ] && [ -s "$_frf_cache" ]; then
+      printf '%s[WARN]%s Official registry unavailable — using stale cache (age: %ds)\n' \
+        "${TUI_YELLOW:-}" "${TUI_RESET:-}" "${_frf_age:-?}" >&2
+      cat "$_frf_cache"
+      unset _frf_cache _frf_now _frf_mtime _frf_age _frf_official _frf_merged
+      return 0
+    fi
+    printf '%s[WARN]%s Registry unavailable and no cache exists\n' \
+      "${TUI_YELLOW:-}" "${TUI_RESET:-}" >&2
+    unset _frf_cache _frf_official _frf_merged
+    return 1
+  fi
+
+  # Start with official registry content
+  _frf_merged="$_frf_official"
+
+  # Fetch and merge additional registries from FLU_REGISTRIES env var
+  if [ -n "${FLU_REGISTRIES:-}" ]; then
+    _frf_saved_ifs="$IFS"
+    IFS=' '
+    for _frf_url in $FLU_REGISTRIES; do
+      [ -z "$_frf_url" ] && continue
+      _frf_extra=''
+      if command -v curl >/dev/null 2>&1; then
+        _frf_extra=$(curl -fsSL --connect-timeout 5 "$_frf_url" 2>/dev/null) || true
+      else
+        _frf_extra=$(wget -qO- --timeout=5 "$_frf_url" 2>/dev/null) || true
+      fi
+      if [ -n "$_frf_extra" ]; then
+        # Merge: strip closing ] from merged, strip opening [ from extra, join with comma
+        _frf_merged=$(printf '%s\n%s\n' "$_frf_merged" "$_frf_extra" | awk '
+          BEGIN { first = 1 }
+          /\[/ { gsub(/^\[/, "") }
+          /\]/ { gsub(/\]$/, "") }
+          /\{/ {
+            if (first) { first = 0 } else { printf "," }
+            printf "%s", $0
+          }
+          END { printf "\n" }
+        ')
+      else
+        printf '%s[WARN]%s Third-party registry unavailable: %s\n' \
+          "${TUI_YELLOW:-}" "${TUI_RESET:-}" "$_frf_url" >&2
+      fi
+      unset _frf_url _frf_extra
+    done
+    IFS="$_frf_saved_ifs"
+    unset _frf_saved_ifs
+  fi
+
+  # Wrap merged content as JSON array and cache
+  mkdir -p "$FLU_CACHE_DIR" 2>/dev/null || true
+  _frf_cache_tmp="${FLU_CACHE_DIR}/.tmp_reg_$$"
+  printf '[%s]\n' "$_frf_merged" > "$_frf_cache_tmp"
+  mv "$_frf_cache_tmp" "$_frf_cache" 2>/dev/null || rm -f "$_frf_cache_tmp" 2>/dev/null
+
+  # Output merged JSON
+  printf '[%s]\n' "$_frf_merged"
+
+  unset _frf_cache _frf_now _frf_mtime _frf_age _frf_official _frf_merged _frf_cache_tmp
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# Section 13: flu_registry_lookup() — Look up a module in registry
+# ---------------------------------------------------------------------------
+
+# flu_registry_lookup <action_id>
+# Looks up a community module by action_id in the registry index.
+# Sets globals: _freg_name, _freg_description, _freg_category,
+#   _freg_platforms, _freg_base_url, _freg_sha256
+# Returns 0 if found, 1 if not found.
+flu_registry_lookup() {
+  _frl_id="$1"
+  _frl_json=''
+
+  # Fetch registry (uses cache when available)
+  _frl_json=$(flu_registry_fetch 2>/dev/null) || true
+  if [ -z "$_frl_json" ]; then
+    unset _frl_id _frl_json
+    return 1
+  fi
+
+  # Parse JSON with awk — flat array of objects, no nesting
+  # Awk extracts fields for the entry where action_id matches $1
+  _frl_result=$(printf '%s\n' "$_frl_json" | awk -v id="$_frl_id" '
+    /"action_id"/ {
+      gsub(/.*"action_id": *"/, "")
+      gsub(/".*/, "")
+      current_id = $0
+    }
+    current_id == id && /"name"/ {
+      gsub(/.*"name": *"/, "")
+      gsub(/".*/, "")
+      name = $0
+    }
+    current_id == id && /"description"/ {
+      gsub(/.*"description": *"/, "")
+      gsub(/".*/, "")
+      desc = $0
+    }
+    current_id == id && /"category"/ {
+      gsub(/.*"category": *"/, "")
+      gsub(/".*/, "")
+      cat = $0
+    }
+    current_id == id && /"platforms"/ {
+      gsub(/.*"platforms": *"/, "")
+      gsub(/".*/, "")
+      plats = $0
+    }
+    current_id == id && /"base_url"/ {
+      gsub(/.*"base_url": *"/, "")
+      gsub(/".*/, "")
+      burl = $0
+    }
+    current_id == id && /"sha256"/ {
+      gsub(/.*"sha256": *"/, "")
+      gsub(/".*/, "")
+      hash = $0
+    }
+    /\}/ && current_id == id {
+      printf "%s\n%s\n%s\n%s\n%s\n%s\n", name, desc, cat, plats, burl, hash
+      current_id = ""
+      name = ""; desc = ""; cat = ""; plats = ""; burl = ""; hash = ""
+    }
+    /\}/ && current_id != "" {
+      current_id = ""
+      name = ""; desc = ""; cat = ""; plats = ""; burl = ""; hash = ""
+    }
+  ')
+
+  if [ -z "$_frl_result" ]; then
+    printf 'Module not found in registry: %s\n' "$_frl_id" >&2
+    unset _frl_id _frl_json _frl_result
+    return 1
+  fi
+
+  # Extract individual fields from awk output (6 lines)
+  _freg_name=$(printf '%s\n' "$_frl_result" | awk 'NR==1')
+  _freg_description=$(printf '%s\n' "$_frl_result" | awk 'NR==2')
+  _freg_category=$(printf '%s\n' "$_frl_result" | awk 'NR==3')
+  _freg_platforms=$(printf '%s\n' "$_frl_result" | awk 'NR==4')
+  _freg_base_url=$(printf '%s\n' "$_frl_result" | awk 'NR==5')
+  _freg_sha256=$(printf '%s\n' "$_frl_result" | awk 'NR==6')
+
+  unset _frl_id _frl_json _frl_result
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# Section 14: flu_registry_fetch_module() — Fetch a community module
+# ---------------------------------------------------------------------------
+
+# flu_registry_fetch_module <action_id>
+# Fetches a community module script from the registry-provided URL,
+# verifies SHA256 checksum from the registry index, and caches the result.
+# Parameter: action_id WITHOUT the community/ prefix.
+# Prints script content to stdout on success. Returns 0 on success, 1 on failure.
+flu_registry_fetch_module() {
+  _frfm_id="$1"
+
+  # Look up in registry to get base_url and sha256
+  flu_registry_lookup "$_frfm_id" || {
+    unset _frfm_id
+    return 1
+  }
+
+  # Build full URL for the module script
+  _frfm_url="${_freg_base_url}${_frfm_id}.sh"
+  _frfm_expected_hash="$_freg_sha256"
+  _frfm_cache_file="${FLU_CACHE_DIR}/community_${_frfm_id}"
+
+  # Check cache first
+  if [ -f "$_frfm_cache_file" ] && [ -s "$_frfm_cache_file" ]; then
+    _frfm_now=$(date +%s)
+    _frfm_mtime=$(stat -c %Y "$_frfm_cache_file" 2>/dev/null || echo 0)
+    _frfm_age=$((_frfm_now - _frfm_mtime))
+    if [ "$_frfm_age" -lt "${FLU_CACHE_TTL:-86400}" ] 2>/dev/null; then
+      printf '  %s[cached]%s community/%s (age: %ds)\n' \
+        "${TUI_DIM:-}" "${TUI_RESET:-}" "$_frfm_id" "$_frfm_age" >&2
+      cat "$_frfm_cache_file"
+      unset _frfm_id _frfm_url _frfm_expected_hash _frfm_cache_file
+      unset _frfm_now _frfm_mtime _frfm_age _frfm_content
+      return 0
+    fi
+  fi
+
+  # Fetch the module script
+  _frfm_content=''
+  _frfm_attempt=1
+  _frfm_rc=1
+
+  while [ "$_frfm_attempt" -le 3 ]; do
+    printf '  Downloading community/%s.sh... ' "$_frfm_id" >&2
+    _frfm_tmp_dl="${TMPDIR:-/tmp}/flu_dl_$$_${_frfm_id}"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fL --connect-timeout 10 --progress-bar "$_frfm_url" -o "$_frfm_tmp_dl" 2>&2
+      _frfm_rc=$?
+    else
+      wget -q --show-progress -O "$_frfm_tmp_dl" "$_frfm_url" 2>&2
+      _frfm_rc=$?
+    fi
+
+    if [ "$_frfm_rc" -eq 0 ] && [ -f "$_frfm_tmp_dl" ] && [ -s "$_frfm_tmp_dl" ]; then
+      _frfm_content=$(cat "$_frfm_tmp_dl")
+      _frfm_size=$(wc -c < "$_frfm_tmp_dl")
+      rm -f "$_frfm_tmp_dl"
+      printf 'done (%s bytes)\n' "$_frfm_size" >&2
+      break
+    fi
+
+    rm -f "$_frfm_tmp_dl" 2>/dev/null
+    printf 'failed\n' >&2
+
+    if [ "$_frfm_attempt" -lt 3 ]; then
+      printf '  Retrying (%d/3)...\n' "$((_frfm_attempt + 1))" >&2
+      sleep 2
+    fi
+    _frfm_attempt=$((_frfm_attempt + 1))
+  done
+
+  if [ -z "$_frfm_content" ]; then
+    printf '%s[ERROR]%s Failed to fetch community module: %s (exit: %d)\n' \
+      "${TUI_RED:-}" "${TUI_RESET:-}" "$_frfm_url" "$_frfm_rc" >&2
+    unset _frfm_id _frfm_url _frfm_expected_hash _frfm_cache_file
+    unset _frfm_content _frfm_attempt _frfm_rc _frfm_tmp_dl _frfm_size
+    return 1
+  fi
+
+  # SHA256 verification against registry-provided hash
+  if [ -n "$_frfm_expected_hash" ]; then
+    _frfm_actual_hash=$(printf '%s\n' "$_frfm_content" | sha256sum | awk '{print $1}')
+    if [ "$_frfm_actual_hash" != "$_frfm_expected_hash" ]; then
+      printf '%s[ERROR]%s Checksum mismatch for community/%s.sh — possible tampering or corruption\n' \
+        "${TUI_RED:-}" "${TUI_RESET:-}" "$_frfm_id" >&2
+      unset _frfm_id _frfm_url _frfm_expected_hash _frfm_cache_file
+      unset _frfm_content _frfm_attempt _frfm_rc _frfm_actual_hash _frfm_size
+      return 1
+    fi
+    printf '  %s[verified]%s SHA256 checksum OK\n' "${TUI_GREEN:-}" "${TUI_RESET:-}" >&2
+  fi
+
+  # Store to cache (atomic via mv)
+  mkdir -p "$FLU_CACHE_DIR" 2>/dev/null || true
+  if [ -d "$FLU_CACHE_DIR" ]; then
+    _frfm_cache_tmp="${FLU_CACHE_DIR}/.tmp_comm_$$_${_frfm_id}"
+    printf '%s\n' "$_frfm_content" > "$_frfm_cache_tmp"
+    mv "$_frfm_cache_tmp" "$_frfm_cache_file" 2>/dev/null || rm -f "$_frfm_cache_tmp" 2>/dev/null
+  fi
+
+  printf '%s\n' "$_frfm_content"
+  unset _frfm_id _frfm_url _frfm_expected_hash _frfm_cache_file
+  unset _frfm_content _frfm_attempt _frfm_rc _frfm_actual_hash _frfm_size _frfm_cache_tmp
+  return 0
 }
 
 # ---------------------------------------------------------------------------
