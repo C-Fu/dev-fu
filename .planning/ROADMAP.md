@@ -54,11 +54,11 @@
   2. User sees a progress bar with bytes received during module script downloads
   3. User's second run of the same module skips the download (cache hit) and expired cache entries are re-fetched
   4. User can inspect a local log file showing tool name, action, success/failure, version, and timestamp for every module execution
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — SHA256 checksums, module caching, and download progress (SECU-01, PERF-01, PERF-02)
+- [ ] 10-02-PLAN.md — Execution logging to TSV file (ADVN-03)
 
 ### Phase 11: Modern CLI Tools
 **Goal**: Users can install and remove four modern CLI tools (lazygit, starship, zoxide, eza) through the flu.sh menu
@@ -131,7 +131,7 @@ Plans:
 | 7. Feature Parity | v1.1 | 3/3 | Complete | 2026-05-25 |
 | 8. Intro Polish | v1.1 | 1/1 | Complete | 2026-05-25 |
 | 9. Documentation | v1.1 | 3/3 | Complete | 2026-05-25 |
-| 10. Module Pipeline Hardening | v2.0 | 0/? | Not started | - |
+| 10. Module Pipeline Hardening | v2.0 | 0/2 | Planned | - |
 | 11. Modern CLI Tools | v2.0 | 0/? | Not started | - |
 | 12. Advanced Module System | v2.0 | 0/? | Not started | - |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
