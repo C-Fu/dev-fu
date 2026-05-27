@@ -71,6 +71,89 @@ trap '_flu_cleanup_exit' INT TERM HUP QUIT
 flu_module_set_env
 
 # ──────────────
+# 📋 CLI Argument Parsing
+# ──────────────
+# Parse CLI flags for non-interactive batch mode.
+# When CLI flags are present, TUI is never entered — script exits
+# after dispatching the appropriate batch/list command.
+_flu_cli_mode=false
+_flu_cli_install=''
+_flu_cli_remove=''
+_flu_cli_list=false
+_flu_cli_yes=false
+_flu_cli_json=false
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --install)
+            [ -z "${2:-}" ] && { printf 'Error: --install requires a comma-separated list of action IDs\n' >&2; exit 2; }
+            _flu_cli_install="$2"
+            shift 2
+            ;;
+        --remove)
+            [ -z "${2:-}" ] && { printf 'Error: --remove requires a comma-separated list of action IDs\n' >&2; exit 2; }
+            _flu_cli_remove="$2"
+            shift 2
+            ;;
+        --list)
+            _flu_cli_list=true
+            shift
+            ;;
+        --yes)
+            _flu_cli_yes=true
+            shift
+            ;;
+        --json)
+            _flu_cli_json=true
+            shift
+            ;;
+        --help|-h)
+            printf 'Usage: flu.sh [OPTIONS]\n\n'
+            printf 'Options:\n'
+            printf '  --install <ids>  Install modules (comma-separated action IDs)\n'
+            printf '  --remove <ids>   Remove modules (comma-separated action IDs)\n'
+            printf '  --list           List available modules\n'
+            printf '  --yes            Skip confirmations (batch mode)\n'
+            printf '  --json           JSON output (with --list)\n'
+            printf '  --help           Show this help message\n'
+            exit 0
+            ;;
+        *)
+            printf 'Error: Unknown option: %s\n' "$1" >&2
+            printf 'Try: flu.sh --help\n' >&2
+            exit 2
+            ;;
+    esac
+done
+
+# Dispatch CLI commands (skip TUI entirely)
+if [ "$_flu_cli_list" = "true" ]; then
+    if [ "$_flu_cli_json" = "true" ]; then
+        flu_batch_list "json"
+    else
+        flu_batch_list ""
+    fi
+    exit 0
+fi
+
+if [ -n "$_flu_cli_install" ] || [ -n "$_flu_cli_remove" ]; then
+    _flu_cli_mode=true
+    _flu_all_actions=""
+    [ -n "$_flu_cli_install" ] && _flu_all_actions="$_flu_cli_install"
+    [ -n "$_flu_cli_remove" ] && _flu_all_actions="${_flu_all_actions:+${_flu_all_actions},}$_flu_cli_remove"
+
+    _flu_batch_flags=""
+    [ "$_flu_cli_yes" = "true" ] && _flu_batch_flags="yes"
+
+    flu_batch_run "$_flu_all_actions" "$_flu_batch_flags"
+    exit $?
+fi
+
+# No CLI flags — proceed to TUI main loop
+unset _flu_cli_mode _flu_cli_install _flu_cli_remove
+unset _flu_cli_list _flu_cli_yes _flu_cli_json
+
+# ──────────────
 # 🎨 Logo Art — ASCII "dev-fu" LEGO-style block characters
 # ──────────────
 # Renders the branded dev-fu logo centered on screen.
