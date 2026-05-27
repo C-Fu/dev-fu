@@ -70,11 +70,11 @@ Plans:
   3. User can install zoxide and use `z` to jump to frecency-ranked directories
   4. User can install eza and use it as a colorized, modern `ls` replacement
   5. User can remove any of the four tools via the menu and the tool is fully uninstalled
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — lazygit and starship install/remove scripts + menu.db entries (TOOL-01, TOOL-02)
+- [ ] 11-02-PLAN.md — zoxide and eza install/remove scripts + menu.db entries + README + MANIFEST (TOOL-03, TOOL-04)
 
 ### Phase 12: Advanced Module System
 **Goal**: Users can run flu.sh non-interactively from the command line and browse/discover available modules from a registry
@@ -132,7 +132,7 @@ Plans:
 | 8. Intro Polish | v1.1 | 1/1 | Complete | 2026-05-25 |
 | 9. Documentation | v1.1 | 3/3 | Complete | 2026-05-25 |
 | 10. Module Pipeline Hardening | v2.0 | 0/2 | Planned | - |
-| 11. Modern CLI Tools | v2.0 | 0/? | Not started | - |
+| 11. Modern CLI Tools | v2.0 | 0/2 | Planned | - |
 | 12. Advanced Module System | v2.0 | 0/? | Not started | - |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
