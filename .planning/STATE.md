@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Modular Ecosystem
-status: ready-to-execute
-stopped_at: Phase 12 planned
-last_updated: "2026-05-28T14:00:00.000Z"
+status: executing
+stopped_at: Phase 12 plan 01 complete
+last_updated: "2026-05-28T20:18:12Z"
 last_activity: 2026-05-28
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 ## Current Position
 
 Phase: 12 of 14 (Advanced Module System)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-28 — Phase 12 planned (2 plans)
+Plan: 01 complete
+Status: Executing
+Last activity: 2026-05-28 — Plan 12-01 (CLI batch mode) complete
 
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v2.0 not started)
+Progress: [████████░░░░░░░░░░░░] 50% (1/2 plans)
 
 ## Performance Metrics
 
@@ -65,6 +65,9 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v2.
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [v2.0 Phase 12-01]: Action ID validation against menu.db for CLI batch mode security (T-12-01)
+- [v2.0 Phase 12-01]: Manual while/case CLI parser over getopts — getopts cannot handle --flag value patterns
+- [v2.0 Phase 12-01]: Conditional ANSI output via [ -t 1 ] check rather than post-hoc sed stripping
 - [v1.1 Phase 7]: Standardized module contract — `set -eu`, `_maybe_sudo()`, FLU_PKG_MGR fallback
 - [v1.1 Phase 7]: 6-category menu grouping (later refined to 5)
 - [v1.1 Phase 9]: Menu.db as authoritative source for README documentation
@@ -86,7 +89,7 @@ Items acknowledged and carried forward from milestone closures:
 | Module | Module caching with TTL | Now SECU-01 in v2.0 | v1.0 close |
 | Module | SHA256 checksum verification | Now PERF-01 in v2.0 | v1.0 close |
 | Module | Module registry with auto-discovery | Now ADVN-02 in v2.0 | v1.0 close |
-| Integration | CLI batch mode for flu.sh | Now ADVN-01 in v2.0 | v1.0 close |
+| Integration | CLI batch mode for flu.sh | ✓ Completed in 12-01 | v1.0 close |
 | Integration | Color themes via FLU_THEME env var | Now UI-01 in v2.0 | v1.0 close |
 | Integration | Progress bar for downloads | Now PERF-02 in v2.0 | v1.0 close |
 | Integration | Module execution logging | Now ADVN-03 in v2.0 | v1.0 close |
@@ -95,5 +98,5 @@ Items acknowledged and carried forward from milestone closures:
 ## Session Continuity
 
 Last session: 2026-05-28
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-advanced-module-system/12-CONTEXT.md
+Stopped at: Plan 12-01 complete, plan 12-02 next
+Resume file: .planning/phases/12-advanced-module-system/12-01-SUMMARY.md
