@@ -61,24 +61,24 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SECU-01 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| ADVN-01 | — | Pending |
-| ADVN-02 | — | Pending |
-| ADVN-03 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| TOOL-01 | — | Pending |
-| TOOL-02 | — | Pending |
-| TOOL-03 | — | Pending |
-| TOOL-04 | — | Pending |
-| PS-01 | — | Pending |
+| SECU-01 | Phase 10 | Pending |
+| PERF-01 | Phase 10 | Pending |
+| PERF-02 | Phase 10 | Pending |
+| ADVN-03 | Phase 10 | Pending |
+| TOOL-01 | Phase 11 | Pending |
+| TOOL-02 | Phase 11 | Pending |
+| TOOL-03 | Phase 11 | Pending |
+| TOOL-04 | Phase 11 | Pending |
+| ADVN-01 | Phase 12 | Pending |
+| ADVN-02 | Phase 12 | Pending |
+| UI-01 | Phase 13 | Pending |
+| UI-02 | Phase 13 | Pending |
+| PS-01 | Phase 14 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-28*

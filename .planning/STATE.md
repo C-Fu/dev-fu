@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Modular Ecosystem
 status: planning
-stopped_at: Milestone v2.0 started — defining requirements
-last_updated: "2026-05-28T01:30:00.000Z"
+stopped_at: Roadmap created — 5 phases (10-14), 13 requirements mapped
+last_updated: "2026-05-28T02:00:00.000Z"
 last_activity: 2026-05-28
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Planning v2.0 Modular Ecosystem
+**Current focus:** Phase 10 — Module Pipeline Hardening
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 of 14 (Module Pipeline Hardening)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-28 — Milestone v2.0 started
+Status: Ready to plan
+Last activity: 2026-05-28 — v2.0 roadmap created (5 phases, 13 requirements)
 
 Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v2.0 not started)
 
@@ -83,17 +83,17 @@ Items acknowledged and carried forward from milestone closures:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Module | Module caching with TTL | Deferred to v2 | v1.0 close |
-| Module | SHA256 checksum verification | Deferred to v2 | v1.0 close |
-| Module | Module registry with auto-discovery | Deferred to v2 | v1.0 close |
-| Integration | CLI batch mode for flu.sh | Deferred to v2 | v1.0 close |
-| Integration | Color themes via FLU_THEME env var | Deferred to v2 | v1.0 close |
-| Integration | Progress bar for downloads | Deferred to v2 | v1.0 close |
-| Integration | Module execution logging | Deferred to v2 | v1.0 close |
-| Engine | Terminal resize handling | Deferred to v2 | v1.0 close |
+| Module | Module caching with TTL | Now SECU-01 in v2.0 | v1.0 close |
+| Module | SHA256 checksum verification | Now PERF-01 in v2.0 | v1.0 close |
+| Module | Module registry with auto-discovery | Now ADVN-02 in v2.0 | v1.0 close |
+| Integration | CLI batch mode for flu.sh | Now ADVN-01 in v2.0 | v1.0 close |
+| Integration | Color themes via FLU_THEME env var | Now UI-01 in v2.0 | v1.0 close |
+| Integration | Progress bar for downloads | Now PERF-02 in v2.0 | v1.0 close |
+| Integration | Module execution logging | Now ADVN-03 in v2.0 | v1.0 close |
+| Engine | Terminal resize handling | Now UI-02 in v2.0 | v1.0 close |
 
 ## Session Continuity
 
 Last session: 2026-05-28
-Stopped at: Milestone v1.1 shipped — ready for next milestone
+Stopped at: Roadmap created for v2.0 — Phase 10 ready to plan
 Resume file: None
