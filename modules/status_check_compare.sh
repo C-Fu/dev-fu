@@ -161,7 +161,7 @@ _gsd_local=$(npm list -g gsd-opencode 2>/dev/null | grep -oE 'gsd-opencode@[0-9]
 if [ -z "$_gsd_local" ]; then
     _gsd_local=$(_extract_ver "$(npx --yes gsd-opencode --version 2>/dev/null | head -1)")
 fi
-_compare_row "GSD" \
+_compare_row "GSD (Rokicool)" \
     "$_gsd_local" \
     "$(_gh_latest "rokicool/gsd-opencode" "")"
 
