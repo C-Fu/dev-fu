@@ -99,13 +99,13 @@ _compare_row() {
     _lat="${_latest}"
 
     if [ -z "$_local_raw" ]; then
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "${_SC_RED}not installed${_SC_RESET}" "${_lat:-N/A}" "—"
+        printf '  %-14s %s%-24s%s %-18s %s\n' "$_name" "$_SC_RED" "not installed" "$_SC_RESET" "${_lat:-N/A}" "—"
     elif [ -z "$_latest" ] || [ "$_latest" = "N/A" ]; then
         printf '  %-14s %-24s %-18s %s\n' "$_name" "${_local_ver:-?}" "N/A" "?"
     elif [ "$_local_ver" = "$_latest" ]; then
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_GREEN}up to date${_SC_RESET}"
+        printf '  %-14s %-24s %-18s %s%s%s\n' "$_name" "$_local_ver" "$_lat" "$_SC_GREEN" "up to date" "$_SC_RESET"
     else
-        printf '  %-14s %-24s %-18s %s\n' "$_name" "$_local_ver" "$_lat" "${_SC_YELLOW}update available${_SC_RESET}"
+        printf '  %-14s %-24s %-18s %s%s%s\n' "$_name" "$_local_ver" "$_lat" "$_SC_YELLOW" "update available" "$_SC_RESET"
     fi
 }
 
