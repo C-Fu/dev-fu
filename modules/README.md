@@ -37,8 +37,16 @@ This directory contains the module scripts that flu.sh fetches and executes on d
 | `set_github_token` | `set_github_token.sh` | GitHub Token | configure |
 | `configure_mouse_disable` | `configure_mouse_disable.sh` | Mouse Reporting | configure |
 | `configure_mouse_enable` | `configure_mouse_enable.sh` | Mouse Reporting | configure |
+| `install_lazygit` | `install_lazygit.sh` | lazygit | install |
+| `remove_lazygit` | `remove_lazygit.sh` | lazygit | remove |
+| `install_starship` | `install_starship.sh` | Starship | install |
+| `remove_starship` | `remove_starship.sh` | Starship | remove |
+| `install_zoxide` | `install_zoxide.sh` | zoxide | install |
+| `remove_zoxide` | `remove_zoxide.sh` | zoxide | remove |
+| `install_eza` | `install_eza.sh` | eza | install |
+| `remove_eza` | `remove_eza.sh` | eza | remove |
 
-**Total: 31 module scripts** (15 install, 13 remove, 2 display, 3 configure, 1 upgrade)
+**Total: 55 module scripts** (30 install, 17 remove, 2 display, 2 create, 2 configure, 1 set, 1 upgrade)
 
 ## Module Script Contract
 
@@ -126,5 +134,13 @@ Each module script extracts its install/remove logic from the corresponding fu.s
 | `install_opencode_gsd.sh` | `install_opencode_gsd()` | 2079-2249 |
 | `install_php_laravel.sh` | `install_php_laravel()` | 2265-... |
 | `set_github_token.sh` | `set_github_token()` | 441-484 |
+| `install_lazygit.sh` | New (no fu.sh equivalent) | — |
+| `remove_lazygit.sh` | New (no fu.sh equivalent) | — |
+| `install_starship.sh` | New (no fu.sh equivalent) | — |
+| `remove_starship.sh` | New (no fu.sh equivalent) | — |
+| `install_zoxide.sh` | New (no fu.sh equivalent) | — |
+| `remove_zoxide.sh` | New (no fu.sh equivalent) | — |
+| `install_eza.sh` | New (no fu.sh equivalent) | — |
+| `remove_eza.sh` | New (no fu.sh equivalent) | — |
 
 `remove_php_laravel.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` have no direct fu.sh equivalent — implement based on package manager removal patterns.

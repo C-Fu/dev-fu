@@ -56,3 +56,7 @@ Modern CLI|lazygit|📦 Install lazygit|install_lazygit
 Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
 Modern CLI|Starship|🚀 Install Starship|install_starship
 Modern CLI|Starship|🗑 Remove Starship|remove_starship
+Modern CLI|zoxide|📁 Install zoxide|install_zoxide
+Modern CLI|zoxide|🗑 Remove zoxide|remove_zoxide
+Modern CLI|eza|📋 Install eza|install_eza
+Modern CLI|eza|🗑 Remove eza|remove_eza
