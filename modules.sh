@@ -688,6 +688,301 @@ _flu_log_execution() {
 }
 
 # ---------------------------------------------------------------------------
+# Section 8.7: _flu_strip_ansi() — Strip ANSI escape codes for non-TTY output
+# ---------------------------------------------------------------------------
+
+# _flu_strip_ansi
+# Reads from stdin, strips ANSI escape sequences, writes to stdout.
+# Used in batch mode when stdout is not a TTY (per D-09).
+_flu_strip_ansi() {
+  sed 's/\x1b\[[0-9;]*m//g'
+}
+
+# ---------------------------------------------------------------------------
+# Section 8.8: flu_batch_run() — Non-interactive batch module execution
+# ---------------------------------------------------------------------------
+
+# flu_batch_run <action_ids> <flags>
+# Executes multiple modules in batch mode without TUI interaction (D-05–D-09).
+#
+# Parameters:
+#   $1 = comma-separated action_ids (e.g., "install_go,install_rust")
+#   $2 = flags string — "yes" if --yes was passed, empty otherwise
+#
+# Logic:
+#   1. Validate action_ids against menu.db entries (T-12-01 mitigation)
+#   2. For each action_id: fetch, parse metadata, check params, check platform,
+#      execute with timeout, log, print status
+#   3. Continue on failure — one failed module does not stop subsequent modules
+#   4. Print summary with success/failure counts
+#   5. Return 0 if all succeed, 1 if any fail
+flu_batch_run() {
+  _br_action_ids="$1"
+  _br_flags="$2"
+  _br_ok=0
+  _br_fail=0
+  _br_is_tty=true
+  [ -t 1 ] || _br_is_tty=false
+
+  # Validate: action_ids must not be empty
+  if [ -z "$_br_action_ids" ]; then
+    printf 'Error: no action IDs provided\n' >&2
+    unset _br_action_ids _br_flags _br_ok _br_fail _br_is_tty
+    return 1
+  fi
+
+  # Set platform context
+  flu_module_set_env
+
+  # Determine menu.db path for action_id validation (T-12-01)
+  _br_menu="${FLU_MENU_FILE:-${FLU_SCRIPT_DIR:-.}/menu.db}"
+
+  _br_saved_ifs="$IFS"
+  IFS=','
+  for _br_aid in $_br_action_ids; do
+    # Trim whitespace
+    _br_aid=$(printf '%s' "$_br_aid" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    [ -z "$_br_aid" ] && continue
+
+    # T-12-01: Validate action_id exists in menu.db
+    if [ -f "$_br_menu" ]; then
+      _br_valid=$(grep -v '^#' "$_br_menu" | grep -v '^$' \
+        | cut -d'|' -f4 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+        | grep -xF "$_br_aid" || true)
+      if [ -z "$_br_valid" ]; then
+        if [ "$_br_is_tty" = "true" ]; then
+          printf '%s✗ %s — Unknown action ID%s\n' "$TUI_RED" "$_br_aid" "$TUI_RESET"
+        else
+          printf '✗ %s — Unknown action ID\n' "$_br_aid"
+        fi
+        _br_fail=$((_br_fail + 1))
+        unset _br_valid
+        continue
+      fi
+      unset _br_valid
+    fi
+
+    # Print status line
+    if [ "$_br_is_tty" = "true" ]; then
+      printf '%s▶ %s%s\n' "$TUI_BOLD" "$_br_aid" "$TUI_RESET"
+    else
+      printf '▶ %s\n' "$_br_aid"
+    fi
+
+    # Fetch module to temp file
+    _br_tmp="/tmp/flu_batch_$$_${_br_aid}"
+    flu_module_fetch "$_br_aid" > "$_br_tmp" 2>/dev/null
+    _br_fetch_rc=$?
+    if [ "$_br_fetch_rc" -ne 0 ] || [ ! -s "$_br_tmp" ]; then
+      if [ "$_br_is_tty" = "true" ]; then
+        printf '%s✗ %s — Fetch failed%s\n' "$TUI_RED" "$_br_aid" "$TUI_RESET"
+      else
+        printf '✗ %s — Fetch failed\n' "$_br_aid"
+      fi
+      rm -f "$_br_tmp" 2>/dev/null
+      _br_fail=$((_br_fail + 1))
+      unset _br_tmp _br_fetch_rc
+      continue
+    fi
+
+    # Parse metadata
+    flu_module_parse_metadata < "$_br_tmp" 2>/dev/null
+    _br_parse_rc=$?
+    if [ "$_br_parse_rc" -ne 0 ]; then
+      if [ "$_br_is_tty" = "true" ]; then
+        printf '%s✗ %s — Metadata parse error%s\n' "$TUI_RED" "$_br_aid" "$TUI_RESET"
+      else
+        printf '✗ %s — Metadata parse error\n' "$_br_aid"
+      fi
+      rm -f "$_br_tmp" 2>/dev/null
+      _br_fail=$((_br_fail + 1))
+      unset _br_tmp _br_parse_rc
+      continue
+    fi
+
+    # Check for @params — reject in --yes mode
+    if [ -n "${_fmp_params:-}" ]; then
+      case "$_br_flags" in
+        *yes*)
+          if [ "$_br_is_tty" = "true" ]; then
+            printf '%s✗ %s — Requires parameters, use interactive mode%s\n' \
+              "$TUI_RED" "$_br_aid" "$TUI_RESET"
+          else
+            printf '✗ %s — Requires parameters, use interactive mode\n' "$_br_aid"
+          fi
+          rm -f "$_br_tmp" 2>/dev/null
+          _br_fail=$((_br_fail + 1))
+          unset _br_tmp _br_parse_rc
+          continue
+          ;;
+        *)
+          if [ "$_br_is_tty" = "true" ]; then
+            printf '%s⚠ %s — Requires parameters, skipping%s\n' \
+              "$TUI_YELLOW" "$_br_aid" "$TUI_RESET"
+          else
+            printf '⚠ %s — Requires parameters, skipping\n' "$_br_aid"
+          fi
+          rm -f "$_br_tmp" 2>/dev/null
+          _br_fail=$((_br_fail + 1))
+          unset _br_tmp _br_parse_rc
+          continue
+          ;;
+      esac
+    fi
+
+    # Platform check (defense in depth — parse_metadata also checks)
+    _br_plat_match=false
+    _br_plat_ifs="$IFS"
+    IFS=','
+    for _br_p in $_fmp_platforms; do
+      _br_p=$(printf '%s' "$_br_p" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      if [ "$_br_p" = "$FLU_OS" ]; then
+        _br_plat_match=true
+        break
+      fi
+    done
+    IFS="$_br_plat_ifs"
+    unset _br_plat_ifs _br_p
+
+    if [ "$_br_plat_match" = "false" ]; then
+      if [ "$_br_is_tty" = "true" ]; then
+        printf '%s✗ %s — Not available for this platform%s\n' \
+          "$TUI_RED" "$_br_aid" "$TUI_RESET"
+      else
+        printf '✗ %s — Not available for this platform\n' "$_br_aid"
+      fi
+      rm -f "$_br_tmp" 2>/dev/null
+      _br_fail=$((_br_fail + 1))
+      unset _br_tmp _br_parse_rc _br_plat_match
+      continue
+    fi
+
+    # Execute module with timeout
+    _br_start=$(date +%s)
+    _flu_execute_with_timeout "${_fmp_timeout:-300}" "$_br_tmp"
+    _br_exit_code=$?
+    _br_end=$(date +%s)
+    _br_duration=$((_br_end - _br_start))
+
+    # Log execution result
+    _br_op=$(_flu_classify_operation "$_br_aid")
+    if [ "$_br_exit_code" -eq 0 ]; then
+      _br_result="success"
+    else
+      _br_result="fail"
+    fi
+    _flu_log_execution "$_br_aid" "$_br_op" "$_br_result" \
+      "${_fmp_version:-}" "$_br_duration" 2>/dev/null || true
+
+    # Print result
+    if [ "$_br_exit_code" -eq 0 ]; then
+      if [ "$_br_is_tty" = "true" ]; then
+        printf '%s✓ %s — Complete%s\n' "$TUI_GREEN" "$_br_aid" "$TUI_RESET"
+      else
+        printf '✓ %s — Complete\n' "$_br_aid"
+      fi
+      _br_ok=$((_br_ok + 1))
+    else
+      if [ "$_br_is_tty" = "true" ]; then
+        printf '%s✗ %s — Failed (exit %d)%s\n' \
+          "$TUI_RED" "$_br_aid" "$_br_exit_code" "$TUI_RESET"
+      else
+        printf '✗ %s — Failed (exit %d)\n' "$_br_aid" "$_br_exit_code"
+      fi
+      _br_fail=$((_br_fail + 1))
+    fi
+
+    # Clean up temp file
+    rm -f "$_br_tmp" 2>/dev/null
+    unset _br_tmp _br_fetch_rc _br_parse_rc _br_plat_match
+    unset _br_start _br_end _br_duration _br_op _br_result _br_exit_code
+  done
+  IFS="$_br_saved_ifs"
+
+  # Print summary
+  printf '\n'
+  if [ "$_br_is_tty" = "true" ]; then
+    if [ "$_br_fail" -eq 0 ]; then
+      printf '%s%d succeeded, %d failed%s\n' "$TUI_GREEN" "$_br_ok" "$_br_fail" "$TUI_RESET"
+    else
+      printf '%s%d succeeded, %d failed%s\n' "$TUI_YELLOW" "$_br_ok" "$_br_fail" "$TUI_RESET"
+    fi
+  else
+    printf '%d succeeded, %d failed\n' "$_br_ok" "$_br_fail"
+  fi
+
+  # Save return code before cleanup
+  _br_ret=0
+  [ "$_br_fail" -gt 0 ] && _br_ret=1
+
+  unset _br_action_ids _br_flags _br_ok _br_fail _br_is_tty _br_saved_ifs
+  unset _br_menu _br_aid
+  return "$_br_ret"
+}
+
+# ---------------------------------------------------------------------------
+# Section 8.9: flu_batch_list() — List available modules
+# ---------------------------------------------------------------------------
+
+# flu_batch_list <json_flag>
+# Lists available modules from menu.db in table or JSON format (D-03).
+#
+# Parameters:
+#   $1 = "json" for --list --json, empty for plain text table
+#
+# Plain text: columnar table with Category, Subcategory, Name, Action ID
+# JSON: array of objects with category, subcategory, name, action_id fields
+flu_batch_list() {
+  _bl_json="$1"
+  _bl_menu="${FLU_MENU_FILE:-${FLU_SCRIPT_DIR:-.}/menu.db}"
+
+  if [ ! -f "$_bl_menu" ]; then
+    printf 'Error: menu database not found: %s\n' "$_bl_menu" >&2
+    unset _bl_json _bl_menu
+    return 1
+  fi
+
+  if [ "$_bl_json" = "json" ]; then
+    # JSON output — array of objects
+    printf '['
+    _bl_first=true
+    while IFS='|' read -r _bl_cat _bl_subcat _bl_label _bl_aid; do
+      case "$_bl_cat" in \#*) continue ;; esac
+      [ -z "$_bl_cat" ] && continue
+      # Trim whitespace
+      _bl_cat=$(printf '%s' "$_bl_cat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_subcat=$(printf '%s' "$_bl_subcat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_label=$(printf '%s' "$_bl_label" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_aid=$(printf '%s' "$_bl_aid" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      if [ "$_bl_first" = "true" ]; then
+        printf '\n'
+        _bl_first=false
+      else
+        printf ',\n'
+      fi
+      printf '  {"category":"%s","subcategory":"%s","name":"%s","action_id":"%s"}' \
+        "$_bl_cat" "$_bl_subcat" "$_bl_label" "$_bl_aid"
+    done < "$_bl_menu"
+    printf '\n]\n'
+  else
+    # Plain text table — sorted by category, subcategory, label
+    printf '%-20s %-16s %-40s %s\n' "Category" "Subcategory" "Name" "Action ID"
+    printf '%-20s %-16s %-40s %s\n' "--------" "-----------" "----" "---------"
+    grep -v '^#' "$_bl_menu" | grep -v '^$' | sort -t'|' -k1,1 -k2,2 -k3,3 \
+    | while IFS='|' read -r _bl_cat _bl_subcat _bl_label _bl_aid; do
+      # Trim whitespace
+      _bl_cat=$(printf '%s' "$_bl_cat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_subcat=$(printf '%s' "$_bl_subcat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_label=$(printf '%s' "$_bl_label" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      _bl_aid=$(printf '%s' "$_bl_aid" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      printf '%-20s %-16s %-40s %s\n' "$_bl_cat" "$_bl_subcat" "$_bl_label" "$_bl_aid"
+    done
+  fi
+
+  unset _bl_json _bl_menu _bl_cat _bl_subcat _bl_label _bl_aid _bl_first
+}
+
+# ---------------------------------------------------------------------------
 # Section 9: flu_module_execute() — Module execution orchestrator
 # ---------------------------------------------------------------------------
 
