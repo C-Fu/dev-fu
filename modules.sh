@@ -795,7 +795,8 @@ flu_batch_run() {
     fi
 
     # Fetch module to temp file
-    _br_tmp="/tmp/flu_batch_$$_${_br_aid}"
+    _br_tmp_safe=$(printf '%s' "$_br_aid" | tr '/' '_')
+    _br_tmp="/tmp/flu_batch_$$_${_br_tmp_safe}"
     flu_module_fetch "$_br_aid" > "$_br_tmp" 2>/dev/null
     _br_fetch_rc=$?
     if [ "$_br_fetch_rc" -ne 0 ] || [ ! -s "$_br_tmp" ]; then
