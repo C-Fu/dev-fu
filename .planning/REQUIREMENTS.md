@@ -18,7 +18,7 @@
 ### Advanced Module Features
 
 - [ ] **ADVN-01**: flu.sh supports CLI batch mode for non-interactive execution (e.g., `flu.sh --install go,rust,starship --yes`) without entering the TUI
-- [ ] **ADVN-02**: flu.sh supports a module registry with auto-discovery, allowing users to browse and install community-contributed module scripts
+- [x] **ADVN-02**: flu.sh supports a module registry with auto-discovery, allowing users to browse and install community-contributed module scripts
 - [ ] **ADVN-03**: flu.sh logs module execution results (tool, action, success/failure, version, timestamp) to a local log file
 
 ### UI & Terminal
@@ -70,7 +70,7 @@ Deferred to future milestones.
 | TOOL-03 | Phase 11 | Pending |
 | TOOL-04 | Phase 11 | Pending |
 | ADVN-01 | Phase 12 | Pending |
-| ADVN-02 | Phase 12 | Pending |
+| ADVN-02 | Phase 12 | ✓ Complete |
 | UI-01 | Phase 13 | Pending |
 | UI-02 | Phase 13 | Pending |
 | PS-01 | Phase 14 | Pending |

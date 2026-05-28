@@ -39,7 +39,7 @@
 
 - [ ] **Phase 10: Module Pipeline Hardening** — SHA256 verification, caching, progress bar, and execution logging
 - [ ] **Phase 11: Modern CLI Tools** — lazygit, starship, zoxide, and eza install/remove modules
-- [ ] **Phase 12: Advanced Module System** — CLI batch mode and module registry with auto-discovery
+- [x] **Phase 12: Advanced Module System** — CLI batch mode and module registry with auto-discovery
 - [ ] **Phase 13: UI & Terminal Polish** — Color themes and terminal resize handling
 - [ ] **Phase 14: PowerShell Parity** — flu.ps1 mirrors all v1.1 + v2.0 features
 
@@ -87,8 +87,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — CLI batch mode: --install, --remove, --list, --yes flags (ADVN-01)
-- [ ] 12-02-PLAN.md — Module registry with auto-discovery and community modules (ADVN-02)
+- [x] 12-01-PLAN.md — CLI batch mode: --install, --remove, --list, --yes flags (ADVN-01)
+- [x] 12-02-PLAN.md — Module registry with auto-discovery and community modules (ADVN-02)
 
 ### Phase 13: UI & Terminal Polish
 **Goal**: Users can customize flu.sh's appearance with color themes and the menu stays usable when the terminal is resized
@@ -133,6 +133,6 @@ Plans:
 | 9. Documentation | v1.1 | 3/3 | Complete | 2026-05-25 |
 | 10. Module Pipeline Hardening | v2.0 | 0/2 | Planned | - |
 | 11. Modern CLI Tools | v2.0 | 0/2 | Planned | - |
-| 12. Advanced Module System | v2.0 | 0/2 | Planned | - |
+| 12. Advanced Module System | v2.0 | 2/2 | Complete | 2026-05-28 |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |

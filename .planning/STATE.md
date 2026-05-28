@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Modular Ecosystem
 status: executing
-stopped_at: Phase 12 plan 01 complete
-last_updated: "2026-05-28T20:18:12Z"
+stopped_at: Phase 12 plan 02 complete
+last_updated: "2026-05-28T11:11:14Z"
 last_activity: 2026-05-28
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 12 — Advanced Module System
+**Current focus:** Phase 12 — Advanced Module System (complete)
 
 ## Current Position
 
 Phase: 12 of 14 (Advanced Module System)
-Plan: 01 complete
+Plan: 02 complete (all plans done)
 Status: Executing
-Last activity: 2026-05-28 — Plan 12-01 (CLI batch mode) complete
+Last activity: 2026-05-28 — Plan 12-02 (module registry) complete
 
-Progress: [████████░░░░░░░░░░░░] 50% (1/2 plans)
+Progress: [████████████████████] 100% (2/2 plans)
 
 ## Performance Metrics
 
@@ -65,6 +65,9 @@ Progress: [████████░░░░░░░░░░░░] 50% (1/
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [v2.0 Phase 12-02]: Separate community module fetch pipeline (flu_registry_fetch_module) for clean security model separation
+- [v2.0 Phase 12-02]: Awk line copies (_l = $0) for JSON parsing — avoids $0 mutation breaking subsequent pattern matching
+- [v2.0 Phase 12-02]: Dynamic menu assembly via temp merged file rather than modifying menu.sh internals
 - [v2.0 Phase 12-01]: Action ID validation against menu.db for CLI batch mode security (T-12-01)
 - [v2.0 Phase 12-01]: Manual while/case CLI parser over getopts — getopts cannot handle --flag value patterns
 - [v2.0 Phase 12-01]: Conditional ANSI output via [ -t 1 ] check rather than post-hoc sed stripping
@@ -88,7 +91,7 @@ Items acknowledged and carried forward from milestone closures:
 |----------|------|--------|-------------|
 | Module | Module caching with TTL | Now SECU-01 in v2.0 | v1.0 close |
 | Module | SHA256 checksum verification | Now PERF-01 in v2.0 | v1.0 close |
-| Module | Module registry with auto-discovery | Now ADVN-02 in v2.0 | v1.0 close |
+| Module | Module registry with auto-discovery | ✓ Completed in 12-02 | v1.0 close |
 | Integration | CLI batch mode for flu.sh | ✓ Completed in 12-01 | v1.0 close |
 | Integration | Color themes via FLU_THEME env var | Now UI-01 in v2.0 | v1.0 close |
 | Integration | Progress bar for downloads | Now PERF-02 in v2.0 | v1.0 close |
@@ -98,5 +101,5 @@ Items acknowledged and carried forward from milestone closures:
 ## Session Continuity
 
 Last session: 2026-05-28
-Stopped at: Plan 12-01 complete, plan 12-02 next
-Resume file: .planning/phases/12-advanced-module-system/12-01-SUMMARY.md
+Stopped at: Phase 12 complete (all 2 plans done)
+Resume file: .planning/phases/12-advanced-module-system/12-02-SUMMARY.md
