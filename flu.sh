@@ -10,12 +10,26 @@
 # ============================================================
 
 # ──────────────
+# 🔍 Early CLI Detection
+# ──────────────
+# Scan args for CLI flags before TTY reattachment or subsystem sourcing.
+# This allows --help to work in non-TTY environments (CI, pipe contexts).
+_flu_is_cli=false
+for _flu_a in "$@"; do
+    case "$_flu_a" in
+        --*) _flu_is_cli=true; break ;;
+        -h) _flu_is_cli=true; break ;;
+    esac
+done
+
+# ──────────────
 # 📡 TTY Reattachment (for curl | bash)
 # ──────────────
 # If stdin is not a TTY (e.g., curl-pipe-bash), reattach to /dev/tty
 # so interactive TUI menus work correctly.
 # If /dev/tty is unavailable, fall through to numbered prompt fallback.
-if [ ! -t 0 ] && [ -r /dev/tty ]; then
+# Skip in CLI mode — batch commands don't need a TTY.
+if [ "$_flu_is_cli" = "false" ] && [ ! -t 0 ] && [ -r /dev/tty ]; then
     exec 0</dev/tty
 fi
 
