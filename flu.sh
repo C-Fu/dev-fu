@@ -180,16 +180,19 @@ cat "$FLU_SCRIPT_DIR/menu.db" > "$FLU_MENU_FILE_MERGED"
 if [ -f "$_flu_registry_cache" ] && [ -s "$_flu_registry_cache" ]; then
     _flu_cm_entries=$(awk '
         /"action_id"/ {
-            gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
-            id = $0
+            _l = $0
+            gsub(/.*"action_id": *"/, "", _l); gsub(/".*/, "", _l)
+            id = _l
         }
         /"name"/ {
-            gsub(/.*"name": *"/, ""); gsub(/".*/, "")
-            name = $0
+            _l = $0
+            gsub(/.*"name": *"/, "", _l); gsub(/".*/, "", _l)
+            name = _l
         }
         /"category"/ {
-            gsub(/.*"category": *"/, ""); gsub(/".*/, "")
-            cat = $0
+            _l = $0
+            gsub(/.*"category": *"/, "", _l); gsub(/".*/, "", _l)
+            cat = _l
         }
         /\}/ && id != "" {
             printf "Community Modules|%s|%s|community/%s\n", cat, name, id

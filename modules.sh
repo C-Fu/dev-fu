@@ -993,16 +993,19 @@ flu_batch_list() {
     if [ -n "$_bl_reg_json" ]; then
       _bl_comm=$(printf '%s\n' "$_bl_reg_json" | awk '
         /"action_id"/ {
-          gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
-          id = $0
+          _l = $0
+          gsub(/.*"action_id": *"/, "", _l); gsub(/".*/, "", _l)
+          id = _l
         }
         /"name"/ {
-          gsub(/.*"name": *"/, ""); gsub(/".*/, "")
-          name = $0
+          _l = $0
+          gsub(/.*"name": *"/, "", _l); gsub(/".*/, "", _l)
+          name = _l
         }
         /"category"/ {
-          gsub(/.*"category": *"/, ""); gsub(/".*/, "")
-          cat = $0
+          _l = $0
+          gsub(/.*"category": *"/, "", _l); gsub(/".*/, "", _l)
+          cat = _l
         }
         /\}/ && id != "" {
           if (first != 0) printf ","
@@ -1035,16 +1038,19 @@ flu_batch_list() {
     if [ -n "$_bl_reg_json" ]; then
       printf '%s\n' "$_bl_reg_json" | awk '
         /"action_id"/ {
-          gsub(/.*"action_id": *"/, ""); gsub(/".*/, "")
-          id = $0
+          _l = $0
+          gsub(/.*"action_id": *"/, "", _l); gsub(/".*/, "", _l)
+          id = _l
         }
         /"name"/ {
-          gsub(/.*"name": *"/, ""); gsub(/".*/, "")
-          name = $0
+          _l = $0
+          gsub(/.*"name": *"/, "", _l); gsub(/".*/, "", _l)
+          name = _l
         }
         /"category"/ {
-          gsub(/.*"category": *"/, ""); gsub(/".*/, "")
-          cat = $0
+          _l = $0
+          gsub(/.*"category": *"/, "", _l); gsub(/".*/, "", _l)
+          cat = _l
         }
         /\}/ && id != "" {
           printf "%-20s %-16s %-40s community/%s\n", "Community Modules", cat, name, id
@@ -1349,8 +1355,8 @@ flu_registry_fetch() {
     return 1
   fi
 
-  # Start with official registry content
-  _frf_merged="$_frf_official"
+  # Start with official registry content (strip outer brackets for consistent merging)
+  _frf_merged=$(printf '%s' "$_frf_official" | sed 's/^\[//;s/\]$//')
 
   # Fetch and merge additional registries from FLU_REGISTRIES env var
   if [ -n "${FLU_REGISTRIES:-}" ]; then
@@ -1365,22 +1371,19 @@ flu_registry_fetch() {
         _frf_extra=$(wget -qO- --timeout=5 "$_frf_url" 2>/dev/null) || true
       fi
       if [ -n "$_frf_extra" ]; then
-        # Merge: strip closing ] from merged, strip opening [ from extra, join with comma
-        _frf_merged=$(printf '%s\n%s\n' "$_frf_merged" "$_frf_extra" | awk '
-          BEGIN { first = 1 }
-          /\[/ { gsub(/^\[/, "") }
-          /\]/ { gsub(/\]$/, "") }
-          /\{/ {
-            if (first) { first = 0 } else { printf "," }
-            printf "%s", $0
-          }
-          END { printf "\n" }
-        ')
+        # Strip outer brackets from extra, join with comma to merged content
+        _frf_extra_stripped=$(printf '%s' "$_frf_extra" | sed 's/^\[//;s/\]$//')
+        # Merge: if merged already has content, append with comma
+        if [ -n "$_frf_merged" ]; then
+          _frf_merged="${_frf_merged},${_frf_extra_stripped}"
+        else
+          _frf_merged="$_frf_extra_stripped"
+        fi
       else
         printf '%s[WARN]%s Third-party registry unavailable: %s\n' \
           "${TUI_YELLOW:-}" "${TUI_RESET:-}" "$_frf_url" >&2
       fi
-      unset _frf_url _frf_extra
+      unset _frf_url _frf_extra _frf_extra_stripped
     done
     IFS="$_frf_saved_ifs"
     unset _frf_saved_ifs
@@ -1420,42 +1423,49 @@ flu_registry_lookup() {
   fi
 
   # Parse JSON with awk — flat array of objects, no nesting
-  # Awk extracts fields for the entry where action_id matches $1
+  # Uses line copies to avoid modifying $0 for subsequent pattern matching
   _frl_result=$(printf '%s\n' "$_frl_json" | awk -v id="$_frl_id" '
     /"action_id"/ {
-      gsub(/.*"action_id": *"/, "")
-      gsub(/".*/, "")
-      current_id = $0
+      _line = $0
+      gsub(/.*"action_id": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      current_id = _line
     }
     current_id == id && /"name"/ {
-      gsub(/.*"name": *"/, "")
-      gsub(/".*/, "")
-      name = $0
+      _line = $0
+      gsub(/.*"name": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      name = _line
     }
     current_id == id && /"description"/ {
-      gsub(/.*"description": *"/, "")
-      gsub(/".*/, "")
-      desc = $0
+      _line = $0
+      gsub(/.*"description": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      desc = _line
     }
     current_id == id && /"category"/ {
-      gsub(/.*"category": *"/, "")
-      gsub(/".*/, "")
-      cat = $0
+      _line = $0
+      gsub(/.*"category": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      cat = _line
     }
     current_id == id && /"platforms"/ {
-      gsub(/.*"platforms": *"/, "")
-      gsub(/".*/, "")
-      plats = $0
+      _line = $0
+      gsub(/.*"platforms": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      plats = _line
     }
     current_id == id && /"base_url"/ {
-      gsub(/.*"base_url": *"/, "")
-      gsub(/".*/, "")
-      burl = $0
+      _line = $0
+      gsub(/.*"base_url": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      burl = _line
     }
     current_id == id && /"sha256"/ {
-      gsub(/.*"sha256": *"/, "")
-      gsub(/".*/, "")
-      hash = $0
+      _line = $0
+      gsub(/.*"sha256": *"/, "", _line)
+      gsub(/".*/, "", _line)
+      hash = _line
     }
     /\}/ && current_id == id {
       printf "%s\n%s\n%s\n%s\n%s\n%s\n", name, desc, cat, plats, burl, hash
