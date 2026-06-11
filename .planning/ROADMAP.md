@@ -5,7 +5,7 @@
 - ✅ **v1.0 flu.sh** — Phases 1-6 (shipped 2026-05-25)
 - ✅ **v1.1 Feature Parity & Polish** — Phases 7-9 (shipped 2026-05-25)
 - 🚧 **v2.0 Modular Ecosystem** — Phases 10-14 (in progress)
-- 📋 **v3.0 Rust Binary** — Phases 15-21 (planned)
+- 📋 **v3.0 Rust Binary** — Phases 15-21 (complete)
 
 ## Phases
 
@@ -128,8 +128,8 @@ Plans:
 - [x] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time (completed 2026-06-11)
 - [x] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem (completed 2026-06-11)
 - [x] **Phase 19: Registry + Batch Mode** — Community module registry, CLI batch commands (--install, --remove, --list) (completed 2026-06-11)
-- [ ] **Phase 20: Integration** — Logo, startup display, main event loop, error recovery, signal handling
-- [ ] **Phase 21: Build & Distribution** — Cross-compile targets, CI, release binaries, curl-pipe-bash installer
+- [x] **Phase 20: Integration** — Logo, startup display, main event loop, error recovery, signal handling (completed 2026-06-11)
+- [x] **Phase 21: Build & Distribution** — Cross-compile targets, CI, release binaries, curl-pipe-bash installer (completed 2026-06-11)
 
 ## v3.0 Phase Details
 
@@ -212,7 +212,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 20-01-PLAN.md — Logo rendering, startup display, main event loop, error recovery, signal handling
+- [x] 20-01-PLAN.md — Logo rendering, startup display, main event loop, error recovery, signal handling
 
 ### Phase 21: Build & Distribution
 **Goal**: Cross-compile for all target platforms, set up CI, and create a curl-pipe-bash installer
@@ -225,7 +225,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 21-01-PLAN.md — Cross-compile setup, GitHub Actions CI, release workflow, install script
+- [x] 21-01-PLAN.md — Cross-compile setup, GitHub Actions CI, release workflow, install script
 
 ## Progress
 
@@ -250,5 +250,5 @@ Plans:
 | 17. Menu System | v3.0 | 1/1 | Complete | 2026-06-11 |
 | 18. Module Pipeline | v3.0 | 2/2 | Complete | 2026-06-11 |
 | 19. Registry + Batch Mode | v3.0 | 1/1 | Complete | 2026-06-11 |
-| 20. Integration | v3.0 | 0/1 | Planned | - |
-| 21. Build & Distribution | v3.0 | 0/1 | Planned | - |
+| 20. Integration | v3.0 | 1/1 | Complete | 2026-06-11 |
+| 21. Build & Distribution | v3.0 | 1/1 | Complete | 2026-06-11 |
