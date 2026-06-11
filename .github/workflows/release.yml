@@ -105,7 +105,8 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           if [ "${{ matrix.use_zig }}" = "true" ]; then
-            llvm-strip -s target/${{ matrix.target }}/release/fust
+            sudo apt-get install -y -q llvm-strip 2>/dev/null || true
+            command -v llvm-strip >/dev/null 2>&1 && llvm-strip -s target/${{ matrix.target }}/release/fust || strip target/${{ matrix.target }}/release/fust
           else
             strip target/${{ matrix.target }}/release/fust
           fi
