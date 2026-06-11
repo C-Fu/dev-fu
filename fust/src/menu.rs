@@ -15,8 +15,8 @@ pub struct MenuEntry {
     pub action_id: String,
 }
 
-/// Embedded menu.db content (compile-time inclusion from repo root).
-const MENU_DB: &str = include_str!("../../menu.db");
+/// Embedded menu.db content (compile-time inclusion from crate root).
+const MENU_DB: &str = include_str!("../menu.db");
 
 /// Parse the embedded menu.db into a sorted vector of MenuEntry items.
 ///

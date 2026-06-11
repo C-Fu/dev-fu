@@ -32,12 +32,13 @@ detect_platform() {
     esac
 
     case "$arch" in
-        x86_64|amd64) cpu="x86_64" ;;
-        aarch64|arm64) cpu="aarch64" ;;
+        x86_64|amd64) target_triple="x86_64-${vendor}-${system}" ;;
+        aarch64|arm64) target_triple="aarch64-${vendor}-${system}" ;;
+        armv7l|armv7|armhf) target_triple="armv7-${vendor}-linux-musleabihf" ;;
         *)      echo "Error: unsupported architecture '$arch'" >&2; exit 1 ;;
     esac
 
-    printf "%s-%s-%s" "$cpu" "$vendor" "$system"
+    printf "%s" "$target_triple"
 }
 
 # ── Resolve download URL ─────────────────────────────────────────

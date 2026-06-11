@@ -1,0 +1,11 @@
+# Cross.toml — used by `cross` for local cross-compilation (CI uses cargo-zigbuild)
+# For best results, prefer: cargo zigbuild --release --target <triple>
+
+[build.env]
+passthrough = ["CARGO_PROFILE_RELEASE_LTO"]
+
+[target.aarch64-unknown-linux-musl]
+image = "ghcr.io/cross-rs/aarch64-unknown-linux-musl:main"
+
+[target.armv7-unknown-linux-musleabihf]
+image = "ghcr.io/cross-rs/armv7-unknown-linux-musleabihf:main"

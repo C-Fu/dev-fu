@@ -1,8 +1,12 @@
 # Cross-compilation targets for static builds
-# Install with: rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
+# Linux musl: use cargo-zigbuild (zig provides cross-linker)
+# macOS: cargo native build on macos runners
 
 [target.x86_64-unknown-linux-musl]
 linker = "x86_64-linux-gnu-gcc"
 
 [target.aarch64-unknown-linux-musl]
 linker = "aarch64-linux-gnu-gcc"
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "armv7-linux-gnueabihf-gcc"

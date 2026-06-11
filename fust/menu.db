@@ -1,0 +1,62 @@
+# menu.db — Menu definition for flu.sh v1.1
+# Format: Category|Subcategory|Label|action_id
+# Lines starting with # are comments. Empty lines are ignored.
+# Action IDs map 1:1 to module script filenames in modules/<action_id>.sh
+
+# ── 🔍 Diagnostics ──
+Diagnostics|System|🔍 Status Check|status_check
+Diagnostics|System|🔄 Compare With Latest|status_check_compare
+Diagnostics|Updates|⬆️ Upgrade All Tools|upgrade_all
+
+# ── 🐹 Languages & Runtimes ──
+Languages & Runtimes|Go|🐹 Install Go|install_go
+Languages & Runtimes|Go|🗑 Remove Go|remove_go
+Languages & Runtimes|Rust|🦀 Install Rust|install_rust
+Languages & Runtimes|Rust|🗑 Remove Rust|remove_rust
+Languages & Runtimes|Python|🐍 Install Python + Pip + UV + Pipx|install_python
+Languages & Runtimes|Python|🗑 Remove Python|remove_python
+Languages & Runtimes|Node.js|💚 Install NVM + Node LTS|install_nvm_node
+Languages & Runtimes|Node.js|🗑 Remove NVM + Node|remove_nvm_node
+Languages & Runtimes|Bun|🥟 Install Bun|install_bun
+Languages & Runtimes|Bun|🗑 Remove Bun|remove_bun
+Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
+Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
+
+# ── 🛠 System Tools ──
+System Tools|Yarn|🧶 Install Yarn|install_yarn
+System Tools|Yarn|🗑 Remove Yarn|remove_yarn
+System Tools|Docker|🐳 Install Docker|install_docker
+System Tools|Docker|🗑 Remove Docker|remove_docker
+System Tools|Tailscale|🛜 Install Tailscale|install_tailscale
+System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
+
+# ── 🤖 AI Tools ──
+AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
+AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
+AI Tools|GSD (Rokicool)|🛠 Install GSD (Rokicool)|install_gsd_rokicool
+AI Tools|GSD (Redux)|🛠 Install GSD (Redux)|install_gsd_redux
+AI Tools|Hermes Agent|🤖 Install Hermes Agent|install_hermes_agent
+AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
+
+# ── 🐚 Shell ──
+Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
+Shell|Prompts|🗑 Remove Fancy Prompt (Purple-Pink)|remove_fancy_prompt
+Shell|Prompts|💙 Fancy Prompt (Shades of Blue)|create_fancy_prompt_blue
+Shell|Prompts|🗑 Remove Fancy Prompt (Blue)|remove_fancy_prompt_blue
+Shell|Network|🏠 Hostname Discovery (Linux)|install_avahi
+Shell|Network|🗑 Remove Hostname Discovery|remove_avahi
+
+# ── ⚙️ Settings ──
+Settings|GitHub|🔑 Set GitHub Token|set_github_token
+Settings|Mouse|🖱 Disable Mouse Reporting|configure_mouse_disable
+Settings|Mouse|🖱 Enable Mouse Reporting|configure_mouse_enable
+
+# ── 🚀 Modern CLI ──
+Modern CLI|lazygit|📦 Install lazygit|install_lazygit
+Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
+Modern CLI|Starship|🚀 Install Starship|install_starship
+Modern CLI|Starship|🗑 Remove Starship|remove_starship
+Modern CLI|zoxide|📁 Install zoxide|install_zoxide
+Modern CLI|zoxide|🗑 Remove zoxide|remove_zoxide
+Modern CLI|eza|📋 Install eza|install_eza
+Modern CLI|eza|🗑 Remove eza|remove_eza
