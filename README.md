@@ -95,25 +95,25 @@ flu.sh v1.1
 │   ├── 💚 NVM + Node LTS (install/remove)
 │   ├── 🥟 Bun (install/remove)
 │   ├── 🐘 PHP + Laravel (install/remove)
-│   └── ☕ OpenJDK (install/remove)
-├── 🛠 System Tools
-│   ├── 🐳 Docker (install/remove)
-│   ├── 🛜 Tailscale (install/remove)
+│   ├── ☕ OpenJDK (install/remove)
 │   └── 🧶 Yarn (install/remove)
+├── 🚀 Modern CLI
+│   ├── 📦 lazygit (install/remove)
+│   ├── 🚀 Starship (install/remove)
+│   ├── 📁 zoxide (install/remove)
+│   └── 📋 eza (install/remove)
 ├── 🐚 Shell
 │   ├── 💜 Fancy Prompt (Purple-Pink) (create/remove)
 │   ├── 💙 Fancy Prompt (Shades of Blue) (create/remove)
 │   ├── 📡 Avahi Daemon / mDNS (install/remove)
 │   └── 🌐 Systemd-Resolved / LLMNR (install/remove)
-├── ⚙️ Settings
-│   ├── 🔑 Set GitHub Token
-│   ├── 🖱  Disable Mouse Reporting
-│   └── 🖱  Enable Mouse Reporting
-└── 🚀 Modern CLI
-    ├── 📦 lazygit (install/remove)
-    ├── 🚀 Starship (install/remove)
-    ├── 📁 zoxide (install/remove)
-    └── 📋 eza (install/remove)
+├── 🛠 System Tools
+│   ├── 🐳 Docker (install/remove)
+│   └── 🛜 Tailscale (install/remove)
+└── ⚙️ Settings
+    ├── 🔑 Set GitHub Token
+    ├── 🖱  Disable Mouse Reporting
+    └── 🖱  Enable Mouse Reporting
 ```
 
 ## Module Architecture

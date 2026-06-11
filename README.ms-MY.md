@@ -93,25 +93,25 @@ flu.sh v1.1
 │   ├── 💚 NVM + Node LTS (pasang/keluarkan)
 │   ├── 🥟 Bun (pasang/keluarkan)
 │   ├── 🐘 PHP + Laravel (pasang/keluarkan)
-│   └── ☕ OpenJDK (pasang/keluarkan)
-├── 🛠 Alatan Sistem
-│   ├── 🐳 Docker (pasang/keluarkan)
-│   ├── 🛜 Tailscale (pasang/keluarkan)
+│   ├── ☕ OpenJDK (pasang/keluarkan)
 │   └── 🧶 Yarn (pasang/keluarkan)
+├── 🚀 CLI Moden
+│   ├── 📦 lazygit (pasang/keluarkan)
+│   ├── 🚀 Starship (pasang/keluarkan)
+│   ├── 📁 zoxide (pasang/keluarkan)
+│   └── 📋 eza (pasang/keluarkan)
 ├── 🐚 Shell
 │   ├── 💜 Fancy Prompt (Ungu-Merah Jambu) (cipta/keluarkan)
 │   ├── 💙 Fancy Prompt (Warna Biru) (cipta/keluarkan)
 │   ├── 📡 Avahi Daemon / mDNS (pasang/keluarkan)
 │   └── 🌐 Systemd-Resolved / LLMNR (pasang/keluarkan)
-├── ⚙️ Tetapan
-│   ├── 🔑 Set GitHub Token
-│   ├── 🖱  Disable Mouse Reporting
-│   └── 🖱  Enable Mouse Reporting
-└── 🚀 CLI Moden
-    ├── 📦 lazygit (pasang/keluarkan)
-    ├── 🚀 Starship (pasang/keluarkan)
-    ├── 📁 zoxide (pasang/keluarkan)
-    └── 📋 eza (pasang/keluarkan)
+├── 🛠 Alatan Sistem
+│   ├── 🐳 Docker (pasang/keluarkan)
+│   └── 🛜 Tailscale (pasang/keluarkan)
+└── ⚙️ Tetapan
+    ├── 🔑 Set GitHub Token
+    ├── 🖱  Disable Mouse Reporting
+    └── 🖱  Enable Mouse Reporting
 ```
 
 ## Seni Bina Modul
