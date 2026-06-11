@@ -46,17 +46,18 @@ resolve_url() {
     target="$1"
 
     if [ -n "$VERSION" ]; then
-        # Specific version requested
-        tag="${VERSION#v}"
-        printf "https://github.com/%s/releases/download/v%s/fust-%s.tar.gz" \
+        # Specific version requested — construct direct URL
+        tag="${VERSION}"
+        case "$tag" in v*) ;; *) tag="v${tag}" ;; esac
+        printf "https://github.com/%s/releases/download/%s/fust-%s.tar.gz" \
             "$REPO" "$tag" "$target"
         return
     fi
 
-    # Fetch latest release from GitHub API
-    api_url="https://api.github.com/repos/${REPO}/releases/latest"
+    # Fetch most recent release (including pre-releases)
+    api_url="https://api.github.com/repos/${REPO}/releases"
     release_json="$(fetch_url "$api_url")" || {
-        echo "Error: failed to fetch latest release info" >&2
+        echo "Error: failed to fetch release info" >&2
         exit 1
     }
 
