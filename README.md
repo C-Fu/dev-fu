@@ -16,10 +16,12 @@
 ```sh
 # One-liner: auto-detects OS/arch, downloads, runs. Cleans up on exit.
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
-
+```
+```sh
 # Or install permanently
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
-
+```
+```sh
 # Pin a specific version
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
 ```
