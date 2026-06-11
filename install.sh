@@ -46,37 +46,41 @@ resolve_url() {
     target="$1"
 
     if [ -n "$VERSION" ]; then
-        # Specific version requested — construct direct URL
         tag="${VERSION}"
         case "$tag" in v*) ;; *) tag="v${tag}" ;; esac
-        printf "https://github.com/%s/releases/download/%s/fust-%s.tar.gz" \
-            "$REPO" "$tag" "$target"
+    else
+        tag="$(latest_tag)"
+    fi
+
+    printf "https://github.com/%s/releases/download/%s/fust-%s.tar.gz" \
+        "$REPO" "$tag" "$target"
+}
+
+# ── Get latest release tag ────────────────────────────────────────
+latest_tag() {
+    # Try GitHub API (returns JSON array of releases)
+    tag="$(curl -sSL -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/releases" 2>/dev/null \
+        | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+        | head -1)" || true
+
+    if [ -n "$tag" ]; then
+        printf "%s" "$tag"
         return
     fi
 
-    # Fetch most recent release (including pre-releases)
-    api_url="https://api.github.com/repos/${REPO}/releases"
-    release_json="$(fetch_url "$api_url")" || {
-        echo "Error: failed to fetch release info" >&2
-        exit 1
-    }
+    # Fallback: scrape the releases page HTML for the first tag
+    tag="$(fetch_url_silent "https://github.com/${REPO}/releases" 2>/dev/null \
+        | sed -n 's|.*/releases/tag/\([^"]*\)".*|\1|p' \
+        | head -1)" || true
 
-    # Extract tag name and asset URL for matching target
-    tag_name="$(printf "%s" "$release_json" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
-    if [ -z "$tag_name" ]; then
-        echo "Error: could not determine latest version" >&2
-        exit 1
+    if [ -n "$tag" ]; then
+        printf "%s" "$tag"
+        return
     fi
 
-    asset_pattern="fust-${target}.tar.gz"
-    asset_url="$(printf "%s" "$release_json" | sed -n "s|.*\"browser_download_url\"[[:space:]]*:[[:space:]]*\"\\([^\"]*${asset_pattern}\\)\".*|\\1|p" | head -1)"
-
-    if [ -z "$asset_url" ]; then
-        echo "Error: no release asset found for target '$target'" >&2
-        exit 1
-    fi
-
-    printf "%s" "$asset_url"
+    echo "Error: could not determine latest version. Set FLU_VERSION manually." >&2
+    exit 1
 }
 
 # ── Download helper (curl or wget) ───────────────────────────────
@@ -89,6 +93,17 @@ fetch_url() {
     else
         echo "Error: curl or wget required" >&2
         exit 1
+    fi
+}
+
+fetch_url_silent() {
+    url="$1"
+    if command -v curl >/dev/null 2>&1; then
+        curl -sSL "$url"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- "$url"
+    else
+        return 1
     fi
 }
 
