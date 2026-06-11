@@ -1,338 +1,293 @@
-# dev-fu — One command to bootstrap a developer machine ([Bahasa Melayu version](README.ms-MY.md))
+# dev-fu — One command to bootstrap a developer machine ([Bahasa Melayu](README.ms-MY.md))
 
-**One command to bootstrap a complete (kinda) developer machine, anywhere.**
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu.sh)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-```bash
-# bash / zsh
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
-```
+**`flu.sh`** is a zero-dependency, curl-pipe-bash-ready TUI menu system that fetches and executes modular install scripts on demand. Runs on any POSIX shell — bash, zsh, dash, ash, busybox — across 10+ Linux distros, macOS, WSL2, Chromebook, and Android (Termux).
 
-```sh
-# sh / ash / BusyBox (no process substitution)
-curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh
-```
-
-```powershell
-# Windows (PowerShell) — bypasses execution policy for unsigned scripts
-Set-ExecutionPolicy Bypass -Scope Process -Force
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-```
-## Screenshot
-
-```
-://─────────────── System Info ────────────────║
-│ Architecture: x86_64
-│ OS: alpine
-│ Package Mgr: apk
-│ Shell: bash
-│ WAN IP:
-│ LAN IP:
-│ Hostname:
-│ User: root (0:0)
-▉════════════════by═C-Fu════════════════
-
-
-        ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗
- ██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║
- ╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║
- ██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║
- ╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝
-    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝ 
-
-://─────────────────────────────║
-│ Environment Setup Utility
-▉══════════════════════════
-
-│ 1)  🔍  Status Check
-│ 2)  🔄  Compare With Latest
-│ 3)  ⬆️  Upgrade All Tools
-│ 4)  🔑  Set GitHub Token
-│ 5)  🐳  Install Docker
-│ 6)  ✨  Create Fancy Prompt (Purple-Pink)
-│ 7)  💎  Create Fancy Prompt (Shades of Blue)
-│ 8)  🌐  Install Hostname Discovery (Linux only)
-│ 9)  🐹  Install Go
-│ 10) ☢️  Install Rust
-│ 11) 🐍  Install Python + Pip + UV + Pipx
-│ 12) 📦  Install NVM + Node LTS
-│ 13) 🥟  Install Bun
-│ 14) ⚡  Install Yarn
-│ 15) 🐁  Disable Mouse Reporting in Terminal
-│ 16) 🐘  Install PHP + Laravel
-│ 17) 🔒  Install Tailscale
-│ 18) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
-
-  Enter your selected options, split by commas or spaces (1,2 3 4)
-  Enter -N to remove (e.g. -3 removes Docker)
-
-://─────────────────────────║
-│  Press u to upgrade all
-│  Press q to quit
-▉══════════════════
-▸ Choice: 
-```
-
-## Why dev-fu
-
-- **Zero dependencies** — Pure Bash 4+ and PowerShell 5.1+. No Python, no Node, no framework required to run the script itself. Everything it installs is fetched from official sources.
-- **Runs everywhere** — Same script works across WSL2, Linux, macOS, Chromebooks, Android (Termux), and Windows (PowerShell). Supports x86, x64, ARM (Raspberry Pi, Apple Silicon), and bare metal. Tested in LXC containers, VMs, and ChromeOS Crostini. Compatible with Bash and ZSH on Unix, PowerShell on Windows.
-- **Multi-distro** — Auto-detects your package manager (apk, apt, dnf, pacman, zypper, brew, winget, choco). Works on Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, ChromeOS, Android (Termux), and Windows.
-- **Multi-select menu** — Select multiple operations in one pass. Batch install Go, Rust, and Python without re-running the script.
-- **Atomic operations** — Each install has a matching remove. Every operation confirms before proceeding.
-
-## Supported Platforms
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
-  <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
-  <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
-  <img src="https://img.shields.io/badge/WSL2-4A4A4A?style=for-the-badge&logo=windows-terminal&logoColor=white" alt="WSL2">
-  <img src="https://img.shields.io/badge/Chromebook-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Chromebook">
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
-  <br>
-  <img src="https://img.shields.io/badge/Alpine-0D597F?style=for-the-badge&logo=alpine-linux&logoColor=white" alt="Alpine">
-  <img src="https://img.shields.io/badge/Debian-A80030?style=for-the-badge&logo=debian&logoColor=white" alt="Debian">
-  <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Ubuntu">
-  <img src="https://img.shields.io/badge/Fedora-294172?style=for-the-badge&logo=fedora&logoColor=white" alt="Fedora">
-  <img src="https://img.shields.io/badge/Arch-1793D1?style=for-the-badge&logo=arch-linux&logoColor=white" alt="Arch">
-  <br>
-  <img src="https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="Bash">
-  <img src="https://img.shields.io/badge/ZSH-4EAA25?style=for-the-badge&logo=zsh&logoColor=white" alt="ZSH">
-  <img src="https://img.shields.io/badge/PowerShell-5391FE?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell">
-  <img src="https://img.shields.io/badge/BusyBox-293E5A?style=for-the-badge&logo=buzzfeed&logoColor=white" alt="BusyBox">
-  <img src="https://img.shields.io/badge/ash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="ash">
-  <br>
-  <img src="https://img.shields.io/badge/x86__64-6DB33F?style=for-the-badge&logo=amd&logoColor=white" alt="x86_64">
-  <img src="https://img.shields.io/badge/ARM64-00C1DE?style=for-the-badge&logo=arm&logoColor=white" alt="ARM64">
-  <img src="https://img.shields.io/badge/Raspberry_Pi-C51A4A?style=for-the-badge&logo=raspberry-pi&logoColor=white" alt="Raspberry Pi">
-  <img src="https://img.shields.io/badge/LXC-4A4A4A?style=for-the-badge&logo=linux-containers&logoColor=white" alt="LXC">
-</p>
-
-| Platform | Architecture | Package Manager | Script |
-|----------|-------------|-----------------|--------|
-| Alpine Linux | x86_64, ARM | apk | `fu.sh` |
-| Debian / Ubuntu | x86_64, ARM | apt | `fu.sh` |
-| Fedora / RHEL | x86_64, ARM | dnf | `fu.sh` |
-| Arch Linux | x86_64, ARM | pacman | `fu.sh` |
-| openSUSE | x86_64, ARM | zypper | `fu.sh` |
-| macOS (Intel & Apple Silicon) | x64, ARM | Homebrew | `fu.sh` |
-| WSL2 (Ubuntu, Debian) | x86_64, ARM | apt | `fu.sh` |
-| LXC / LXD containers | x86_64, ARM | auto-detected | `fu.sh` |
-| Bare metal servers | x86_64, ARM | auto-detected | `fu.sh` |
-| Raspberry Pi (Pi OS, Ubuntu) | ARM | apt | `fu.sh` |
-| Chromebook (Crostini) | x86_64, ARM | apt (auto-detected) | `fu.sh` |
-| Android / Termux | ARM, x86_64 | pkg (apt) | `fu.sh` |
-| Windows (native) | x64, ARM | winget / choco | `fu.ps1` |
-
-## What Can Be Installed
-
-| Category | Tools |
-|----------|-------|
-| **Containers** | [Docker](https://www.docker.com/) |
-| **Networking** | [Avahi Daemon](https://github.com/lathiat/avahi) + [systemd-resolved](https://www.freedesktop.org/wiki/Software/systemd/resolved/) — mDNS/NSS hostname discovery + DNS (Linux only) |
-| **Languages** | [Go](https://go.dev/), [Rust](https://www.rust-lang.org/), [Python](https://www.python.org/) (with pip, pipx, uv), [Node.js](https://nodejs.org/) (LTS via nvm), [PHP](https://www.php.net/) |
-| **Runtimes** | [Bun](https://bun.sh/) |
-| **Package Managers** | [Yarn](https://yarnpkg.com/), [Composer](https://getcomposer.org/) (PHP), npm |
-| **Web Dev** | [Laravel](https://laravel.com/) installer (via Composer) |
-| **AI Tools** | [OpenCode](https://github.com/anomalyco/opencode), [GSD](https://github.com/rokicool/gsd-opencode) (Rokicool), [OpenChamber](https://github.com/rokicool/openchamber) |
-| **Productivity** | [Fancy Prompt](https://github.com/jonathan-scholbach/fancy-prompt) — optional shell enhancement |
-| **Terminal** | Disable mouse reporting — prevents terminal mouse events from interfering with CLI tools |
-| **Diagnostics** | Status Check — shows installed tools and versions; Compare With Latest — fetches latest versions from GitHub/npm/go.dev/nodejs.org and shows which tools need updating |
-
-## Prerequisites
-
-- POSIX-compatible shell (bash, zsh, ash, sh) — or PowerShell 5.1+ on Windows
-- curl or wget for downloads
-- sudo privileges (for system package installs)
-- Internet connection
-
-**NOTE:** For WSL2, run inside the Linux distribution, not PowerShell.
+> **`fu.sh`** (the original monolithic script) is still available — see [fu-sh/README-Fu.md](fu-sh/README-Fu.md).
+>
+> **`fust`** (Rust binary port) is also available — see [fust/README-fust.md](fust/README-fust.md).
 
 ## Quick Start
 
+### fust (Rust binary — run without installing)
+
+```sh
+# One-liner: auto-detects OS/arch, downloads, runs. Cleans up on exit.
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
+
+# Or install permanently
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+
+# Pin a specific version
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
+```
+
+### flu.sh (POSIX shell — modular TUI)
+
 ```bash
-# Option 1: Clone and run
+# Option 1: curl-pipe-bash (bash / zsh / any POSIX shell)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh)
+```
+
+```sh
+# Option 1 alt: BusyBox / dash / ash (no process substitution)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+```
+
+```bash
+# Option 2: Clone and run locally (no network needed after clone)
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
-bash fu.sh
+./flu-sh/flu.sh
 ```
+
+### fu.sh (Bash — original monolithic)
 
 ```bash
-# Option 2: bash (Linux / macOS / WSL2)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)
-```
-
-```zsh
-# Option 2: zsh (macOS default)
-zsh -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
+# Option 1: curl-pipe-bash
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh)
 ```
 
 ```sh
-# Option 2: sh / dash (Debian default)
-sh -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
+# Option 2: BusyBox / dash / ash
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh -o /tmp/fu.sh && sh /tmp/fu.sh
 ```
-
-```sh
-# Option 2: ash / BusyBox (Alpine default)
-ash -c 'curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh -o /tmp/fu.sh && bash /tmp/fu.sh'
-```
-
-```fish
-# Option 2: fish
-bash -c 'bash <(curl -H "Cache-Control: no-cache" -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh)'
-```
-
-```powershell
-# Windows (PowerShell) — bypasses execution policy
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-```
-
-## Usage
-
-Run `./fu.sh` and select options from the interactive menu:
-
-```
- 1) 🔍  Status Check
- 2) 🔄  Compare With Latest
- 3) ⬆️  Upgrade All Tools
- 4) 🔑  Set GitHub Token
- 5) 🐳  Install Docker
- 6) ✨  Create Fancy Prompt (Purple-Pink)
- 7) 💎  Create Fancy Prompt (Shades of Blue)
- 8) 🌐  Install Hostname Discovery (Linux only)
- 9) 🐹  Install Go
-10) ☢️  Install Rust
-11) 🐍  Install Python + Pip + UV + Pipx
-12) 📦  Install NVM + Node LTS
-13) 🥟  Install Bun
-14) ⚡  Install Yarn
-15) 🐁  Disable Mouse Reporting in Terminal
-16) 🐘  Install PHP + Laravel
-17) 🔒  Install Tailscale
-18) 🚀  Install OpenCode + GSD (Rokicool) + OpenChamber
-```
-
-- **Multi-select:** Enter comma or space-separated numbers (e.g. `7,8 9` to install Go, Rust, and Python together)
-- **Remove:** Prefix with `-` (e.g. `-4` to remove Docker)
-- **Compare versions:** Option 2 fetches latest versions online and compares with your local installs
-- **Upgrade all:** Press `u` at the prompt
-- **Quit:** Press `q`
-
-Single-select options (Hostname Discovery, OpenCode+GSD) must be used alone.
-
-## Non-Interactive (CLI) Mode
-
-Pass option numbers as arguments to run without the interactive menu:
 
 ```bash
-# Upgrade all tools
-bash fu.sh u
-
-# Install Docker and Python, remove Go
-bash fu.sh 5 11 -9
-
-# One-liner from remote
-bash <(curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.sh) 5 11 -9
+# Option 3: Clone and run locally
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+bash ./fu-sh/fu.sh
 ```
 
-```powershell
-# Windows: Upgrade all tools
-.\fu.ps1 u
+> **Windows:** Use `flu.ps1` for native PowerShell. The POSIX scripts work in WSL2 (run inside the Linux distribution, not PowerShell).
 
-# Install Docker and Python, remove Go
-.\fu.ps1 5 11 -9
+## flu.sh Features
+
+- **Zero dependencies** — Pure POSIX `sh`. No Python, no Node, no framework needed to run the script itself.
+- **ANSI TUI** — Arrow-key navigation with breadcrumb trails and magenta ASCII dev-fu logo on startup.
+- **3-level nested submenus** — Category → Subcategory → Option, with keyboard shortcuts (`q` quit, `b` back).
+- **Modular remote architecture** — Each menu option fetches and executes a standalone POSIX `sh` script from GitHub on demand. In local mode (`git clone`), modules run from disk — no network required.
+- **POSIX sh compatible** — Tested on bash 4+, zsh, dash, ash (Alpine/BusyBox).
+- **Platform detection** — Auto-detects OS, distro, package manager, and CPU architecture on startup.
+- **19 operations across 5 categories** — Most install operations have a matching remove.
+
+## flu.sh Menu Structure
+
 ```
+flu.sh v1.1
+├── 🔍 Diagnostics
+│   ├── 🔍 Status Check
+│   ├── 🔄 Compare With Latest
+│   └── ⬆️  Upgrade All Tools
+├── 🤖 AI Tools
+│   ├── 🤖 OpenCode (install/remove)
+│   ├── 🛠 GSD (Rokicool)
+│   ├── 🛠 GSD (Redux)
+│   ├── 🤖 Hermes Agent
+│   └── 🏛 OpenChamber
+├── 🐹 Languages & Runtimes
+│   ├── 🐹 Go (install/remove)
+│   ├── 🦀 Rust (install/remove)
+│   ├── 🐍 Python + Pip + UV + Pipx (install/remove)
+│   ├── 💚 NVM + Node LTS (install/remove)
+│   ├── 🥟 Bun (install/remove)
+│   ├── 🐘 PHP + Laravel (install/remove)
+│   ├── ☕ OpenJDK (install/remove)
+│   └── 🧶 Yarn (install/remove)
+├── 🚀 Modern CLI
+│   ├── 📦 lazygit (install/remove)
+│   ├── 🚀 Starship (install/remove)
+│   ├── 📁 zoxide (install/remove)
+│   └── 📋 eza (install/remove)
+├── 🐚 Shell
+│   ├── 💜 Fancy Prompt (Purple-Pink) (create/remove)
+│   ├── 💙 Fancy Prompt (Shades of Blue) (create/remove)
+│   ├── 📡 Avahi Daemon / mDNS (install/remove)
+│   └── 🌐 Systemd-Resolved / LLMNR (install/remove)
+├── 🛠 System Tools
+│   ├── 🐳 Docker (install/remove)
+│   └── 🛜 Tailscale (install/remove)
+└── ⚙️ Settings
+    ├── 🔑 Set GitHub Token
+    ├── 🖱  Disable Mouse Reporting
+    └── 🖱  Enable Mouse Reporting
+```
+
+## Module Architecture
+
+flu.sh uses a remote on-demand module system. Each menu option maps to a standalone POSIX `sh` script under `flu-sh/modules/`. When flu.sh runs:
+
+1. **`tui.sh`** — ANSI terminal rendering primitives (cursor positioning, colors, keyboard input)
+2. **`menu.sh`** — Parses `menu.db` (pipe-delimited menu DSL) and renders the interactive TUI
+3. **`modules.sh`** — Handles remote script fetching from GitHub and local execution
+
+### How Modules Work
+
+- **Local mode:** `git clone` and run — modules are sourced from disk in `flu-sh/modules/`, no network needed
+- **Remote mode:** `curl-pipe-bash` — modules are fetched on-demand from GitHub raw URLs with 3 retries (2s delay)
+- **Environment:** Modules use `FLU_OS`, `FLU_DISTRO`, `FLU_PKG_MGR`, `FLU_ARCH` for platform-aware installs
+- **Safety:** All modules use `set -eu`, idempotent guards (`command -v`), and `_maybe_sudo()` for privilege escalation only when needed
+- **Contract:** Every module script includes a parsed metadata header (`@name`, `@platforms`, `@deps`, `@timeout`) and follows strict exit code conventions (0 = success, 1 = failure)
+
+### Module Categories
+
+| Category | Module Scripts | Count |
+|----------|---------------|-------|
+| Languages & Runtimes | `install_go.sh`, `install_rust.sh`, `install_python.sh`, `install_nvm_node.sh`, `install_bun.sh`, `install_php_laravel.sh` (+ matching remove scripts) | 12 |
+| Tools | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh` (+ matching remove scripts) | 7 |
+| Shell | `create_fancy_prompt.sh`, `create_fancy_prompt_blue.sh`, `install_avahi.sh` (+ matching remove scripts) | 6 |
+| Diagnostics | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
+| Settings | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
+
+**Total: 31 module scripts.** See [flu-sh/modules/README.md](flu-sh/modules/README.md) for the full action ID registry and module contract specification.
+
+### Architecture Diagram
+
+```
+curl-pipe-bash / git clone
+        │
+        ▼
+    flu.sh ─── orchestrator
+        │
+   ┌────┼────────────┐
+   ▼    ▼            ▼
+tui.sh  menu.sh  modules.sh
+   │     │           │
+   │     ▼           ▼
+   │  menu.db    modules/*.sh
+   │  (DSL)    (on-demand fetch)
+   ▼
+  TTY rendering
+  (ANSI escape codes)
+```
+
+## fu.sh — Legacy Monolithic Script
+
+flu.sh is the next-generation modular TUI system. The original monolithic script `fu.sh` is still available with 18 flat-menu operations and is documented separately — see **[fu-sh/README-Fu.md](fu-sh/README-Fu.md)** for `fu.sh` documentation, including its numbered prompt interface, non-interactive CLI mode, and platform-specific notes.
+
+| Feature | `flu.sh` | `fu.sh` |
+|---------|----------|---------|
+| Shell | POSIX `sh` (bash, zsh, dash, ash, busybox) | Bash 4+ |
+| UI | ANSI TUI with arrow-key navigation | Numbered list prompt |
+| Menu depth | 3-level nested submenus | Flat (18 options) |
+| Architecture | Modular (remote on-demand scripts) | Monolithic (all logic in one file) |
+| Module source | `modules/` directory (local) or GitHub (remote) | Inline functions |
+| Operations | 19 across 5 categories | 18 flat operations |
+| POSIX compatibility | Full (dash, ash, busybox) | Bash only |
+
+## Why dev-fu
+
+- **Zero dependencies** — Pure POSIX `sh` and PowerShell 5.1+. Everything it installs is fetched from official sources.
+- **Runs everywhere** — Same script across 10+ Linux distros, macOS, WSL2, Chromebooks, Android (Termux), and Windows (PowerShell). Tested in LXC containers, VMs, bare metal, and ChromeOS Crostini.
+- **Multi-distro** — Auto-detects 6 package managers (apk, apt, dnf, pacman, zypper, brew). Works on Alpine, Debian, Ubuntu, Fedora, RHEL, Arch, openSUSE, macOS, and Termux.
+- **Modular architecture** — On-demand remote scripts in `flu.sh`. Clone and run locally for zero-network operation.
+- **Batch operations** — `upgrade_all.sh` upgrades every installed tool in one pass. Status Check shows all installed versions. Compare With Latest checks for updates.
+
+## Supported Platforms
+
+flu.sh is POSIX `sh` compatible and tested on:
+
+| Shell | TUI Support |
+|-------|------------|
+| bash 4+ | Full |
+| zsh | Full |
+| dash (Debian default) | Full |
+| ash (Alpine/BusyBox) | Full |
+
+| Platform | Package Manager | Architecture |
+|----------|----------------|-------------|
+| Alpine Linux | apk | x86_64, ARM |
+| Debian / Ubuntu | apt | x86_64, ARM |
+| Fedora / RHEL | dnf | x86_64, ARM |
+| Arch Linux | pacman | x86_64, ARM |
+| openSUSE | zypper | x86_64, ARM |
+| macOS (Intel & Apple Silicon) | Homebrew | x64, ARM |
+| WSL2 (Ubuntu, Debian) | apt | x86_64, ARM |
+| Chromebook (Crostini) | apt | x86_64, ARM |
+| Android (Termux) | pkg | ARM, x86_64 |
+| Raspberry Pi (Pi OS, Ubuntu) | apt | ARM |
+
+> **Windows native:** Use `flu.ps1` (PowerShell). For WSL2, run `flu.sh` inside the Linux distribution.
 
 ## Platform-Specific Notes
 
-### Linux
-
-All package managers supported. The script auto-detects your package manager.
-
-Option 7 (Hostname Discovery) installs `avahi-daemon` for mDNS/NSS and `systemd-resolved` for DNS resolution, then symlinks `/etc/resolv.conf` to systemd-resolved's stub. This option is Linux-only — not available on macOS, Windows, or WSL.
-
 ### Alpine / BusyBox
 
-- Option 12 (NVM + Node LTS) installs Node.js directly via `apk add nodejs npm` instead of NVM. Alpine's musl libc is incompatible with NVM's prebuilt Node binaries, and compiling from source often fails due to missing build dependencies.
-- Option 5 (Docker) uses `apk add docker docker-cli-compose` since Docker's official install script does not support Alpine.
+- **NVM + Node LTS** installs Node.js directly via `apk add nodejs npm` instead of NVM. Alpine's musl libc is incompatible with NVM's prebuilt Node binaries.
+- **Docker** uses `apk add docker docker-cli-compose` since Docker's official install script does not support Alpine.
 
 ### macOS
 
-- Requires Homebrew: `brew install bash`
-- Node via nvm, not system Node
+- Requires [Homebrew](https://brew.sh/) — the script auto-detects `brew` as the package manager.
+- Node is installed via NVM, not the system Node.
 
 ### WSL2
 
-- Run inside WSL Linux environment, not Windows
-- Works with Docker Desktop WSL2 backend
-
-### Windows (PowerShell)
-
-For native Windows, use `fu.ps1`:
-
-```powershell
-# Option 1: Clone and run locally
-git clone https://github.com/C-Fu/dev-fu.git
-cd dev-fu
-.\fu.ps1
-
-# Option 2: Run directly from remote (bypasses execution policy)
-irm https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu.ps1?t=$(Get-Date -Format s) | Invoke-Expression
-
-# Option 3: Bypass execution policy for local script
-powershell -ExecutionPolicy Bypass -File .\fu.ps1
-```
-
-**Note:** If you see a "not digitally signed" error, use Option 2 or 3 above.
-
-### ARM (Apple Silicon, Raspberry Pi)
-
-- ARM builds supported for all tools
-- Bun, Go, Rust have native ARM binaries
+- Run `flu.sh` inside the WSL Linux distribution, not from PowerShell.
+- Works with Docker Desktop WSL2 backend.
 
 ### Chromebook (ChromeOS Crostini)
 
-- Enable Linux (Crostini) in ChromeOS Settings > Advanced > Developers
-- Debian-based container with `apt` — all tools work
-- Docker runs in the Crostini VM (no nested virtualization needed)
-- Option 7 (Hostname Discovery) may not work if systemd is not available
+- Enable Linux (Crostini) in ChromeOS **Settings > Advanced > Developers**.
+- Debian-based container with `apt` — all tools work.
+- Docker runs in the Crostini VM (no nested virtualization needed).
+- Hostname Discovery may not work if systemd is not available.
 
 ### Android (Termux)
 
-- Install [Termux](https://termux.dev/) from F-Droid or GitHub releases
-- Uses `pkg` (apt-based) as the package manager
-- No `sudo` needed — Termux runs as a single user
-- Option 7 (Hostname Discovery) not available (no systemd)
-- Some tools (Docker, PHP) have limited support on Android
+- Install [Termux](https://termux.dev/) from F-Droid or GitHub releases.
+- Uses `pkg` (apt-based). No `sudo` needed — Termux runs as a single user.
+- Hostname Discovery not available (no systemd).
+- Some tools (Docker, PHP) have limited support on Android.
+
+### ARM (Apple Silicon, Raspberry Pi)
+
+- ARM builds supported for all tools. Bun, Go, Rust have native ARM binaries.
 
 ## Troubleshooting
 
-### "command not found"
+### "command not found" after install
 
-Some tools install to `~/.cargo/bin`, `~/.bun/bin`, or `~/.nvm/versions/node/`. Add to PATH:
+Some tools install to non-standard paths. Add to your shell profile:
 
 ```bash
-source ~/.cargo/env    # Rust
-export PATH="$HOME/.bun/bin:$PATH"  # Bun
-source ~/.nvm/nvm.sh   # Node
+export PATH="$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.local/bin:$PATH"
+source ~/.cargo/env     # Rust
+source ~/.nvm/nvm.sh    # Node.js (NVM)
+```
+
+### Terminal not restored after exit
+
+Press `Ctrl+C` or run `reset`. flu.sh has signal-safe cleanup via `_flu_cleanup_exit()` that restores terminal settings on every exit path (normal, error, or signal).
+
+### Module fetch fails (network error)
+
+flu.sh retries 3 times with 2-second delays. For environments with unreliable network, clone the repo and run locally:
+
+```bash
+git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu-sh/flu.sh
+```
+
+### "No such file" on curl-pipe-bash
+
+BusyBox and dash don't support process substitution (`<(curl ...)`). Use the alternate form:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Permission denied
 
 ```bash
-chmod +x fu.sh
+chmod +x flu.sh
 ```
 
-### Network issues
+### TUI not rendering (garbled text)
 
-The script includes retry logic (3 attempts, 2s delay). For manual installs,
-see individual tool installation docs.
-
-## Exit Codes
-
-- 0 — Success
-- 1 — Error (check error message for hint)
-- 2 — Invalid option
+Ensure your terminal supports ANSI escape codes. Most modern terminals do — try `xterm-256color` or `screen-256color` as your `TERM` setting. For very minimal environments (bare `dash` without a TTY), flu.sh falls back to a plain-text numbered prompt.
 
 ## License
 
