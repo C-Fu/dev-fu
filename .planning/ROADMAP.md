@@ -123,7 +123,7 @@ Plans:
 
 **Milestone Goal:** Refactor the entire flu.sh POSIX shell ecosystem into a single portable Rust binary — zero runtime dependencies, cross-platform, with all TUI menus, module fetching, registry, and execution embedded in one static binary.
 
-- [ ] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection
+- [x] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection (completed 2026-06-11)
 - [ ] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno)
 - [ ] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time
 - [ ] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem
