@@ -103,13 +103,7 @@ jobs:
 
       - name: Strip binary (Linux/macOS)
         if: runner.os != 'Windows'
-        run: |
-          if [ "${{ matrix.use_zig }}" = "true" ]; then
-            sudo apt-get install -y -q llvm-strip 2>/dev/null || true
-            command -v llvm-strip >/dev/null 2>&1 && llvm-strip -s target/${{ matrix.target }}/release/fust || strip target/${{ matrix.target }}/release/fust
-          else
-            strip target/${{ matrix.target }}/release/fust
-          fi
+        run: strip target/${{ matrix.target }}/release/fust
 
       - name: Package tarball (Linux/macOS)
         if: runner.os != 'Windows'
