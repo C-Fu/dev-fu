@@ -107,6 +107,7 @@ pub fn select(
 }
 
 /// Widget state (per D-06)
+#[allow(dead_code)]
 struct SelectState {
     cursor: usize,
     scroll: usize,

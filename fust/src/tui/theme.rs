@@ -2,6 +2,7 @@ use ratatui::style::Color;
 
 /// Box-drawing characters — UTF-8 on capable terminals, ASCII fallback (per D-12).
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub struct BoxChars {
     pub tl: char, // top-left
     pub tr: char, // top-right
@@ -53,6 +54,7 @@ impl BoxChars {
 
 /// Theme abstraction (per D-13). Default matches tui.sh dark-terminal colors.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Theme {
     pub border: Color,
     pub title: Color,

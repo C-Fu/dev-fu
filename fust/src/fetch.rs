@@ -75,8 +75,7 @@ pub fn fetch_manifest(config: &FetchConfig) -> Option<String> {
 }
 
 pub fn fetch_module(config: &FetchConfig, action_id: &str) -> Result<String> {
-    if action_id.starts_with("community/") {
-        let module_id = &action_id["community/".len()..];
+    if let Some(module_id) = action_id.strip_prefix("community/") {
         let reg = crate::registry::fetch_registry()?;
         let entry = crate::registry::lookup_entry(&reg, module_id)
             .ok_or_else(|| anyhow!("Community module not found: {}", module_id))?;

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::menu::MenuEntry;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TreeNode {
     pub label: String,
     pub path: Vec<String>,
@@ -47,6 +48,7 @@ impl ActionQueue {
         self.items.clone()
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.items.clear();
     }
@@ -127,16 +129,16 @@ pub fn build_navigation_tree(entries: &[MenuEntry]) -> MenuTree {
             entry.subcategory.clone(),
             entry.label.clone(),
         ];
-        if !index_map.contains_key(&leaf_path) {
+        if let std::collections::hash_map::Entry::Vacant(e) = index_map.entry(leaf_path.clone()) {
             let idx = nodes.len();
             nodes.push(TreeNode {
                 label: entry.label.clone(),
-                path: leaf_path.clone(),
+                path: leaf_path,
                 children: Vec::new(),
                 action_id: Some(entry.action_id.clone()),
                 depth: 3,
             });
-            index_map.insert(leaf_path, idx);
+            e.insert(idx);
             let sub_idx = index_map[&sub_path];
             nodes[sub_idx].children.push(idx);
         }

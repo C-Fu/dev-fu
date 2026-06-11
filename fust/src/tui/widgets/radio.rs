@@ -114,6 +114,7 @@ pub fn radio(
 }
 
 /// Widget state (per D-06)
+#[allow(dead_code)]
 struct RadioState {
     cursor: usize,
     selected: Option<usize>, // currently selected radio item (None = nothing selected)

@@ -9,6 +9,7 @@ const DEFAULT_REGISTRY_URL: &str =
     "https://raw.githubusercontent.com/C-Fu/dev-fu-registry/main/registry.json";
 
 #[derive(Debug, Clone, serde::Deserialize)]
+#[allow(dead_code)]
 pub struct CommunityEntry {
     pub action_id: String,
     pub name: String,

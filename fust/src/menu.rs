@@ -1,7 +1,7 @@
-/// Menu module — parses menu.db and provides list/JSON output.
-///
-/// menu.db format: Category|Subcategory|Label|action_id
-/// Lines starting with # are comments. Empty lines are ignored.
+//! Menu module — parses menu.db and provides list/JSON output.
+//!
+//! menu.db format: Category|Subcategory|Label|action_id
+//! Lines starting with # are comments. Empty lines are ignored.
 
 use serde::Serialize;
 
@@ -68,12 +68,12 @@ fn parse_menu_db_from(content: &str) -> Vec<MenuEntry> {
 pub fn print_table(entries: &[MenuEntry]) {
     // Header row matching flu.sh format exactly
     println!(
-        "{:<20} {:<16} {:<40} {}",
-        "Category", "Subcategory", "Name", "Action ID"
+        "{:<20} {:<16} {:<40} Action ID",
+        "Category", "Subcategory", "Name"
     );
     println!(
-        "{:<20} {:<16} {:<40} {}",
-        "--------", "-----------", "----", "---------"
+        "{:<20} {:<16} {:<40} ---------",
+        "--------", "-----------", "----"
     );
 
     for entry in entries {

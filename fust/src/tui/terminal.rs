@@ -49,6 +49,7 @@ impl TerminalGuard {
         &mut self.terminal
     }
 
+    #[allow(dead_code)]
     pub fn size(&self) -> anyhow::Result<ratatui::layout::Rect> {
         let s = self.terminal.size()?;
         Ok(ratatui::layout::Rect::new(0, 0, s.width, s.height))
@@ -87,7 +88,7 @@ fn install_signal_handlers() -> anyhow::Result<Vec<SigId>> {
             register(sig, move || {
                 let _ = disable_raw_mode();
                 let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture);
-                std::process::exit(128 + sig as i32);
+                std::process::exit(128 + sig);
             })?
         };
         ids.push(id);

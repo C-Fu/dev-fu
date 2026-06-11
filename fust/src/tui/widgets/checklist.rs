@@ -138,6 +138,7 @@ pub fn checklist(
 }
 
 /// Widget state (per D-06)
+#[allow(dead_code)]
 struct ChecklistState {
     cursor: usize,
     scroll: usize,

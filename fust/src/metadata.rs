@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ModuleMetadata {
     pub name: String,
     pub params: String,
@@ -18,6 +19,7 @@ pub enum ParamType {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ParamDecl {
     pub index: usize,
     pub name: String,

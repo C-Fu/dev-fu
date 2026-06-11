@@ -41,6 +41,7 @@ pub fn read_key() -> anyhow::Result<Key> {
 }
 
 /// Read a key with timeout. Returns None if no key within timeout.
+#[allow(dead_code)]
 pub fn read_key_timeout(timeout: Duration) -> anyhow::Result<Option<Key>> {
     if event::poll(timeout)? {
         match event::read()? {
