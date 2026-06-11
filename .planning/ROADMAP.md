@@ -154,7 +154,7 @@ Plans:
   2. All 5 widget types work: select, checklist, radio, text input, yes/no
   3. Keyboard navigation (arrow keys, vim keys, enter, escape, pgup/pgdn) works identically to flu.sh
   4. Terminal is always restored on exit (including signal interrupts)
-**Plans**: 2 plans
+**Plans**: 2 plans (Wave 1: 16-01, Wave 2: 16-02)
 
 Plans:
 - [ ] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (ratatui + crossterm)
