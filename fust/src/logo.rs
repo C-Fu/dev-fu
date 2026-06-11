@@ -50,7 +50,7 @@ pub fn show_splash(
         .alignment(Alignment::Center);
 
         let version_line = Line::from(Span::styled(
-            format!("flu v{}", env!("CARGO_PKG_VERSION")),
+            "fust - A rust version of fu.sh",
             Style::default()
                 .fg(theme.title)
                 .add_modifier(Modifier::BOLD),
@@ -62,7 +62,7 @@ pub fn show_splash(
 
         let info_block = Block::default()
             .title(Span::styled(
-                " flu ",
+                " fust ",
                 Style::default()
                     .fg(theme.title)
                     .add_modifier(Modifier::BOLD),
@@ -80,7 +80,7 @@ pub fn show_splash(
         )))
         .alignment(Alignment::Center);
 
-        let info_height: u16 = 4;
+        let info_height: u16 = 5;
         let footer_height: u16 = 2;
         let separator_height: u16 = 1;
         let total_content = logo_height + separator_height + info_height + footer_height;

@@ -339,6 +339,9 @@ mod tests {
             is_wsl: false,
             is_termux: false,
             is_root: true,
+            disk_used: "50G".to_string(),
+            disk_total: "100G".to_string(),
+            disk_percent: 50,
         };
         let vars = build_env_vars(&platform);
         assert_eq!(vars.len(), 7);

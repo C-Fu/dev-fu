@@ -1,23 +1,18 @@
 use anyhow::Result;
 use std::process::Command;
 
-/// Platform information matching flu.sh's FLU_* environment variables.
 #[derive(Debug)]
 pub struct PlatformInfo {
-    /// OS family: "darwin" or "linux" (maps to FLU_OS)
     pub os: String,
-    /// Distro ID from /etc/os-release (maps to FLU_DISTRO)
     pub distro: String,
-    /// Detected package manager name (maps to FLU_PKG_MGR)
     pub pkg_mgr: String,
-    /// CPU architecture (maps to FLU_ARCH)
     pub arch: String,
-    /// Running under WSL (maps to FLU_IS_WSL)
     pub is_wsl: bool,
-    /// Running under Termux (maps to FLU_IS_TERMUX)
     pub is_termux: bool,
-    /// Running as root (maps to FLU_IS_ROOT)
     pub is_root: bool,
+    pub disk_used: String,
+    pub disk_total: String,
+    pub disk_percent: u8,
 }
 
 /// Detect the current platform, producing identical results to flu.sh's
@@ -30,6 +25,7 @@ pub fn detect() -> Result<PlatformInfo> {
     let is_wsl = detect_wsl();
     let is_termux = detect_termux();
     let is_root = detect_root();
+    let (disk_used, disk_total, disk_percent) = detect_disk();
 
     Ok(PlatformInfo {
         os,
@@ -39,6 +35,9 @@ pub fn detect() -> Result<PlatformInfo> {
         is_wsl,
         is_termux,
         is_root,
+        disk_used,
+        disk_total,
+        disk_percent,
     })
 }
 
@@ -124,7 +123,6 @@ fn detect_termux() -> bool {
 }
 
 fn detect_root() -> bool {
-    // Run `id -u` and check if result is "0"
     let output = Command::new("id").arg("-u").output();
     match output {
         Ok(out) => String::from_utf8_lossy(&out.stdout).trim() == "0",
@@ -132,12 +130,35 @@ fn detect_root() -> bool {
     }
 }
 
+fn detect_disk() -> (String, String, u8) {
+    let output = Command::new("df")
+        .arg("-h")
+        .arg("/")
+        .output();
+    let stdout = match output {
+        Ok(o) => String::from_utf8_lossy(&o.stdout).to_string(),
+        Err(_) => return ("?".into(), "?".into(), 0),
+    };
+    let line = match stdout.lines().nth(1) {
+        Some(l) => l,
+        None => return ("?".into(), "?".into(), 0),
+    };
+    let fields: Vec<&str> = line.split_whitespace().collect();
+    if fields.len() < 6 {
+        return ("?".into(), "?".into(), 0);
+    }
+    let used = fields[2].to_string();
+    let total = fields[1].to_string();
+    let pct = fields[4].trim_end_matches('%').parse::<u8>().unwrap_or(0);
+    (used, total, pct)
+}
+
 impl PlatformInfo {
     /// Format platform info for display, matching flu.sh's startup info format.
     pub fn display(&self) -> String {
         format!(
-            "OS: {} | Distro: {} | Package Manager: {} | Architecture: {}",
-            self.os, self.distro, self.pkg_mgr, self.arch
+            "OS: {} | Distro: {} | Package Manager: {} | Architecture: {}\nDisk Space: {} / {} ({}%)",
+            self.os, self.distro, self.pkg_mgr, self.arch, self.disk_used, self.disk_total, self.disk_percent
         )
     }
 }
@@ -162,6 +183,7 @@ mod tests {
         assert!(display.contains("Distro:"));
         assert!(display.contains("Package Manager:"));
         assert!(display.contains("Architecture:"));
+        assert!(display.contains("Disk Space:"));
     }
 
     #[test]
