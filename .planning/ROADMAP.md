@@ -5,6 +5,7 @@
 - ✅ **v1.0 flu.sh** — Phases 1-6 (shipped 2026-05-25)
 - ✅ **v1.1 Feature Parity & Polish** — Phases 7-9 (shipped 2026-05-25)
 - 🚧 **v2.0 Modular Ecosystem** — Phases 10-14 (in progress)
+- 📋 **v3.0 Rust Binary** — Phases 15-21 (planned)
 
 ## Phases
 
@@ -118,6 +119,114 @@ Plans:
 - [ ] 14-01: TBD
 - [ ] 14-02: TBD
 
+### 📋 v3.0 Rust Binary (Planned)
+
+**Milestone Goal:** Refactor the entire flu.sh POSIX shell ecosystem into a single portable Rust binary — zero runtime dependencies, cross-platform, with all TUI menus, module fetching, registry, and execution embedded in one static binary.
+
+- [ ] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection
+- [ ] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno)
+- [ ] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time
+- [ ] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem
+- [ ] **Phase 19: Registry + Batch Mode** — Community module registry, CLI batch commands (--install, --remove, --list)
+- [ ] **Phase 20: Integration** — Logo, startup display, main event loop, error recovery, signal handling
+- [ ] **Phase 21: Build & Distribution** — Cross-compile targets, CI, release binaries, curl-pipe-bash installer
+
+## v3.0 Phase Details
+
+### Phase 15: Rust Project Scaffold + CLI
+**Goal**: Establish the Rust project with CLI argument parsing and platform detection that mirrors flu.sh's CLI interface
+**Depends on**: None (foundational)
+**Success Criteria** (what must be TRUE):
+  1. `cargo build` produces a `fust` binary that runs on Linux and macOS
+  2. `fust --help` shows the same flags as `flu.sh --help`
+  3. `fust --list` outputs the menu structure from embedded menu.db
+  4. Platform detection sets OS, distro, package manager, arch (matching flu.sh's FLU_* variables)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 15-01-PLAN.md — Cargo project scaffold, clap CLI, platform detection, menu.db parser
+
+### Phase 16: TUI Engine
+**Goal**: Port the entire tui.sh rendering engine — terminal control, box drawing, cursor positioning, keyboard input, and all interactive widgets
+**Depends on**: Phase 15
+**Success Criteria** (what must be TRUE):
+  1. TUI renders a bordered box with centered title matching flu.sh's visual style
+  2. All 5 widget types work: select, checklist, radio, text input, yes/no
+  3. Keyboard navigation (arrow keys, vim keys, enter, escape, pgup/pgdn) works identically to flu.sh
+  4. Terminal is always restored on exit (including signal interrupts)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (crossterm)
+- [ ] 16-02-PLAN.md — Interactive widgets: select, checklist, radio, text input, yesno
+
+### Phase 17: Menu System
+**Goal**: Port the hierarchical menu DSL parser and 3-level navigation engine from menu.sh
+**Depends on**: Phase 16
+**Success Criteria** (what must be TRUE):
+  1. Menu renders identically to flu.sh with colored borders, breadcrumbs, and numbered items
+  2. Users navigate 3-level hierarchy (category → subcategory → action) with keyboard
+  3. Space-bar queue (multi-select) works for batch execution
+  4. menu.db is embedded at compile time and parsed at startup
+**Plans**: 1 plan
+
+Plans:
+- [ ] 17-01-PLAN.md — Menu DSL parser, navigation engine, rendering, embedded menu.db
+
+### Phase 18: Module Pipeline
+**Goal**: Port the module fetch, cache, SHA256 verify, metadata parse, and execute subsystem from modules.sh
+**Depends on**: Phase 15
+**Success Criteria** (what must be TRUE):
+  1. Modules are fetched from GitHub with retry logic (3 attempts)
+  2. SHA256 checksums are verified against MANIFEST.sha256
+  3. Module scripts are cached locally with TTL expiry
+  4. Modules execute in isolated subprocesses with timeout enforcement
+  5. Metadata (@name, @platforms, @version, @params, @deps, @timeout) is parsed from comment headers
+**Plans**: 2 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Module fetch, cache, SHA256 verification, HTTP client (reqwest + sha2)
+- [ ] 18-02-PLAN.md — Metadata parser, parameter collection, isolated execution with timeout
+
+### Phase 19: Registry + Batch Mode
+**Goal**: Port community module registry and CLI batch mode from modules.sh/flu.sh
+**Depends on**: Phase 17, Phase 18
+**Success Criteria** (what must be TRUE):
+  1. `flu --install go,rust --yes` installs both tools without TUI interaction
+  2. `flu --list --json` outputs JSON array of all modules including community ones
+  3. Community module registry is fetched, cached, and merged with official modules
+  4. Dynamic menu assembly merges official menu.db + community modules at runtime
+**Plans**: 1 plan
+
+Plans:
+- [ ] 19-01-PLAN.md — Registry fetch/cache, batch run, batch list, dynamic menu assembly
+
+### Phase 20: Integration
+**Goal**: Wire everything together — logo, startup display, main event loop, error recovery, signal handling
+**Depends on**: Phase 17, Phase 18, Phase 19
+**Success Criteria** (what must be TRUE):
+  1. Running `flu` with no flags shows the branded dev-fu ASCII logo, then platform info, then the main menu
+  2. Selecting a menu item fetches and executes the module with progress feedback
+  3. Exit codes are mapped to actionable user hints (timeout, permission denied, etc.)
+  4. Ctrl-C always restores terminal state cleanly
+**Plans**: 1 plan
+
+Plans:
+- [ ] 20-01-PLAN.md — Logo rendering, startup display, main event loop, error recovery, signal handling
+
+### Phase 21: Build & Distribution
+**Goal**: Cross-compile for all target platforms, set up CI, and create a curl-pipe-bash installer
+**Depends on**: Phase 20
+**Success Criteria** (what must be TRUE):
+  1. Static binaries are produced for: linux-amd64, linux-arm64, macos-amd64, macos-arm64
+  2. `curl -fsSL https://flu.sh | bash` downloads and runs the correct binary
+  3. Binary size is under 5MB (stripped, static)
+  4. GitHub Actions CI builds and releases on tag push
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01-PLAN.md — Cross-compile setup, GitHub Actions CI, release workflow, install script
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -136,3 +245,10 @@ Plans:
 | 12. Advanced Module System | v2.0 | 2/2 | Complete | 2026-05-28 |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
+| 15. Rust Project Scaffold + CLI | v3.0 | 0/1 | Planned | - |
+| 16. TUI Engine | v3.0 | 0/2 | Planned | - |
+| 17. Menu System | v3.0 | 0/1 | Planned | - |
+| 18. Module Pipeline | v3.0 | 0/2 | Planned | - |
+| 19. Registry + Batch Mode | v3.0 | 0/1 | Planned | - |
+| 20. Integration | v3.0 | 0/1 | Planned | - |
+| 21. Build & Distribution | v3.0 | 0/1 | Planned | - |
