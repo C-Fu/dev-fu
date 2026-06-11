@@ -95,23 +95,20 @@ pub fn menu(
                 state.error_msg = None;
             }
             Key::Enter => {
-                if state.queue.count() > 0 && state.path.is_empty() {
-                    return Ok(Some(state.queue.to_vec()));
-                }
                 let child_idx = children[state.cursor];
-                if tree.is_leaf(child_idx) {
-                    if state.queue.count() > 0 {
-                        return Ok(Some(state.queue.to_vec()));
-                    }
-                    if let Some(action_id) = tree.get_action_id(child_idx) {
-                        return Ok(Some(vec![action_id.to_string()]));
-                    }
-                } else {
+                if !tree.is_leaf(child_idx) {
                     let child_label = tree.nodes[child_idx].label.clone();
                     state.path.push(child_label);
                     state.cursor = 0;
                     state.scroll = 0;
                 }
+                state.error_msg = None;
+            }
+            Key::Char('c') => {
+                if state.queue.count() > 0 {
+                    return Ok(Some(state.queue.to_vec()));
+                }
+                state.error_msg = Some("Queue is empty — press Space to add items".to_string());
             }
             Key::Esc | Key::Char('q') => {
                 if state.path.is_empty() {
@@ -280,9 +277,9 @@ fn render(
         };
 
         let footer_text = if state.show_help {
-            "↑↓/jk:navigate  Space:queue  Enter:select/descend  Esc:back  PgUp/PgDn:page  g/G:home/end  1-9:go-to  q:quit  ?:less"
+            "↑↓/jk:navigate  Space:queue  Enter:descend  ⌫:back  c:confirm queue  PgUp/PgDn:page  g/G:home/end  1-9:go-to  q:quit  ?:less"
         } else {
-            "↑↓/jk:navigate  Space:queue  Enter:select  Esc:back  ?:help"
+            "↑↓/jk:navigate  Space:queue  Enter:descend  ⌫:back  c:confirm  ?:help"
         };
 
         let footer_spans = vec![
@@ -334,19 +331,31 @@ fn render(
 
             let queue_inner = qa.inner(ratatui::layout::Margin::new(1, 1));
             if queue_inner.width > 0 && queue_inner.height > 0 {
-                let queued_items = state.queue.to_vec();
-                let queue_lines: Vec<ListItem> = queued_items
-                    .iter()
-                    .enumerate()
-                    .map(|(i, action_id)| {
-                        ListItem::new(Span::styled(
-                            format!("{}. {}", i + 1, action_id),
-                            Style::default().fg(theme.text),
-                        ))
-                    })
-                    .collect();
-                let queue_list = List::new(queue_lines);
-                f.render_widget(queue_list, queue_inner);
+                let confirm_hint = Paragraph::new(Span::styled(
+                    "c : confirm install",
+                    Style::default().fg(theme.dim),
+                ));
+                let hint_area = Rect::new(queue_inner.x, queue_inner.y, queue_inner.width, 1);
+                f.render_widget(confirm_hint, hint_area);
+
+                let list_y = queue_inner.y + 1;
+                let list_height = queue_inner.height.saturating_sub(1);
+                if list_height > 0 {
+                    let queued_items = state.queue.to_vec();
+                    let queue_lines: Vec<ListItem> = queued_items
+                        .iter()
+                        .enumerate()
+                        .map(|(i, action_id)| {
+                            ListItem::new(Span::styled(
+                                format!("{}. {}", i + 1, action_id),
+                                Style::default().fg(theme.text),
+                            ))
+                        })
+                        .collect();
+                    let queue_list = List::new(queue_lines);
+                    let list_area = Rect::new(queue_inner.x, list_y, queue_inner.width, list_height);
+                    f.render_widget(queue_list, list_area);
+                }
             }
         }
     })?;
