@@ -84,6 +84,17 @@ impl Theme {
             box_chars: BoxChars::detect(),
         }
     }
+
+    const DEPTH_COLORS: [Color; 4] = [
+        Color::Cyan,       // depth 0 — Main Menu
+        Color::Magenta,     // depth 1 — submenu
+        Color::Yellow,      // depth 2 — sub-submenu
+        Color::Green,       // depth 3+ — deeper
+    ];
+
+    pub fn border_color_for_depth(&self, depth: usize) -> Color {
+        Self::DEPTH_COLORS[depth.min(Self::DEPTH_COLORS.len() - 1)]
+    }
 }
 
 #[cfg(test)]

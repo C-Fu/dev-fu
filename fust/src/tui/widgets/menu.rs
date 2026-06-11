@@ -198,15 +198,17 @@ fn render(
         };
 
         let breadcrumb = tree.get_breadcrumb(&state.path);
+        let depth = state.path.len();
+        let border_color = theme.border_color_for_depth(depth);
         let block = Block::default()
             .title(Span::styled(
                 format!(" {} ", breadcrumb),
                 Style::default()
-                    .fg(theme.title)
+                    .fg(border_color)
                     .add_modifier(Modifier::BOLD),
             ))
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border));
+            .border_style(Style::default().fg(border_color));
         f.render_widget(block.clone(), main_area);
 
         let inner = main_area.inner(ratatui::layout::Margin::new(1, 1));
@@ -326,7 +328,7 @@ fn render(
                         .add_modifier(Modifier::BOLD),
                 ))
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(theme.border));
+                .border_style(Style::default().fg(border_color));
             f.render_widget(queue_block, qa);
 
             let queue_inner = qa.inner(ratatui::layout::Margin::new(1, 1));

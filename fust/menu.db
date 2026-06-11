@@ -31,14 +31,18 @@ Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
 Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
 Languages & Runtimes|OpenJDK|☕ Install OpenJDK|install_openjdk
 Languages & Runtimes|OpenJDK|🗑 Remove OpenJDK|remove_openjdk
+Languages & Runtimes|Yarn|🧶 Install Yarn|install_yarn
+Languages & Runtimes|Yarn|🗑 Remove Yarn|remove_yarn
 
-# ── 🛠 System Tools ──
-System Tools|Docker|🐳 Install Docker|install_docker
-System Tools|Docker|🗑 Remove Docker|remove_docker
-System Tools|Tailscale|🛜 Install Tailscale|install_tailscale
-System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
-System Tools|Yarn|🧶 Install Yarn|install_yarn
-System Tools|Yarn|🗑 Remove Yarn|remove_yarn
+# ── 🚀 Modern CLI ──
+Modern CLI|lazygit|📦 Install lazygit|install_lazygit
+Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
+Modern CLI|Starship|🚀 Install Starship|install_starship
+Modern CLI|Starship|🗑 Remove Starship|remove_starship
+Modern CLI|zoxide|📁 Install zoxide|install_zoxide
+Modern CLI|zoxide|🗑 Remove zoxide|remove_zoxide
+Modern CLI|eza|📋 Install eza|install_eza
+Modern CLI|eza|🗑 Remove eza|remove_eza
 
 # ── 🐚 Shell ──
 Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
@@ -50,17 +54,13 @@ Shell|Network|🗑 Remove Avahi Daemon|remove_avahi
 Shell|Network|🌐 Systemd-Resolved (LLMNR)|install_systemd_resolved
 Shell|Network|🗑 Remove Systemd-Resolved|remove_systemd_resolved
 
+# ── 🛠 System Tools ──
+System Tools|Docker|🐳 Install Docker|install_docker
+System Tools|Docker|🗑 Remove Docker|remove_docker
+System Tools|Tailscale|🛜 Install Tailscale|install_tailscale
+System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
+
 # ── ⚙️ Settings ──
 Settings|GitHub|🔑 Set GitHub Token|set_github_token
 Settings|Mouse|🖱 Disable Mouse Reporting|configure_mouse_disable
 Settings|Mouse|🖱 Enable Mouse Reporting|configure_mouse_enable
-
-# ── 🚀 Modern CLI ──
-Modern CLI|lazygit|📦 Install lazygit|install_lazygit
-Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
-Modern CLI|Starship|🚀 Install Starship|install_starship
-Modern CLI|Starship|🗑 Remove Starship|remove_starship
-Modern CLI|zoxide|📁 Install zoxide|install_zoxide
-Modern CLI|zoxide|🗑 Remove zoxide|remove_zoxide
-Modern CLI|eza|📋 Install eza|install_eza
-Modern CLI|eza|🗑 Remove eza|remove_eza
