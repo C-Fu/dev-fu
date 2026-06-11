@@ -42,18 +42,31 @@ jobs:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
             use_zig: true
+            ext: ""
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             use_zig: true
+            ext: ""
           - target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
             use_zig: true
+            ext: ""
           - target: x86_64-apple-darwin
             os: macos-latest
             use_zig: false
+            ext: ""
           - target: aarch64-apple-darwin
             os: macos-latest
             use_zig: false
+            ext: ""
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            use_zig: false
+            ext: .exe
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            use_zig: false
+            ext: .exe
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -88,7 +101,8 @@ jobs:
         if: "!matrix.use_zig"
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Strip binary
+      - name: Strip binary (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
           if [ "${{ matrix.use_zig }}" = "true" ]; then
             llvm-strip -s target/${{ matrix.target }}/release/fust
@@ -96,18 +110,26 @@ jobs:
             strip target/${{ matrix.target }}/release/fust
           fi
 
-      - name: Package tarball
+      - name: Package tarball (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
           tar -czf fust-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release fust
           shasum -a 256 fust-${{ matrix.target }}.tar.gz > fust-${{ matrix.target }}.sha256
+
+      - name: Package zip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "target/${{ matrix.target }}/release/fust.exe" -DestinationPath "fust-${{ matrix.target }}.zip"
+          $hash = (Get-FileHash "fust-${{ matrix.target }}.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  fust-${{ matrix.target }}.zip" | Out-File -Encoding utf8 "fust-${{ matrix.target }}.sha256"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: fust-${{ matrix.target }}
           path: |
-            fust/fust-${{ matrix.target }}.tar.gz
-            fust/fust-${{ matrix.target }}.sha256
+            fust/fust-${{ matrix.target }}.*
 
   release:
     name: Create Release
@@ -138,4 +160,5 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/*.tar.gz
+            artifacts/*.zip
             checksums.txt

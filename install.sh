@@ -26,9 +26,11 @@ detect_platform() {
     arch="$(uname -m 2>/dev/null || true)"
 
     case "$os" in
-        Linux)  vendor="unknown";   system="linux-musl" ;;
-        Darwin) vendor="apple";     system="darwin" ;;
-        *)      echo "Error: unsupported OS '$os'" >&2; exit 1 ;;
+        Linux)      vendor="unknown";  system="linux-musl";  archive_ext="tar.gz" ;;
+        Darwin)     vendor="apple";    system="darwin";      archive_ext="tar.gz" ;;
+        MINGW*|MSYS*|CYGWIN*|Windows_NT)
+            vendor="pc"; system="windows-msvc"; archive_ext="zip" ;;
+        *)          echo "Error: unsupported OS '$os'" >&2; exit 1 ;;
     esac
 
     case "$arch" in
@@ -52,8 +54,8 @@ resolve_url() {
         tag="$(latest_tag)"
     fi
 
-    printf "https://github.com/%s/releases/download/%s/fust-%s.tar.gz" \
-        "$REPO" "$tag" "$target"
+    printf "https://github.com/%s/releases/download/%s/fust-%s.%s" \
+        "$REPO" "$tag" "$target" "$archive_ext"
 }
 
 # ── Get latest release tag ────────────────────────────────────────
@@ -116,35 +118,39 @@ main() {
     echo "Downloading: $download_url"
 
     TMPDIR="$(mktemp -d)"
-    tarball="${TMPDIR}/fust-${target}.tar.gz"
+    archive="${TMPDIR}/fust-${target}.${archive_ext}"
 
-    # Download tarball
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL -o "$tarball" "$download_url"
+        curl -fsSL -o "$archive" "$download_url"
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO "$tarball" "$download_url"
+        wget -qO "$archive" "$download_url"
     else
         echo "Error: curl or wget required" >&2
         exit 1
     fi
 
-    # Extract
-    tar -xzf "$tarball" -C "$TMPDIR" || {
+    case "$archive_ext" in
+        tar.gz) tar -xzf "$archive" -C "$TMPDIR" ;;
+        zip)    unzip -qo "$archive" -d "$TMPDIR" ;;
+    esac || {
         echo "Error: extraction failed" >&2
         exit 1
     }
 
-    if [ ! -f "${TMPDIR}/${BINARY_NAME}" ]; then
+    if [ ! -f "${TMPDIR}/${BINARY_NAME}" ] && [ ! -f "${TMPDIR}/${BINARY_NAME}.exe" ]; then
         echo "Error: binary '${BINARY_NAME}' not found in archive" >&2
         exit 1
     fi
 
-    # Install
     mkdir -p "$INSTALL_DIR"
-    mv "${TMPDIR}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
-    chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
-
-    installed_path="${INSTALL_DIR}/${BINARY_NAME}"
+    if [ -f "${TMPDIR}/${BINARY_NAME}.exe" ]; then
+        mv "${TMPDIR}/${BINARY_NAME}.exe" "${INSTALL_DIR}/${BINARY_NAME}.exe"
+        installed_path="${INSTALL_DIR}/${BINARY_NAME}.exe"
+    else
+        mv "${TMPDIR}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
+        chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
+        installed_path="${INSTALL_DIR}/${BINARY_NAME}"
+    fi
     echo ""
     echo "✓ fust installed to ${installed_path}"
 
