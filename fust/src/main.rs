@@ -34,25 +34,89 @@ fn main() -> anyhow::Result<()> {
         || args.demo_yesno
         || args.demo_text_input
     {
-        // Widget demos will be implemented in Plan 16-02
-        // For now, verify terminal init/restore works
         let mut guard = tui::terminal::TerminalGuard::init()?;
         let theme = tui::theme::Theme::dark();
-        let _size = guard.size()?;
 
-        // Draw a simple demo box to verify rendering works
-        guard.terminal().draw(|f| {
-            let area = f.area();
-            let block = ratatui::widgets::Block::default()
-                .title("fust TUI Demo")
-                .borders(ratatui::widgets::Borders::ALL)
-                .border_style(ratatui::style::Style::default().fg(theme.border))
-                .border_type(ratatui::widgets::BorderType::Rounded);
-            f.render_widget(block, area);
-        })?;
-
-        // Wait for any key press then exit
-        let _ = tui::input::read_key()?;
+        if args.demo_select {
+            let items = vec![
+                "Install Docker",
+                "Install Go",
+                "Install Rust",
+                "Install Python",
+                "Install Node.js",
+            ];
+            let result = tui::widgets::select::select(
+                guard.terminal(),
+                &theme,
+                "Select an action",
+                "Choose one option",
+                &items,
+            )?;
+            drop(guard);
+            match result {
+                Some(idx) => println!("Selected: {} ({})", items[idx], idx),
+                None => println!("Cancelled"),
+            }
+        } else if args.demo_checklist {
+            let items = vec!["Docker", "Go", "Rust", "Python", "Node.js"];
+            let result = tui::widgets::checklist::checklist(
+                guard.terminal(),
+                &theme,
+                "Select tools to install",
+                "Space to toggle, Enter to confirm",
+                &items,
+                &[0, 2], // pre-check Docker and Rust
+            )?;
+            drop(guard);
+            if result.is_empty() {
+                println!("Cancelled");
+            } else {
+                let names: Vec<_> = result.iter().map(|&i| items[i]).collect();
+                println!("Selected: {:?}", names);
+            }
+        } else if args.demo_radio {
+            let items = vec!["Dark theme", "Light theme", "Monochrome"];
+            let result = tui::widgets::radio::radio(
+                guard.terminal(),
+                &theme,
+                "Choose theme",
+                "Select one option",
+                &items,
+                Some(0), // default to first
+            )?;
+            drop(guard);
+            match result {
+                Some(idx) => println!("Selected: {} ({})", items[idx], idx),
+                None => println!("Cancelled"),
+            }
+        } else if args.demo_yesno {
+            let result = tui::widgets::yesno::yesno(
+                guard.terminal(),
+                &theme,
+                "Confirm",
+                "Proceed with installation?",
+                false,
+            );
+            drop(guard);
+            match result {
+                Ok(true) => println!("Answer: yes"),
+                Ok(false) => println!("Answer: no"),
+                Err(_) => println!("Cancelled"),
+            }
+        } else if args.demo_text_input {
+            let result = tui::widgets::text_input::text_input(
+                guard.terminal(),
+                &theme,
+                "Configuration",
+                "Enter your name:",
+                "developer",
+            );
+            drop(guard);
+            match result {
+                Ok(value) => println!("Input: {}", value),
+                Err(_) => println!("Cancelled"),
+            }
+        }
         return Ok(());
     }
 

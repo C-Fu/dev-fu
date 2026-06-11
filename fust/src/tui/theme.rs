@@ -21,8 +21,14 @@ impl BoxChars {
             std::env::var("LC_ALL").unwrap_or_default(),
             std::env::var("LC_CTYPE").unwrap_or_default(),
         );
-        let is_utf8 =
-            locale.to_lowercase().contains("utf-8") || locale.to_lowercase().contains("utf8");
+        Self::from_locale(&locale)
+    }
+
+    /// Pure function: determine box chars from a locale string (per D-12).
+    /// Separated from detect() for testability without env var race conditions.
+    pub fn from_locale(locale: &str) -> Self {
+        let is_utf8 = locale.to_lowercase().contains("utf-8")
+            || locale.to_lowercase().contains("utf8");
         if is_utf8 {
             Self {
                 tl: '┌',
@@ -84,70 +90,26 @@ mod tests {
 
     #[test]
     fn box_chars_utf8() {
-        // Save and set env
-        let old_lang = std::env::var("LANG").ok();
-        let old_lc_all = std::env::var("LC_ALL").ok();
-        let old_lc_ctype = std::env::var("LC_CTYPE").ok();
-
-        std::env::set_var("LANG", "en_US.UTF-8");
-        std::env::remove_var("LC_ALL");
-        std::env::remove_var("LC_CTYPE");
-
-        let bc = BoxChars::detect();
+        // Test pure function with UTF-8 locale string (no env var mutation)
+        let bc = BoxChars::from_locale("en_US.UTF-8");
         assert_eq!(bc.tl, '┌');
         assert_eq!(bc.tr, '┐');
         assert_eq!(bc.bl, '└');
         assert_eq!(bc.br, '┘');
         assert_eq!(bc.h, '─');
         assert_eq!(bc.v, '│');
-
-        // Restore
-        match old_lang {
-            Some(v) => std::env::set_var("LANG", v),
-            None => std::env::remove_var("LANG"),
-        }
-        match old_lc_all {
-            Some(v) => std::env::set_var("LC_ALL", v),
-            None => std::env::remove_var("LC_ALL"),
-        }
-        match old_lc_ctype {
-            Some(v) => std::env::set_var("LC_CTYPE", v),
-            None => std::env::remove_var("LC_CTYPE"),
-        }
     }
 
     #[test]
     fn box_chars_ascii() {
-        // Save and set env
-        let old_lang = std::env::var("LANG").ok();
-        let old_lc_all = std::env::var("LC_ALL").ok();
-        let old_lc_ctype = std::env::var("LC_CTYPE").ok();
-
-        std::env::set_var("LANG", "C");
-        std::env::remove_var("LC_ALL");
-        std::env::remove_var("LC_CTYPE");
-
-        let bc = BoxChars::detect();
+        // Test pure function with ASCII locale string (no env var mutation)
+        let bc = BoxChars::from_locale("C");
         assert_eq!(bc.tl, '+');
         assert_eq!(bc.tr, '+');
         assert_eq!(bc.bl, '+');
         assert_eq!(bc.br, '+');
         assert_eq!(bc.h, '-');
         assert_eq!(bc.v, '|');
-
-        // Restore
-        match old_lang {
-            Some(v) => std::env::set_var("LANG", v),
-            None => std::env::remove_var("LANG"),
-        }
-        match old_lc_all {
-            Some(v) => std::env::set_var("LC_ALL", v),
-            None => std::env::remove_var("LC_ALL"),
-        }
-        match old_lc_ctype {
-            Some(v) => std::env::set_var("LC_CTYPE", v),
-            None => std::env::remove_var("LC_CTYPE"),
-        }
     }
 
     #[test]
