@@ -124,7 +124,7 @@ Plans:
 **Milestone Goal:** Refactor the entire flu.sh POSIX shell ecosystem into a single portable Rust binary — zero runtime dependencies, cross-platform, with all TUI menus, module fetching, registry, and execution embedded in one static binary.
 
 - [x] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection (completed 2026-06-11)
-- [ ] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno)
+- [x] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno) (completed 2026-06-11)
 - [ ] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time
 - [ ] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem
 - [ ] **Phase 19: Registry + Batch Mode** — Community module registry, CLI batch commands (--install, --remove, --list)
@@ -157,8 +157,8 @@ Plans:
 **Plans**: 2 plans (Wave 1: 16-01, Wave 2: 16-02)
 
 Plans:
-- [ ] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (ratatui + crossterm)
-- [ ] 16-02-PLAN.md — Interactive widgets: select, checklist, radio, text input, yesno
+- [x] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (ratatui + crossterm)
+- [x] 16-02-PLAN.md — Interactive widgets: select, checklist, radio, text input, yesno
 
 ### Phase 17: Menu System
 **Goal**: Port the hierarchical menu DSL parser and 3-level navigation engine from menu.sh
@@ -246,7 +246,7 @@ Plans:
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
 | 15. Rust Project Scaffold + CLI | v3.0 | 1/1 | Complete | 2026-06-11 |
-| 16. TUI Engine | v3.0 | 0/2 | Planned | - |
+| 16. TUI Engine | v3.0 | 2/2 | Complete | 2026-06-11 |
 | 17. Menu System | v3.0 | 0/1 | Planned | - |
 | 18. Module Pipeline | v3.0 | 0/2 | Planned | - |
 | 19. Registry + Batch Mode | v3.0 | 0/1 | Planned | - |
