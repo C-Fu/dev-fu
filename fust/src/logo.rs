@@ -55,10 +55,11 @@ pub fn show_splash(
                 .fg(theme.title)
                 .add_modifier(Modifier::BOLD),
         ));
-        let platform_line = Line::from(Span::styled(
-            platform.display(),
-            Style::default().fg(theme.text),
-        ));
+
+        let (sys_line, disk_line) = platform.display_lines();
+
+        let sys_span = Line::from(Span::styled(sys_line, Style::default().fg(theme.text)));
+        let disk_span = Line::from(Span::styled(disk_line, Style::default().fg(theme.text)));
 
         let info_block = Block::default()
             .title(Span::styled(
@@ -70,9 +71,10 @@ pub fn show_splash(
             .borders(Borders::ALL)
             .border_style(Style::default().fg(theme.border));
 
-        let info = Paragraph::new(vec![version_line, platform_line])
+        let info = Paragraph::new(vec![version_line, sys_span, disk_span])
             .block(info_block)
-            .alignment(Alignment::Center);
+            .alignment(Alignment::Center)
+            .wrap(ratatui::widgets::Wrap { trim: false });
 
         let footer = Paragraph::new(Line::from(Span::styled(
             "Press any key to continue...",
@@ -80,7 +82,7 @@ pub fn show_splash(
         )))
         .alignment(Alignment::Center);
 
-        let info_height: u16 = 5;
+        let info_height: u16 = 7;
         let footer_height: u16 = 2;
         let separator_height: u16 = 1;
         let total_content = logo_height + separator_height + info_height + footer_height;
