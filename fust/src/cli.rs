@@ -23,4 +23,24 @@ pub struct Cli {
     /// JSON output (with --list)
     #[arg(long = "json")]
     pub json: bool,
+
+    /// Demo: single-select widget
+    #[arg(long = "demo-select")]
+    pub demo_select: bool,
+
+    /// Demo: checklist widget
+    #[arg(long = "demo-checklist")]
+    pub demo_checklist: bool,
+
+    /// Demo: radio widget
+    #[arg(long = "demo-radio")]
+    pub demo_radio: bool,
+
+    /// Demo: yes/no widget
+    #[arg(long = "demo-yesno")]
+    pub demo_yesno: bool,
+
+    /// Demo: text input widget
+    #[arg(long = "demo-text-input")]
+    pub demo_text_input: bool,
 }

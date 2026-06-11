@@ -27,9 +27,38 @@ fn main() -> anyhow::Result<()> {
         std::process::exit(1);
     }
 
-    // No args → TUI mode (Phase 16)
+    // Demo flags (per D-16) — standalone widget testing
+    if args.demo_select
+        || args.demo_checklist
+        || args.demo_radio
+        || args.demo_yesno
+        || args.demo_text_input
+    {
+        // Widget demos will be implemented in Plan 16-02
+        // For now, verify terminal init/restore works
+        let mut guard = tui::terminal::TerminalGuard::init()?;
+        let theme = tui::theme::Theme::dark();
+        let _size = guard.size()?;
+
+        // Draw a simple demo box to verify rendering works
+        guard.terminal().draw(|f| {
+            let area = f.area();
+            let block = ratatui::widgets::Block::default()
+                .title("fust TUI Demo")
+                .borders(ratatui::widgets::Borders::ALL)
+                .border_style(ratatui::style::Style::default().fg(theme.border))
+                .border_type(ratatui::widgets::BorderType::Rounded);
+            f.render_widget(block, area);
+        })?;
+
+        // Wait for any key press then exit
+        let _ = tui::input::read_key()?;
+        return Ok(());
+    }
+
+    // No args → TUI mode (Phase 17)
     println!("fust v{}", env!("CARGO_PKG_VERSION"));
     println!("{}", platform.display());
-    println!("TUI mode not yet implemented (coming in Phase 16)");
+    println!("TUI mode not yet implemented (coming in Phase 17)");
     Ok(())
 }
