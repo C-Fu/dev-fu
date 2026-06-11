@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
-# @name: Hostname Discovery
+# @name: Avahi Daemon (mDNS)
 # @params:
 # @platforms: linux, darwin
-# @version: 1.0.0
+# @version: 1.1.0
 # @deps:
 # @timeout: 120
 #
-# Installs Avahi Daemon for hostname discovery on Linux.
+# Installs Avahi Daemon for mDNS hostname discovery on Linux.
 # On macOS, Bonjour (mDNSResponder) provides this built-in — no-op.
 # Requires systemd on Linux.
 
@@ -78,8 +78,7 @@ if command -v avahi-daemon >/dev/null 2>&1; then
         printf 'Avahi Daemon is running\n'
     else
         printf 'Avahi Daemon is not running — starting...\n'
-        _maybe_sudo systemctl enable avahi-daemon 2>/dev/null || true
-        _maybe_sudo systemctl start avahi-daemon 2>/dev/null || true
+        _maybe_sudo systemctl enable --now avahi-daemon 2>/dev/null || true
     fi
     printf 'Hostname Discovery: use hostname.local to reach this machine\n'
     exit 0
@@ -104,8 +103,7 @@ esac
 
 # Enable and start the service
 printf 'Enabling and starting Avahi Daemon...\n'
-_maybe_sudo systemctl enable avahi-daemon 2>/dev/null || printf 'Warning: could not enable avahi-daemon\n' >&2
-_maybe_sudo systemctl start avahi-daemon 2>/dev/null || printf 'Warning: could not start avahi-daemon\n' >&2
+_maybe_sudo systemctl enable --now avahi-daemon 2>/dev/null || printf 'Warning: could not enable avahi-daemon\n' >&2
 
 printf 'Hostname Discovery installed successfully.\n'
 printf 'Use: hostname.local to reach this machine from other devices on the network.\n'

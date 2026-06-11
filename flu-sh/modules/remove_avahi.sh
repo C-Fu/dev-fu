@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
-# @name: Remove Hostname Discovery
+# @name: Remove Avahi Daemon (mDNS)
 # @params:
 # @platforms: linux, darwin
-# @version: 1.0.0
+# @version: 1.1.0
 # @deps:
 # @timeout: 120
 #
-# Removes Avahi Daemon and restores default DNS configuration on Linux.
+# Removes Avahi Daemon on Linux.
 # On macOS, Bonjour is built-in and cannot be removed.
 
 set -eu
