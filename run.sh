@@ -67,8 +67,11 @@ latest_tag() {
 # ── Main ─────────────────────────────────────────────────────────
 main() {
     target_info="$(detect_target)"
-    target="${target_info%.*}"
-    ext="${target_info##*.}"
+    case "$target_info" in
+        *.tar.gz) target="${target_info%.tar.gz}"; ext="tar.gz" ;;
+        *.zip)    target="${target_info%.zip}";    ext="zip" ;;
+        *)        echo "Error: unknown archive format" >&2; exit 1 ;;
+    esac
 
     if [ -n "$VERSION" ]; then
         tag="${VERSION}"; case "$tag" in v*) ;; *) tag="v${tag}" ;; esac
