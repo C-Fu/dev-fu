@@ -1,32 +1,66 @@
 # dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang ([English](README.md))
 
-[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blo./flu-sh/flu.sh/flu.sh)
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu-sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. **`fu.sh`** adalah pemasang monolitik yang teruji. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
 
 > **`fu.sh`** (skrip monolitik asal) masih tersedia — lihat [README-Fu.ms-MY.md](fu-sh/README-Fu.ms-MY.md) untuk dokumentasi `fu.sh`.
 
-## Mula Pantas flu.sh
+## Mula Pantas
+
+### fust (Binari Rust — jalankan tanpa memasang)
+
+```sh
+# Satu baris: auto-kesan OS/arch, muat turun, jalankan. Bersihkan semasa keluar.
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
+
+# Atau pasang secara kekal
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+
+# Tetapkan versi tertentu
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
+```
+
+### flu.sh (Shell POSIX — TUI modular)
 
 ```bash
-# Option 1: curl-pipe-bash (bash / zsh / mana-mana shell POSIX)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh)
+# Pilihan 1: curl-pipe-bash (bash / zsh / mana-mana shell POSIX)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh)
 ```
 
 ```sh
-# Option 1 alt: BusyBox / dash / ash (tiada process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh -o /tm./flu-sh/flu.sh && sh /tm./flu-sh/flu.sh
+# Pilihan 1 alt: BusyBox / dash / ash (tiada process substitution)
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ```bash
-# Option 2: Klon dan jalankan secara tempatan (tiada rangkaian diperlukan selepas klon)
+# Pilihan 2: Klon dan jalankan secara tempatan (tiada rangkaian diperlukan selepas klon)
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
 ./flu-sh/flu.sh
 ```
 
-> **Windows:** Gunakan `flu.ps1` untuk PowerShell asli. POSIX `flu.sh` berfungsi dalam WSL2 (jalankan di dalam pengedaran Linux, bukan PowerShell).
+### fu.sh (Bash — skrip monolitik asal)
+
+```bash
+# Pilihan 1: curl-pipe-bash
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh)
+```
+
+```sh
+# Pilihan 2: BusyBox / dash / ash
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh -o /tmp/fu.sh && sh /tmp/fu.sh
+```
+
+```bash
+# Pilihan 3: Klon dan jalankan secara tempatan
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+bash ./fu-sh/fu.sh
+```
+
+> **Windows:** Gunakan `flu.ps1` untuk PowerShell asli. Skrip POSIX berfungsi dalam WSL2 (jalankan di dalam pengedaran Linux, bukan PowerShell).
 
 ## Ciri-ciri flu.sh
 
@@ -42,30 +76,42 @@ cd dev-fu
 
 ```
 flu.sh v1.1
-├── 🔍 Diagnostics
+├── 🔍 Diagnostik
 │   ├── 🔍 Status Check
 │   ├── 🔄 Compare With Latest
 │   └── ⬆️  Upgrade All Tools
-├── 🐹 Languages & Runtimes
-│   ├── 🐹 Go (install/remove)
-│   ├── 🦀 Rust (install/remove)
-│   ├── 🐍 Python + Pip + UV + Pipx (install/remove)
-│   ├── 💚 NVM + Node LTS (install/remove)
-│   ├── 🥟 Bun (install/remove)
-│   └── 🐘 PHP + Laravel (install/remove)
-├── 🛠 Tools
-│   ├── 🧶 Yarn (install/remove)
-│   ├── 🐳 Docker (install/remove)
-│   ├── 🛜 Tailscale (install/remove)
-│   └── 🤖 OpenCode + GSD + OpenChamber
+├── 🤖 Alat AI
+│   ├── 🤖 OpenCode (pasang/keluarkan)
+│   ├── 🛠 GSD (Rokicool)
+│   ├── 🛠 GSD (Redux)
+│   ├── 🤖 Hermes Agent
+│   └── 🏛 OpenChamber
+├── 🐹 Bahasa & Runtimes
+│   ├── 🐹 Go (pasang/keluarkan)
+│   ├── 🦀 Rust (pasang/keluarkan)
+│   ├── 🐍 Python + Pip + UV + Pipx (pasang/keluarkan)
+│   ├── 💚 NVM + Node LTS (pasang/keluarkan)
+│   ├── 🥟 Bun (pasang/keluarkan)
+│   ├── 🐘 PHP + Laravel (pasang/keluarkan)
+│   └── ☕ OpenJDK (pasang/keluarkan)
+├── 🛠 Alatan Sistem
+│   ├── 🐳 Docker (pasang/keluarkan)
+│   ├── 🛜 Tailscale (pasang/keluarkan)
+│   └── 🧶 Yarn (pasang/keluarkan)
 ├── 🐚 Shell
-│   ├── 💜 Fancy Prompt (Purple-Pink) (create/remove)
-│   ├── 💙 Fancy Prompt (Shades of Blue) (create/remove)
-│   └── 🏠 Hostname Discovery — Linux (install/remove)
-└── ⚙️ Settings
-    ├── 🔑 Set GitHub Token
-    ├── 🖱  Disable Mouse Reporting
-    └── 🖱  Enable Mouse Reporting
+│   ├── 💜 Fancy Prompt (Ungu-Merah Jambu) (cipta/keluarkan)
+│   ├── 💙 Fancy Prompt (Warna Biru) (cipta/keluarkan)
+│   ├── 📡 Avahi Daemon / mDNS (pasang/keluarkan)
+│   └── 🌐 Systemd-Resolved / LLMNR (pasang/keluarkan)
+├── ⚙️ Tetapan
+│   ├── 🔑 Set GitHub Token
+│   ├── 🖱  Disable Mouse Reporting
+│   └── 🖱  Enable Mouse Reporting
+└── 🚀 CLI Moden
+    ├── 📦 lazygit (pasang/keluarkan)
+    ├── 🚀 Starship (pasang/keluarkan)
+    ├── 📁 zoxide (pasang/keluarkan)
+    └── 📋 eza (pasang/keluarkan)
 ```
 
 ## Seni Bina Modul
@@ -228,7 +274,7 @@ git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu-sh/flu.sh
 BusyBox dan dash tidak menyokong process substitution (`<(curl ...)`). Gunakan bentuk alternatif:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh -o /tm./flu-sh/flu.sh && sh /tm./flu-sh/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Permission denied

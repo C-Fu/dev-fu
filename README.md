@@ -9,7 +9,22 @@
 >
 > **`fust`** (Rust binary port) is also available — see [fust/README-fust.md](fust/README-fust.md).
 
-## flu.sh Quick Start
+## Quick Start
+
+### fust (Rust binary — run without installing)
+
+```sh
+# One-liner: auto-detects OS/arch, downloads, runs. Cleans up on exit.
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
+
+# Or install permanently
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+
+# Pin a specific version
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
+```
+
+### flu.sh (POSIX shell — modular TUI)
 
 ```bash
 # Option 1: curl-pipe-bash (bash / zsh / any POSIX shell)
@@ -28,14 +43,26 @@ cd dev-fu
 ./flu-sh/flu.sh
 ```
 
-> **Windows:** Use `flu.ps1` for native PowerShell. The POSIX `flu.sh` works in WSL2 (run inside the Linux distribution, not PowerShell).
+### fu.sh (Bash — original monolithic)
 
-## fust Quick Start (Rust Binary)
+```bash
+# Option 1: curl-pipe-bash
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh)
+```
 
 ```sh
-# Install the static binary (Linux/macOS)
-curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+# Option 2: BusyBox / dash / ash
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh -o /tmp/fu.sh && sh /tmp/fu.sh
 ```
+
+```bash
+# Option 3: Clone and run locally
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+bash ./fu-sh/fu.sh
+```
+
+> **Windows:** Use `flu.ps1` for native PowerShell. The POSIX scripts work in WSL2 (run inside the Linux distribution, not PowerShell).
 
 ## flu.sh Features
 
@@ -55,26 +82,38 @@ flu.sh v1.1
 │   ├── 🔍 Status Check
 │   ├── 🔄 Compare With Latest
 │   └── ⬆️  Upgrade All Tools
+├── 🤖 AI Tools
+│   ├── 🤖 OpenCode (install/remove)
+│   ├── 🛠 GSD (Rokicool)
+│   ├── 🛠 GSD (Redux)
+│   ├── 🤖 Hermes Agent
+│   └── 🏛 OpenChamber
 ├── 🐹 Languages & Runtimes
 │   ├── 🐹 Go (install/remove)
 │   ├── 🦀 Rust (install/remove)
 │   ├── 🐍 Python + Pip + UV + Pipx (install/remove)
 │   ├── 💚 NVM + Node LTS (install/remove)
 │   ├── 🥟 Bun (install/remove)
-│   └── 🐘 PHP + Laravel (install/remove)
-├── 🛠 Tools
-│   ├── 🧶 Yarn (install/remove)
+│   ├── 🐘 PHP + Laravel (install/remove)
+│   └── ☕ OpenJDK (install/remove)
+├── 🛠 System Tools
 │   ├── 🐳 Docker (install/remove)
 │   ├── 🛜 Tailscale (install/remove)
-│   └── 🤖 OpenCode + GSD + OpenChamber
+│   └── 🧶 Yarn (install/remove)
 ├── 🐚 Shell
 │   ├── 💜 Fancy Prompt (Purple-Pink) (create/remove)
 │   ├── 💙 Fancy Prompt (Shades of Blue) (create/remove)
-│   └── 🏠 Hostname Discovery — Linux (install/remove)
-└── ⚙️ Settings
-    ├── 🔑 Set GitHub Token
-    ├── 🖱  Disable Mouse Reporting
-    └── 🖱  Enable Mouse Reporting
+│   ├── 📡 Avahi Daemon / mDNS (install/remove)
+│   └── 🌐 Systemd-Resolved / LLMNR (install/remove)
+├── ⚙️ Settings
+│   ├── 🔑 Set GitHub Token
+│   ├── 🖱  Disable Mouse Reporting
+│   └── 🖱  Enable Mouse Reporting
+└── 🚀 Modern CLI
+    ├── 📦 lazygit (install/remove)
+    ├── 🚀 Starship (install/remove)
+    ├── 📁 zoxide (install/remove)
+    └── 📋 eza (install/remove)
 ```
 
 ## Module Architecture
