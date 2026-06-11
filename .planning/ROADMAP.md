@@ -125,7 +125,7 @@ Plans:
 
 - [x] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection (completed 2026-06-11)
 - [x] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno) (completed 2026-06-11)
-- [ ] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time
+- [x] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time (completed 2026-06-11)
 - [ ] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem
 - [ ] **Phase 19: Registry + Batch Mode** — Community module registry, CLI batch commands (--install, --remove, --list)
 - [ ] **Phase 20: Integration** — Logo, startup display, main event loop, error recovery, signal handling
@@ -171,7 +171,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 17-01-PLAN.md — Menu DSL parser, navigation engine, rendering, embedded menu.db
+- [x] 17-01-PLAN.md — Menu DSL parser, navigation engine, rendering, embedded menu.db
 
 ### Phase 18: Module Pipeline
 **Goal**: Port the module fetch, cache, SHA256 verify, metadata parse, and execute subsystem from modules.sh
@@ -185,8 +185,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Module fetch, cache, SHA256 verification, HTTP client (reqwest + sha2)
-- [ ] 18-02-PLAN.md — Metadata parser, parameter collection, isolated execution with timeout
+- [ ] 18-01-PLAN.md — Module fetch, cache, SHA256 verification, HTTP client (reqwest + sha2) (SECU-01, PERF-01, PERF-02)
+- [ ] 18-02-PLAN.md — Metadata parser, parameter collection, isolated execution with timeout (ADVN-03)
 
 ### Phase 19: Registry + Batch Mode
 **Goal**: Port community module registry and CLI batch mode from modules.sh/flu.sh
@@ -247,7 +247,7 @@ Plans:
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
 | 15. Rust Project Scaffold + CLI | v3.0 | 1/1 | Complete | 2026-06-11 |
 | 16. TUI Engine | v3.0 | 2/2 | Complete | 2026-06-11 |
-| 17. Menu System | v3.0 | 0/1 | Planned | - |
+| 17. Menu System | v3.0 | 1/1 | Complete | 2026-06-11 |
 | 18. Module Pipeline | v3.0 | 0/2 | Planned | - |
 | 19. Registry + Batch Mode | v3.0 | 0/1 | Planned | - |
 | 20. Integration | v3.0 | 0/1 | Planned | - |
