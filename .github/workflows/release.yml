@@ -101,9 +101,18 @@ jobs:
         if: "!matrix.use_zig"
         run: cargo build --release --target ${{ matrix.target }}
 
+      - name: Install cross-compilation tools
+        if: matrix.use_zig && matrix.target != 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y -q llvm
+
       - name: Strip binary (Linux/macOS)
         if: runner.os != 'Windows'
-        run: strip target/${{ matrix.target }}/release/fust
+        run: |
+          if [ "${{ matrix.use_zig }}" = "true" ] && [ "${{ matrix.target }}" != "x86_64-unknown-linux-musl" ]; then
+            llvm-strip -s target/${{ matrix.target }}/release/fust
+          else
+            strip target/${{ matrix.target }}/release/fust
+          fi
 
       - name: Package tarball (Linux/macOS)
         if: runner.os != 'Windows'
