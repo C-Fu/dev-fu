@@ -157,7 +157,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (crossterm)
+- [ ] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (ratatui + crossterm)
 - [ ] 16-02-PLAN.md — Interactive widgets: select, checklist, radio, text input, yesno
 
 ### Phase 17: Menu System
