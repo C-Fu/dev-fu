@@ -144,7 +144,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 15-01-PLAN.md — Cargo project scaffold, clap CLI, platform detection, menu.db parser
+- [x] 15-01-PLAN.md — Cargo project scaffold, clap CLI, platform detection, menu.db parser
 
 ### Phase 16: TUI Engine
 **Goal**: Port the entire tui.sh rendering engine — terminal control, box drawing, cursor positioning, keyboard input, and all interactive widgets
@@ -245,7 +245,7 @@ Plans:
 | 12. Advanced Module System | v2.0 | 2/2 | Complete | 2026-05-28 |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
 | 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
-| 15. Rust Project Scaffold + CLI | v3.0 | 0/1 | Planned | - |
+| 15. Rust Project Scaffold + CLI | v3.0 | 1/1 | Complete | 2026-06-11 |
 | 16. TUI Engine | v3.0 | 0/2 | Planned | - |
 | 17. Menu System | v3.0 | 0/1 | Planned | - |
 | 18. Module Pipeline | v3.0 | 0/2 | Planned | - |

@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Modular Ecosystem
 status: executing
-stopped_at: Phase 12 plan 02 complete
-last_updated: "2026-05-28T11:11:14Z"
-last_activity: 2026-05-28
+stopped_at: Phase 15 plan 01 complete
+last_updated: "2026-06-11T07:19:15Z"
+last_activity: 2026-06-11
 progress:
   total_phases: 5
   completed_phases: 1
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 12 — Advanced Module System (complete)
+**Current focus:** v2.0 phases 10-14 in progress, v3.0 Rust Binary (Phases 15-21) added to roadmap
 
 ## Current Position
 
-Phase: 12 of 14 (Advanced Module System)
-Plan: 02 complete (all plans done)
+Phase: 15 of 21 (Rust Project Scaffold + CLI)
+Plan: 01 complete (all plans done)
 Status: Executing
-Last activity: 2026-05-28 — Plan 12-02 (module registry) complete
+Last activity: 2026-06-11 — Phase 15 plan 01 complete
 
-Progress: [████████████████████] 100% (2/2 plans)
+Progress: [████████████████████] 100% (1/1 plans)
 
 ## Performance Metrics
 
@@ -65,6 +65,10 @@ Progress: [████████████████████] 100% (2
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [v3.0 Phase 15-01]: clap v4 derive for CLI parsing — idiomatic, auto-generates help/version
+- [v3.0 Phase 15-01]: include_str! for compile-time menu.db embedding — zero runtime file dependency
+- [v3.0 Phase 15-01]: serde rename label→name for JSON field matching flu.sh output
+- [v3.0 Phase 15-01]: Platform detection via std::env::consts + sh -c subprocess matching flu.sh exactly
 - [v2.0 Phase 12-02]: Separate community module fetch pipeline (flu_registry_fetch_module) for clean security model separation
 - [v2.0 Phase 12-02]: Awk line copies (_l = $0) for JSON parsing — avoids $0 mutation breaking subsequent pattern matching
 - [v2.0 Phase 12-02]: Dynamic menu assembly via temp merged file rather than modifying menu.sh internals
@@ -100,6 +104,6 @@ Items acknowledged and carried forward from milestone closures:
 
 ## Session Continuity
 
-Last session: 2026-05-28
-Stopped at: Phase 12 complete (all 2 plans done)
-Resume file: .planning/phases/12-advanced-module-system/12-02-SUMMARY.md
+Last session: 2026-06-11
+Stopped at: Phase 15 plan 01 complete
+Resume file: .planning/phases/15-rust-scaffold/15-01-SUMMARY.md
