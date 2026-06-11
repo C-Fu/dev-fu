@@ -30,7 +30,7 @@ pub fn parse_menu_db() -> Vec<MenuEntry> {
 
 /// Parse arbitrary menu content (used for testing with sample data).
 fn parse_menu_db_from(content: &str) -> Vec<MenuEntry> {
-    let mut entries: Vec<MenuEntry> = content
+    let entries: Vec<MenuEntry> = content
         .lines()
         .filter(|line| {
             let trimmed = line.trim();
@@ -50,13 +50,6 @@ fn parse_menu_db_from(content: &str) -> Vec<MenuEntry> {
             })
         })
         .collect();
-
-    entries.sort_by(|a, b| {
-        a.category
-            .cmp(&b.category)
-            .then_with(|| a.subcategory.cmp(&b.subcategory))
-            .then_with(|| a.label.cmp(&b.label))
-    });
 
     entries
 }
@@ -171,12 +164,12 @@ mod tests {
     }
 
     #[test]
-    fn test_entries_sorted() {
+    fn test_entries_preserve_file_order() {
         let input = "Z-Cat|Sub|B-Label|z_action\nA-Cat|Sub|A-Label|a_action\nA-Cat|Sub|B-Label|ab_action";
         let entries = parse_menu_db_from(input);
-        assert_eq!(entries[0].action_id, "a_action"); // A-Cat comes first
-        assert_eq!(entries[1].action_id, "ab_action"); // A-Cat, B-Label second
-        assert_eq!(entries[2].action_id, "z_action"); // Z-Cat last
+        assert_eq!(entries[0].action_id, "z_action"); // file order preserved
+        assert_eq!(entries[1].action_id, "a_action");
+        assert_eq!(entries[2].action_id, "ab_action");
     }
 
     #[test]

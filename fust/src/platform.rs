@@ -154,16 +154,11 @@ fn detect_disk() -> (String, String, u8) {
 }
 
 impl PlatformInfo {
-    pub fn display_lines(&self) -> (String, String) {
-        let sys = format!(
-            "OS: {} | Distro: {} | Package Manager: {} | Architecture: {}",
-            self.os, self.distro, self.pkg_mgr, self.arch
-        );
-        let disk = format!(
-            "Disk Space: {} / {} ({}%)",
-            self.disk_used, self.disk_total, self.disk_percent
-        );
-        (sys, disk)
+    pub fn display(&self) -> String {
+        format!(
+            "OS: {} | Distro: {} | Package Manager: {} | Architecture: {} | Disk Space: {} / {} ({}%)",
+            self.os, self.distro, self.pkg_mgr, self.arch, self.disk_used, self.disk_total, self.disk_percent
+        )
     }
 }
 
@@ -179,16 +174,15 @@ mod tests {
     }
 
 #[test]
-    fn test_display_lines_produces_output() {
+    fn test_display_produces_output() {
         let info = detect().expect("platform detection should succeed");
-        let (sys, disk) = info.display_lines();
-        assert!(!sys.is_empty());
-        assert!(!disk.is_empty());
-        assert!(sys.contains("OS:"));
-        assert!(sys.contains("Distro:"));
-        assert!(sys.contains("Package Manager:"));
-        assert!(sys.contains("Architecture:"));
-        assert!(disk.contains("Disk Space:"));
+        let display = info.display();
+        assert!(!display.is_empty());
+        assert!(display.contains("OS:"));
+        assert!(display.contains("Distro:"));
+        assert!(display.contains("Package Manager:"));
+        assert!(display.contains("Architecture:"));
+        assert!(display.contains("Disk Space:"));
     }
 
     #[test]
