@@ -1,29 +1,29 @@
 # dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang ([English](README.md))
 
-[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu.sh)
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blo./flu-sh/flu.sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. **`fu.sh`** adalah pemasang monolitik yang teruji. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
 
-> **`fu.sh`** (skrip monolitik asal) masih tersedia — lihat [README-Fu.ms-MY.md](README-Fu.ms-MY.md) untuk dokumentasi `fu.sh`.
+> **`fu.sh`** (skrip monolitik asal) masih tersedia — lihat [README-Fu.ms-MY.md](fu-sh/README-Fu.ms-MY.md) untuk dokumentasi `fu.sh`.
 
 ## Mula Pantas flu.sh
 
 ```bash
 # Option 1: curl-pipe-bash (bash / zsh / mana-mana shell POSIX)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh)
 ```
 
 ```sh
 # Option 1 alt: BusyBox / dash / ash (tiada process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh -o /tm./flu-sh/flu.sh && sh /tm./flu-sh/flu.sh
 ```
 
 ```bash
 # Option 2: Klon dan jalankan secara tempatan (tiada rangkaian diperlukan selepas klon)
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
-./flu.sh
+./flu-sh/flu.sh
 ```
 
 > **Windows:** Gunakan `flu.ps1` untuk PowerShell asli. POSIX `flu.sh` berfungsi dalam WSL2 (jalankan di dalam pengedaran Linux, bukan PowerShell).
@@ -70,7 +70,7 @@ flu.sh v1.1
 
 ## Seni Bina Modul
 
-flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipetakan kepada skrip `sh` POSIX kendiri di bawah `modules/`. Apabila flu.sh dijalankan:
+flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipetakan kepada skrip `sh` POSIX kendiri di bawah `flu-sh/modules/`. Apabila flu.sh dijalankan:
 
 1. **`tui.sh`** — Primitif paparan terminal ANSI (kedudukan kursor, warna, input papan kekunci)
 2. **`menu.sh`** — Menghurai `menu.db` (DSL menu dipisahkan paip) dan memaparkan TUI interaktif
@@ -78,7 +78,7 @@ flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipeta
 
 ### Bagaimana Modul Berfungsi
 
-- **Mod tempatan:** `git clone` dan jalankan — modul diambil dari cakera dalam `modules/`, tiada rangkaian diperlukan
+- **Mod tempatan:** `git clone` dan jalankan — modul diambil dari cakera dalam `flu-sh/modules/`, tiada rangkaian diperlukan
 - **Mod jauh:** `curl-pipe-bash` — modul diambil atas permintaan dari URL mentah GitHub dengan 3 kali cuba semula (kelewatan 2s)
 - **Persekitaran:** Modul menggunakan `FLU_OS`, `FLU_DISTRO`, `FLU_PKG_MGR`, `FLU_ARCH` untuk pemasangan mengikut platform
 - **Keselamatan:** Semua modul menggunakan `set -eu`, pengawal idempoten (`command -v`), dan `_maybe_sudo()` untuk peningkatan keistimewaan hanya apabila diperlukan
@@ -94,7 +94,7 @@ flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipeta
 | Diagnostik | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
 | Tetapan | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
 
-**Jumlah: 31 skrip modul.** Lihat [modules/README.md](modules/README.md) untuk pendaftaran ID tindakan penuh dan spesifikasi kontrak modul.
+**Jumlah: 31 skrip modul.** Lihat [flu-sh/modules/README.md](modules/README.md) untuk pendaftaran ID tindakan penuh dan spesifikasi kontrak modul.
 
 ### Gambarajah Seni Bina
 
@@ -118,7 +118,7 @@ tui.sh  menu.sh  modules.sh
 
 ## fu.sh — Skrip Monolitik Legasi
 
-flu.sh adalah sistem TUI modular generasi seterusnya. Skrip monolitik asal `fu.sh` masih tersedia dengan 18 operasi menu rata dan didokumenkan secara berasingan — lihat **[README-Fu.ms-MY.md](README-Fu.ms-MY.md)** untuk dokumentasi `fu.sh`, termasuk antara muka prompt bernombor, mod CLI tidak interaktif, dan nota mengikut platform.
+flu.sh adalah sistem TUI modular generasi seterusnya. Skrip monolitik asal `fu.sh` masih tersedia dengan 18 operasi menu rata dan didokumenkan secara berasingan — lihat **[README-Fu.ms-MY.md](fu-sh/README-Fu.ms-MY.md)** untuk dokumentasi `fu.sh`, termasuk antara muka prompt bernombor, mod CLI tidak interaktif, dan nota mengikut platform.
 
 | Ciri | `flu.sh` | `fu.sh` |
 |------|----------|---------|
@@ -220,7 +220,7 @@ Tekan `Ctrl+C` atau jalankan `reset`. flu.sh mempunyai pembersihan selamat isyar
 flu.sh cuba semula 3 kali dengan kelewatan 2 saat. Untuk persekitaran dengan rangkaian tidak stabil, klon repositori dan jalankan secara tempatan:
 
 ```bash
-git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu.sh
+git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu-sh/flu.sh
 ```
 
 ### "No such file" pada curl-pipe-bash
@@ -228,7 +228,7 @@ git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu.sh
 BusyBox dan dash tidak menyokong process substitution (`<(curl ...)`). Gunakan bentuk alternatif:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/head./flu-sh/flu.sh/flu.sh -o /tm./flu-sh/flu.sh && sh /tm./flu-sh/flu.sh
 ```
 
 ### Permission denied

@@ -5,28 +5,37 @@
 
 **`flu.sh`** is a zero-dependency, curl-pipe-bash-ready TUI menu system that fetches and executes modular install scripts on demand. Runs on any POSIX shell — bash, zsh, dash, ash, busybox — across 10+ Linux distros, macOS, WSL2, Chromebook, and Android (Termux).
 
-> **`fu.sh`** (the original monolithic script) is still available — see [README-Fu.md](README-Fu.md).
+> **`fu.sh`** (the original monolithic script) is still available — see [fu-sh/README-Fu.md](fu-sh/README-Fu.md).
+>
+> **`fust`** (Rust binary port) is also available — see [fust/README-fust.md](fust/README-fust.md).
 
 ## flu.sh Quick Start
 
 ```bash
 # Option 1: curl-pipe-bash (bash / zsh / any POSIX shell)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh)
 ```
 
 ```sh
 # Option 1 alt: BusyBox / dash / ash (no process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ```bash
 # Option 2: Clone and run locally (no network needed after clone)
 git clone https://github.com/C-Fu/dev-fu.git
 cd dev-fu
-./flu.sh
+./flu-sh/flu.sh
 ```
 
 > **Windows:** Use `flu.ps1` for native PowerShell. The POSIX `flu.sh` works in WSL2 (run inside the Linux distribution, not PowerShell).
+
+## fust Quick Start (Rust Binary)
+
+```sh
+# Install the static binary (Linux/macOS)
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+```
 
 ## flu.sh Features
 
@@ -70,7 +79,7 @@ flu.sh v1.1
 
 ## Module Architecture
 
-flu.sh uses a remote on-demand module system. Each menu option maps to a standalone POSIX `sh` script under `modules/`. When flu.sh runs:
+flu.sh uses a remote on-demand module system. Each menu option maps to a standalone POSIX `sh` script under `flu-sh/modules/`. When flu.sh runs:
 
 1. **`tui.sh`** — ANSI terminal rendering primitives (cursor positioning, colors, keyboard input)
 2. **`menu.sh`** — Parses `menu.db` (pipe-delimited menu DSL) and renders the interactive TUI
@@ -78,7 +87,7 @@ flu.sh uses a remote on-demand module system. Each menu option maps to a standal
 
 ### How Modules Work
 
-- **Local mode:** `git clone` and run — modules are sourced from disk in `modules/`, no network needed
+- **Local mode:** `git clone` and run — modules are sourced from disk in `flu-sh/modules/`, no network needed
 - **Remote mode:** `curl-pipe-bash` — modules are fetched on-demand from GitHub raw URLs with 3 retries (2s delay)
 - **Environment:** Modules use `FLU_OS`, `FLU_DISTRO`, `FLU_PKG_MGR`, `FLU_ARCH` for platform-aware installs
 - **Safety:** All modules use `set -eu`, idempotent guards (`command -v`), and `_maybe_sudo()` for privilege escalation only when needed
@@ -94,7 +103,7 @@ flu.sh uses a remote on-demand module system. Each menu option maps to a standal
 | Diagnostics | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
 | Settings | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
 
-**Total: 31 module scripts.** See [modules/README.md](modules/README.md) for the full action ID registry and module contract specification.
+**Total: 31 module scripts.** See [flu-sh/modules/README.md](flu-sh/modules/README.md) for the full action ID registry and module contract specification.
 
 ### Architecture Diagram
 
@@ -118,7 +127,7 @@ tui.sh  menu.sh  modules.sh
 
 ## fu.sh — Legacy Monolithic Script
 
-flu.sh is the next-generation modular TUI system. The original monolithic script `fu.sh` is still available with 18 flat-menu operations and is documented separately — see **[README-Fu.md](README-Fu.md)** for `fu.sh` documentation, including its numbered prompt interface, non-interactive CLI mode, and platform-specific notes.
+flu.sh is the next-generation modular TUI system. The original monolithic script `fu.sh` is still available with 18 flat-menu operations and is documented separately — see **[fu-sh/README-Fu.md](fu-sh/README-Fu.md)** for `fu.sh` documentation, including its numbered prompt interface, non-interactive CLI mode, and platform-specific notes.
 
 | Feature | `flu.sh` | `fu.sh` |
 |---------|----------|---------|
@@ -220,7 +229,7 @@ Press `Ctrl+C` or run `reset`. flu.sh has signal-safe cleanup via `_flu_cleanup_
 flu.sh retries 3 times with 2-second delays. For environments with unreliable network, clone the repo and run locally:
 
 ```bash
-git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu.sh
+git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu-sh/flu.sh
 ```
 
 ### "No such file" on curl-pipe-bash
@@ -228,7 +237,7 @@ git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu.sh
 BusyBox and dash don't support process substitution (`<(curl ...)`). Use the alternate form:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Permission denied

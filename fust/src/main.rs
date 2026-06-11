@@ -1,9 +1,57 @@
 mod cli;
+mod error;
+mod execute;
+mod fetch;
+mod logo;
 mod menu;
+mod metadata;
+mod navigation;
 mod platform;
+mod registry;
 mod tui;
 
 use clap::Parser;
+
+fn batch_run(action_ids: &[String], platform: &platform::PlatformInfo) -> anyhow::Result<i32> {
+    let entries = menu::parse_menu_db();
+    let valid_ids: Vec<&str> = entries.iter().map(|e| e.action_id.as_str()).collect();
+    let mut ok_count = 0usize;
+    let mut fail_count = 0u32;
+
+    for action_id in action_ids {
+        if !action_id.starts_with("community/") && !valid_ids.contains(&action_id.as_str()) {
+            eprintln!("✗ {} — Unknown action ID", action_id);
+            fail_count += 1;
+            continue;
+        }
+
+        eprintln!("▶ {}", action_id);
+
+        match execute::execute_module(action_id, platform) {
+            Ok(0) => {
+                ok_count += 1;
+            }
+            Ok(code) => {
+                let category = error::classify_exit_code(code);
+                eprintln!("✗ {} — {}", action_id, error::format_hint(&category));
+                fail_count += 1;
+            }
+            Err(e) => {
+                eprintln!("✗ {} — Error: {}", action_id, e);
+                fail_count += 1;
+            }
+        }
+    }
+
+    eprintln!();
+    if fail_count == 0 {
+        eprintln!("{} succeeded, 0 failed", ok_count);
+    } else {
+        eprintln!("{} succeeded, {} failed", ok_count, fail_count);
+    }
+
+    Ok(if fail_count > 0 { 1 } else { 0 })
+}
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Cli::parse();
@@ -12,19 +60,35 @@ fn main() -> anyhow::Result<()> {
     let platform = platform::detect()?;
 
     if args.list {
-        // Delegate to menu module (implemented in task 2)
         let entries = menu::parse_menu_db();
+        let merged = match registry::fetch_registry() {
+            Ok(reg) => registry::merge_community_entries(entries, &reg),
+            Err(_) => entries,
+        };
         if args.json {
-            menu::print_json(&entries);
+            menu::print_json(&merged);
         } else {
-            menu::print_table(&entries);
+            menu::print_table(&merged);
         }
         return Ok(());
     }
 
     if args.install.is_some() || args.remove.is_some() {
-        println!("Batch mode not yet implemented (coming in Phase 19)");
-        std::process::exit(1);
+        let action_ids: Vec<String> = if let Some(ref ids) = args.install {
+            ids.split(',').map(|s| s.trim().to_string()).collect()
+        } else if let Some(ref ids) = args.remove {
+            ids.split(',')
+                .map(|s| format!("remove_{}", s.trim()))
+                .collect()
+        } else {
+            vec![]
+        };
+        if action_ids.is_empty() {
+            eprintln!("Error: no action IDs provided");
+            std::process::exit(2);
+        }
+        let exit_code = batch_run(&action_ids, &platform)?;
+        std::process::exit(exit_code);
     }
 
     // Demo flags (per D-16) — standalone widget testing
@@ -33,6 +97,7 @@ fn main() -> anyhow::Result<()> {
         || args.demo_radio
         || args.demo_yesno
         || args.demo_text_input
+        || args.demo_menu
     {
         let mut guard = tui::terminal::TerminalGuard::init()?;
         let theme = tui::theme::Theme::dark();
@@ -116,13 +181,81 @@ fn main() -> anyhow::Result<()> {
                 Ok(value) => println!("Input: {}", value),
                 Err(_) => println!("Cancelled"),
             }
+        } else if args.demo_menu {
+            logo::show_splash(guard.terminal(), &theme, &platform)?;
+            let entries = menu::parse_menu_db();
+            let entries = match registry::fetch_registry() {
+                Ok(reg) => registry::merge_community_entries(entries, &reg),
+                Err(_) => entries,
+            };
+            let tree = navigation::build_navigation_tree(&entries);
+            let result = tui::widgets::menu::menu(guard.terminal(), &theme, &tree)?;
+            drop(guard);
+            match result {
+                Some(action_ids) => {
+                    for action_id in &action_ids {
+                        eprintln!("▶ {}", action_id);
+                        match execute::execute_module(action_id, &platform) {
+                            Ok(0) => {}
+                            Ok(code) => {
+                                let cat = error::classify_exit_code(code);
+                                eprintln!("✗ {} — {}", action_id, error::format_hint(&cat));
+                            }
+                            Err(e) => eprintln!("✗ {} — Error: {}", action_id, e),
+                        }
+                    }
+                }
+                None => println!("Cancelled"),
+            }
         }
         return Ok(());
     }
 
-    // No args → TUI mode (Phase 17)
-    println!("fust v{}", env!("CARGO_PKG_VERSION"));
-    println!("{}", platform.display());
-    println!("TUI mode not yet implemented (coming in Phase 17)");
+    // No args → TUI menu mode
+    let mut guard = tui::terminal::TerminalGuard::init()?;
+    let theme = tui::theme::Theme::dark();
+
+    logo::show_splash(guard.terminal(), &theme, &platform)?;
+
+    let entries = menu::parse_menu_db();
+    let entries = match registry::fetch_registry() {
+        Ok(reg) => registry::merge_community_entries(entries, &reg),
+        Err(_) => entries,
+    };
+    let tree = navigation::build_navigation_tree(&entries);
+    let result = tui::widgets::menu::menu(guard.terminal(), &theme, &tree)?;
+    match result {
+        Some(action_ids) => {
+            drop(guard);
+            let mut exit_code = 0;
+            for action_id in &action_ids {
+                eprintln!("▶ {}", action_id);
+                match execute::execute_module(action_id, &platform) {
+                    Ok(0) => {}
+                    Ok(_) => {
+                        eprintln!("  ✗ {} — module error", action_id);
+                        exit_code = 1;
+                    }
+                    Err(e) => {
+                        eprintln!("✗ {} — Error: {}", action_id, e);
+                        exit_code = 1;
+                    }
+                }
+            }
+            if action_ids.len() > 1 {
+                eprintln!();
+                if exit_code == 0 {
+                    eprintln!("{} succeeded, 0 failed", action_ids.len());
+                } else {
+                    eprintln!("Batch complete with errors");
+                }
+            }
+            if exit_code != 0 {
+                eprintln!("\nHint: Run with verbose output for more details.");
+            }
+            std::process::exit(exit_code);
+        }
+        None => println!("Cancelled"),
+    }
     Ok(())
 }

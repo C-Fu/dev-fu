@@ -314,29 +314,29 @@ _flu_menu_render() {
 
   # === Top border with breadcrumb as title ===
   move_cursor "$_fr_r" "$_fr_x"
-  printf '%s' "$TUI_BOX_TL"
-  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
-  printf '%s' "$TUI_BOX_TR"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_TL" "$TUI_RESET"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_H" "$TUI_RESET"; _fr_i=$((_fr_i + 1)); done
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_TR" "$TUI_RESET"
   _fr_r=$((_fr_r + 1))
 
   move_cursor "$_fr_r" "$_fr_x"
-  printf '%s' "$TUI_BOX_V"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
   _fr_tlen=${#_fr_breadcrumb}
   if [ "$_fr_tlen" -gt "$_fr_inner" ]; then _fr_tlen=$_fr_inner; fi
   _fr_tshow=$(printf '%s' "$_fr_breadcrumb" | awk -v L="$_fr_tlen" '{print substr($0,1,L)}')
   _fr_pad=$((_fr_inner - ${#_fr_tshow}))
   _fr_pl=$((_fr_pad / 2)); _fr_pr=$((_fr_pad - _fr_pl))
   _fr_j=0; while [ "$_fr_j" -lt "$_fr_pl" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
-  printf '%s%s%s' "$TUI_BOLD" "$_fr_tshow" "$TUI_RESET"
+  printf '%s%s%s%s' "$TUI_CYAN" "$TUI_BOLD" "$_fr_tshow" "$TUI_RESET"
   _fr_j=0; while [ "$_fr_j" -lt "$_fr_pr" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
-  printf '%s' "$TUI_BOX_V"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
   _fr_r=$((_fr_r + 1))
 
   # === Separator row ===
   move_cursor "$_fr_r" "$_fr_x"
-  printf '%s' "$TUI_BOX_V"
-  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
-  printf '%s' "$TUI_BOX_V"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_H" "$TUI_RESET"; _fr_i=$((_fr_i + 1)); done
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
   _fr_r=$((_fr_r + 1))
 
   # === Calculate page size ===
@@ -349,7 +349,7 @@ _flu_menu_render() {
   # === Scroll indicator (top) ===
   if [ "$_fm_scroll" -gt 1 ]; then
     move_cursor "$_fr_r" $((_fr_x + _fr_box_w - 9))
-    printf '%s%cmore%s' "$TUI_DIM" '↑' "$TUI_RESET"
+    printf '%s%cmore%s' "$TUI_YELLOW" '↑' "$TUI_RESET"
   fi
 
   # === Render visible items ===
@@ -369,7 +369,7 @@ _flu_menu_render() {
     _fr_action=$(_flu_menu_lookup "$_fr_item_path") || true
     if [ -n "$_fr_action" ]; then
       if _flu_menu_queue_has "$_fr_action"; then
-        _fr_chk="${TUI_GREEN}[x]${TUI_RESET} "
+        _fr_chk="${TUI_GREEN}${TUI_BOLD}[x]${TUI_RESET} "
       else
         _fr_chk='[ ] '
       fi
@@ -380,7 +380,7 @@ _flu_menu_render() {
     # shellcheck disable=SC2154
     _fr_trunc=$(printf '%s' "$_fr_lab" | awk -v L="$_fr_maxlab" '{print substr($0,1,L)}')
     move_cursor "$_fr_r" "$_fr_x"
-    printf '%s' "$TUI_BOX_V"
+    printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
     if [ "$_fr_i" -eq "$_fm_cursor" ]; then
       printf '%s%s' "$TUI_REV" "$_fr_chk"
       printf '%s' "$TUI_RESET"
@@ -390,12 +390,12 @@ _flu_menu_render() {
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
       printf '%s' "$TUI_RESET"
     else
-      printf '%s%3d) %s%s' "$_fr_chk" "$_fr_i" "$_fr_trunc"
+      printf '%s%s%3d) %s%s%s' "$_fr_chk" "$TUI_WHITE" "$_fr_i" "$TUI_BOLD" "$_fr_trunc" "$TUI_RESET"
       _fr_used=$((9 + ${#_fr_trunc}))
       _fr_fill=$((_fr_inner - _fr_used))
       [ "$_fr_fill" -gt 0 ] && _fr_j=0 && while [ "$_fr_j" -lt "$_fr_fill" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
     fi
-    printf '%s' "$TUI_BOX_V"
+    printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
     _fr_r=$((_fr_r + 1))
     _fr_i=$((_fr_i + 1))
     unset _fr_item_path _fr_chk
@@ -404,9 +404,9 @@ _flu_menu_render() {
   # === Fill remaining body rows with empty space ===
   while [ "$_fr_r" -le "$_fr_status_row" ]; do
     move_cursor "$_fr_r" "$_fr_x"
-    printf '%s' "$TUI_BOX_V"
+    printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
     _fr_j=0; while [ "$_fr_j" -lt "$_fr_inner" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
-    printf '%s' "$TUI_BOX_V"
+    printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
     _fr_r=$((_fr_r + 1))
   done
 
@@ -414,26 +414,26 @@ _flu_menu_render() {
   if [ "$_fr_end" -lt "$_fm_children_count" ]; then
     _fr_drow=$((_fr_r - 1))
     move_cursor "$_fr_drow" $((_fr_x + _fr_box_w - 9))
-    printf '%s%cmore%s' "$TUI_DIM" '↓' "$TUI_RESET"
+    printf '%s%cmore%s' "$TUI_YELLOW" '↓' "$TUI_RESET"
   fi
 
   # === Status row ===
   move_cursor "$_fr_status_row" "$_fr_x"
-  printf '%s' "$TUI_BOX_V"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
   _fr_j=0; while [ "$_fr_j" -lt "$_fr_inner" ]; do printf ' '; _fr_j=$((_fr_j + 1)); done
-  printf '%s' "$TUI_BOX_V"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_V" "$TUI_RESET"
   move_cursor "$_fr_status_row" $((_fr_x + 2))
   if [ -n "$_fm_error_msg" ]; then
     printf '%s%s%s' "$TUI_RED" "$_fm_error_msg" "$TUI_RESET"
   else
-    printf 'Item %d of %d' "$_fm_cursor" "$_fm_children_count"
+    printf '%sItem %d of %d%s' "$TUI_DIM" "$_fm_cursor" "$_fm_children_count" "$TUI_RESET"
   fi
 
   # === Bottom border ===
   move_cursor "$_fr_bottom_row" "$_fr_x"
-  printf '%s' "$TUI_BOX_BL"
-  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s' "$TUI_BOX_H"; _fr_i=$((_fr_i + 1)); done
-  printf '%s' "$TUI_BOX_BR"
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_BL" "$TUI_RESET"
+  _fr_i=1; while [ "$_fr_i" -le "$_fr_inner" ]; do printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_H" "$TUI_RESET"; _fr_i=$((_fr_i + 1)); done
+  printf '%s%s%s' "$TUI_CYAN" "$TUI_BOX_BR" "$TUI_RESET"
 
   # === Footer row ===
   move_cursor "$_fr_footer_row" "$_fr_x"

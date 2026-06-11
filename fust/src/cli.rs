@@ -43,4 +43,8 @@ pub struct Cli {
     /// Demo: text input widget
     #[arg(long = "demo-text-input")]
     pub demo_text_input: bool,
+
+    /// Demo: hierarchical menu widget
+    #[arg(long = "demo-menu")]
+    pub demo_menu: bool,
 }
