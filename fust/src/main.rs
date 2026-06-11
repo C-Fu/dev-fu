@@ -1,6 +1,7 @@
 mod cli;
 mod menu;
 mod platform;
+mod tui;
 
 use clap::Parser;
 
