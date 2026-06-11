@@ -107,7 +107,13 @@ main() {
 
     echo "Running fust ..."
     echo ""
-    exec "$bin" "$@"
+    if [ -t 0 ]; then
+        exec "$bin" "$@"
+    elif [ -e /dev/tty ]; then
+        exec "$bin" "$@" < /dev/tty
+    else
+        exec "$bin" "$@"
+    fi
 }
 
 main "$@"
