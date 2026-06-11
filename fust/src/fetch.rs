@@ -245,6 +245,7 @@ mod tests {
         std::env::remove_var("FLU_MODULES_BASE_URL");
         std::env::remove_var("FLU_CACHE_DIR");
         std::env::remove_var("FLU_CACHE_TTL");
+        std::env::remove_var("XDG_CACHE_HOME");
         let config = FetchConfig::from_env();
         assert_eq!(config.base_url, DEFAULT_BASE_URL);
         assert!(config.cache_dir.to_string_lossy().ends_with("flu.sh"));
