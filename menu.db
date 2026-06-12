@@ -21,6 +21,8 @@ Languages & Runtimes|Bun|🥟 Install Bun|install_bun
 Languages & Runtimes|Bun|🗑 Remove Bun|remove_bun
 Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
 Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
+Languages & Runtimes|OpenJDK|☕ Install OpenJDK|install_openjdk
+Languages & Runtimes|OpenJDK|🗑 Remove OpenJDK|remove_openjdk
 
 # ── 🛠 System Tools ──
 System Tools|Yarn|🧶 Install Yarn|install_yarn
@@ -45,6 +47,8 @@ Shell|Prompts|💙 Fancy Prompt (Shades of Blue)|create_fancy_prompt_blue
 Shell|Prompts|🗑 Remove Fancy Prompt (Blue)|remove_fancy_prompt_blue
 Shell|Network|🏠 Hostname Discovery (Linux)|install_avahi
 Shell|Network|🗑 Remove Hostname Discovery|remove_avahi
+Shell|Network|🌐 Systemd-Resolved (LLMNR)|install_systemd_resolved
+Shell|Network|🗑 Remove Systemd-Resolved|remove_systemd_resolved
 
 # ── ⚙️ Settings ──
 Settings|GitHub|🔑 Set GitHub Token|set_github_token
