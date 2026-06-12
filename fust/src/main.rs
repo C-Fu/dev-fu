@@ -5,6 +5,7 @@ mod fetch;
 mod logo;
 mod menu;
 mod metadata;
+mod module_info;
 mod navigation;
 mod platform;
 mod registry;

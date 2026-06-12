@@ -9,6 +9,7 @@ use ratatui::{
     Terminal,
 };
 
+use crate::module_info;
 use crate::navigation::{ActionQueue, MenuTree};
 use crate::tui::input::{self, Key};
 use crate::tui::theme::Theme;
@@ -194,8 +195,8 @@ fn render(
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([
-                    Constraint::Percentage(55),
-                    Constraint::Percentage(25),
+                    Constraint::Percentage(45),
+                    Constraint::Percentage(35),
                     Constraint::Percentage(20),
                 ])
                 .split(area);
@@ -204,8 +205,8 @@ fn render(
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([
-                    Constraint::Percentage(60),
-                    Constraint::Percentage(40),
+                    Constraint::Percentage(50),
+                    Constraint::Percentage(50),
                 ])
                 .split(area);
             (chunks[0], Some(chunks[1]), None)
@@ -395,7 +396,6 @@ fn render(
                 let desc_lines: Vec<Line> = if let Some(idx) = selected_idx {
                     let node = &tree.nodes[idx];
                     let is_leaf = tree.is_leaf(idx);
-                    let kind = if is_leaf { "Action" } else { "Category" };
 
                     let mut lines = vec![
                         Line::from(Span::styled(
@@ -404,30 +404,56 @@ fn render(
                                 .fg(theme.title)
                                 .add_modifier(Modifier::BOLD),
                         )),
-                        Line::from(Span::styled(
-                            format!("Type: {}", kind),
-                            Style::default().fg(theme.text),
-                        )),
                     ];
 
                     if let Some(ref action_id) = node.action_id {
-                        lines.push(Line::from(Span::styled(
-                            format!("Module: {}.sh", action_id),
-                            Style::default().fg(theme.text),
-                        )));
-                    }
+                        if let Some(info) = module_info::MODULE_INFO.get(action_id.as_str()) {
+                            lines.push(Line::from(Span::styled(
+                                format!("Module: {}.sh", action_id),
+                                Style::default().fg(theme.text),
+                            )));
+                            lines.push(Line::from(Span::styled(
+                                format!("Platforms: {}", info.platforms),
+                                Style::default().fg(theme.text),
+                            )));
+                            lines.push(Line::from(Span::styled(
+                                format!("Version: {}", info.version),
+                                Style::default().fg(theme.text),
+                            )));
+                            if !info.description.is_empty() {
+                                lines.push(Line::from(""));
+                                for desc_line in info.description.lines() {
+                                    lines.push(Line::from(Span::styled(
+                                        desc_line.to_string(),
+                                        Style::default().fg(theme.dim),
+                                    )));
+                                }
+                            }
+                        } else {
+                            lines.push(Line::from(Span::styled(
+                                format!("Module: {}.sh", action_id),
+                                Style::default().fg(theme.text),
+                            )));
+                        }
 
-                    if is_leaf {
-                        lines.push(Line::from(Span::styled(
-                            "Press Space to queue",
-                            Style::default().fg(theme.dim),
-                        )));
+                        if is_leaf {
+                            lines.push(Line::from(""));
+                            lines.push(Line::from(Span::styled(
+                                "Press Space to queue",
+                                Style::default().fg(theme.dim),
+                            )));
+                        }
                     } else {
                         let child_count = node.children.len();
+                        lines.push(Line::from(Span::styled(
+                            "Category",
+                            Style::default().fg(theme.text),
+                        )));
                         lines.push(Line::from(Span::styled(
                             format!("{} items inside", child_count),
                             Style::default().fg(theme.text),
                         )));
+                        lines.push(Line::from(""));
                         lines.push(Line::from(Span::styled(
                             "Press Enter to open",
                             Style::default().fg(theme.dim),
