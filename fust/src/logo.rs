@@ -93,7 +93,7 @@ pub fn show_splash(
         )))
         .alignment(Alignment::Center);
 
-        let info_height: u16 = 8;
+        let info_height: u16 = 9;
         let footer_height: u16 = 2;
         let separator_height: u16 = 1;
         let total_content = logo_height + separator_height + info_height + footer_height;
