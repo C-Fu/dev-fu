@@ -61,7 +61,13 @@ pub fn show_splash(
             Style::default().fg(theme.text),
         ));
 
-        let version_str = format!(" v{} ", env!("CARGO_PKG_VERSION"));
+        let version_line = Line::from(Span::styled(
+            format!(" v{} ", env!("CARGO_PKG_VERSION")),
+            Style::default()
+                .fg(theme.dim)
+                .add_modifier(Modifier::BOLD),
+        )).alignment(Alignment::Right);
+
         let info_block = Block::default()
             .title(Span::styled(
                 " fust ",
@@ -69,12 +75,7 @@ pub fn show_splash(
                     .fg(theme.title)
                     .add_modifier(Modifier::BOLD),
             ))
-            .title_bottom(Span::styled(
-                version_str,
-                Style::default()
-                    .fg(theme.dim)
-                    .add_modifier(Modifier::BOLD),
-            ))
+            .title_bottom(version_line)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(theme.border));
 
