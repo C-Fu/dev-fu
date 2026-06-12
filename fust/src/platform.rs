@@ -13,6 +13,8 @@ pub struct PlatformInfo {
     pub disk_used: String,
     pub disk_total: String,
     pub disk_percent: u8,
+    pub lan_ip: String,
+    pub wan_ip: String,
 }
 
 /// Detect the current platform, producing identical results to flu.sh's
@@ -26,6 +28,7 @@ pub fn detect() -> Result<PlatformInfo> {
     let is_termux = detect_termux();
     let is_root = detect_root();
     let (disk_used, disk_total, disk_percent) = detect_disk();
+    let (lan_ip, wan_ip) = detect_ips();
 
     Ok(PlatformInfo {
         os,
@@ -38,6 +41,8 @@ pub fn detect() -> Result<PlatformInfo> {
         disk_used,
         disk_total,
         disk_percent,
+        lan_ip,
+        wan_ip,
     })
 }
 
@@ -153,12 +158,89 @@ fn detect_disk() -> (String, String, u8) {
     (used, total, pct)
 }
 
+fn detect_ips() -> (String, String) {
+    let lan = detect_lan_ip();
+    let wan = detect_wan_ip();
+    (lan, wan)
+}
+
+fn detect_lan_ip() -> String {
+    #[cfg(unix)]
+    {
+        let output = Command::new("sh")
+            .arg("-c")
+            .arg("ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || hostname -I 2>/dev/null | awk '{print $1; exit}'")
+            .output();
+        if let Ok(o) = output {
+            let ip = String::from_utf8_lossy(&o.stdout).trim().to_string();
+            if !ip.is_empty() && ip.contains('.') {
+                return ip;
+            }
+        }
+    }
+    #[cfg(windows)]
+    {
+        let output = Command::new("cmd")
+            .args(["/C", "ipconfig"])
+            .output();
+        if let Ok(o) = output {
+            let stdout = String::from_utf8_lossy(&o.stdout);
+            for line in stdout.lines() {
+                let line = line.trim();
+                if line.starts_with("IPv4") {
+                    if let Some(addr) = line.split(':').nth(1) {
+                        let addr = addr.trim().split('%').next().unwrap_or("").trim();
+                        if !addr.is_empty() {
+                            return addr.to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    "unavailable".to_string()
+}
+
+fn detect_wan_ip() -> String {
+    let services = [
+        "https://ifconfig.me",
+        "https://icanhazip.com",
+        "https://api.ipify.org",
+    ];
+    for url in &services {
+        #[cfg(unix)]
+        let output = Command::new("sh")
+            .arg("-c")
+            .arg(format!("curl -fsSL --connect-timeout 3 --max-time 5 {} 2>/dev/null || wget -qO- --timeout=5 {} 2>/dev/null", url, url))
+            .output();
+        #[cfg(windows)]
+        let output = Command::new("cmd")
+            .args(["/C", &format!("curl -fsSL --connect-timeout 3 --max-time 5 {} 2>nul", url)])
+            .output();
+        if let Ok(o) = output {
+            let ip = String::from_utf8_lossy(&o.stdout).trim().to_string();
+            if !ip.is_empty() && ip.contains('.') {
+                return ip;
+            }
+        }
+    }
+    "unavailable".to_string()
+}
+
 impl PlatformInfo {
-    pub fn display(&self) -> String {
-        format!(
-            "OS: {} | Distro: {} | Package Manager: {} | Architecture: {} | Disk Space: {} / {} ({}%)",
-            self.os, self.distro, self.pkg_mgr, self.arch, self.disk_used, self.disk_total, self.disk_percent
-        )
+    pub fn display_lines(&self) -> Vec<String> {
+        vec![
+            format!(
+                "OS: {} | Distro: {} | Package Manager: {}",
+                self.os, self.distro, self.pkg_mgr
+            ),
+            format!(
+                "Architecture: {} | Disk Space: {} / {} ({}%)",
+                self.arch, self.disk_used, self.disk_total, self.disk_percent
+            ),
+            format!("IP: {} (LAN) | {} (WAN)", self.lan_ip, self.wan_ip),
+            "github.com/C-Fu/dev-fu".to_string(),
+        ]
     }
 }
 
@@ -176,13 +258,15 @@ mod tests {
 #[test]
     fn test_display_produces_output() {
         let info = detect().expect("platform detection should succeed");
-        let display = info.display();
-        assert!(!display.is_empty());
-        assert!(display.contains("OS:"));
-        assert!(display.contains("Distro:"));
-        assert!(display.contains("Package Manager:"));
-        assert!(display.contains("Architecture:"));
-        assert!(display.contains("Disk Space:"));
+        let lines = info.display_lines();
+        assert_eq!(lines.len(), 4);
+        assert!(lines[0].contains("OS:"));
+        assert!(lines[0].contains("Distro:"));
+        assert!(lines[0].contains("Package Manager:"));
+        assert!(lines[1].contains("Architecture:"));
+        assert!(lines[1].contains("Disk Space:"));
+        assert!(lines[2].contains("IP:"));
+        assert!(lines[3].contains("github.com"));
     }
 
     #[test]

@@ -342,6 +342,8 @@ mod tests {
             disk_used: "50G".to_string(),
             disk_total: "100G".to_string(),
             disk_percent: 50,
+            lan_ip: "192.168.1.1".to_string(),
+            wan_ip: "1.2.3.4".to_string(),
         };
         let vars = build_env_vars(&platform);
         assert_eq!(vars.len(), 7);

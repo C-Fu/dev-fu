@@ -56,10 +56,11 @@ pub fn show_splash(
                 .add_modifier(Modifier::BOLD),
         ));
 
-        let platform_line = Line::from(Span::styled(
-            platform.display(),
-            Style::default().fg(theme.text),
-        ));
+        let info_lines: Vec<Line> = platform
+            .display_lines()
+            .into_iter()
+            .map(|l| Line::from(Span::styled(l, Style::default().fg(theme.text))))
+            .collect();
 
         let version_line = Line::from(Span::styled(
             format!(" v{} ", env!("CARGO_PKG_VERSION")),
@@ -79,7 +80,9 @@ pub fn show_splash(
             .borders(Borders::ALL)
             .border_style(Style::default().fg(theme.border));
 
-        let info = Paragraph::new(vec![desc_line, platform_line])
+        let mut content_lines = vec![desc_line];
+        content_lines.extend(info_lines);
+        let info = Paragraph::new(content_lines)
             .block(info_block)
             .alignment(Alignment::Center)
             .wrap(ratatui::widgets::Wrap { trim: false });
@@ -90,7 +93,7 @@ pub fn show_splash(
         )))
         .alignment(Alignment::Center);
 
-        let info_height: u16 = 6;
+        let info_height: u16 = 8;
         let footer_height: u16 = 2;
         let separator_height: u16 = 1;
         let total_content = logo_height + separator_height + info_height + footer_height;

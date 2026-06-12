@@ -187,14 +187,30 @@ fn render(
     terminal.draw(|f| {
         let area = f.area();
 
-        let (main_area, queue_area) = if state.queue.count() > 0 && area.width > 40 {
+        let has_queue = state.queue.count() > 0;
+        let wide_enough = area.width > 60;
+
+        let (menu_area, desc_area, queue_area) = if has_queue && wide_enough {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(75), Constraint::Percentage(25)])
+                .constraints([
+                    Constraint::Percentage(55),
+                    Constraint::Percentage(25),
+                    Constraint::Percentage(20),
+                ])
                 .split(area);
-            (chunks[0], Some(chunks[1]))
+            (chunks[0], Some(chunks[1]), Some(chunks[2]))
+        } else if wide_enough {
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([
+                    Constraint::Percentage(60),
+                    Constraint::Percentage(40),
+                ])
+                .split(area);
+            (chunks[0], Some(chunks[1]), None)
         } else {
-            (area, None)
+            (area, None, None)
         };
 
         let breadcrumb = tree.get_breadcrumb(&state.path);
@@ -209,9 +225,9 @@ fn render(
             ))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
-        f.render_widget(block.clone(), main_area);
+        f.render_widget(block.clone(), menu_area);
 
-        let inner = main_area.inner(ratatui::layout::Margin::new(1, 1));
+        let inner = menu_area.inner(ratatui::layout::Margin::new(1, 1));
         if inner.width == 0 || inner.height == 0 {
             return;
         }
@@ -358,6 +374,84 @@ fn render(
                     let list_area = Rect::new(queue_inner.x, list_y, queue_inner.width, list_height);
                     f.render_widget(queue_list, list_area);
                 }
+            }
+        }
+
+        if let Some(da) = desc_area {
+            let desc_block = Block::default()
+                .title(Span::styled(
+                    " Info ",
+                    Style::default()
+                        .fg(theme.title)
+                        .add_modifier(Modifier::BOLD),
+                ))
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(border_color));
+            f.render_widget(desc_block, da);
+
+            let desc_inner = da.inner(ratatui::layout::Margin::new(1, 1));
+            if desc_inner.width > 0 && desc_inner.height > 0 {
+                let selected_idx = children.get(state.cursor).copied();
+                let desc_lines: Vec<Line> = if let Some(idx) = selected_idx {
+                    let node = &tree.nodes[idx];
+                    let is_leaf = tree.is_leaf(idx);
+                    let kind = if is_leaf { "Action" } else { "Category" };
+
+                    let mut lines = vec![
+                        Line::from(Span::styled(
+                            node.label.clone(),
+                            Style::default()
+                                .fg(theme.title)
+                                .add_modifier(Modifier::BOLD),
+                        )),
+                        Line::from(Span::styled(
+                            format!("Type: {}", kind),
+                            Style::default().fg(theme.text),
+                        )),
+                    ];
+
+                    if let Some(ref action_id) = node.action_id {
+                        lines.push(Line::from(Span::styled(
+                            format!("Module: {}.sh", action_id),
+                            Style::default().fg(theme.text),
+                        )));
+                    }
+
+                    if is_leaf {
+                        lines.push(Line::from(Span::styled(
+                            "Press Space to queue",
+                            Style::default().fg(theme.dim),
+                        )));
+                    } else {
+                        let child_count = node.children.len();
+                        lines.push(Line::from(Span::styled(
+                            format!("{} items inside", child_count),
+                            Style::default().fg(theme.text),
+                        )));
+                        lines.push(Line::from(Span::styled(
+                            "Press Enter to open",
+                            Style::default().fg(theme.dim),
+                        )));
+                    }
+
+                    let path_str = node.path.join(" > ");
+                    lines.push(Line::from(""));
+                    lines.push(Line::from(Span::styled(
+                        path_str,
+                        Style::default().fg(theme.dim),
+                    )));
+
+                    lines
+                } else {
+                    vec![Line::from(Span::styled(
+                        "No selection",
+                        Style::default().fg(theme.dim),
+                    ))]
+                };
+
+                let desc = Paragraph::new(desc_lines)
+                    .wrap(ratatui::widgets::Wrap { trim: false });
+                f.render_widget(desc, desc_inner);
             }
         }
     })?;
