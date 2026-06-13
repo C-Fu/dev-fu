@@ -1,138 +1,254 @@
 # Roadmap: dev-fu / flu.sh
 
-## Overview
+## Milestones
 
-Build a zero-dependency, curl-pipe-bash TUI menu system that fetches and executes modular developer environment scripts. The journey starts with a portable POSIX TUI engine (primitives + single-select menu), extends to interactive widgets and hierarchical navigation, adds remote module execution, wires everything together in a single orchestrator script, and finally ports the full system to PowerShell.
+- ✅ **v1.0 flu.sh** — Phases 1-6 (shipped 2026-05-25)
+- ✅ **v1.1 Feature Parity & Polish** — Phases 7-9 (shipped 2026-05-25)
+- 🚧 **v2.0 Modular Ecosystem** — Phases 10-14 (in progress)
+- 📋 **v3.0 Rust Binary** — Phases 15-21 (complete)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
+<details>
+<summary>✅ v1.0 flu.sh (Phases 1-6) — SHIPPED 2026-05-25</summary>
 
 - [x] **Phase 1: TUI Engine Core** — Portable POSIX terminal primitives, keyboard input, and single-select menu widget (completed 2026-05-23)
 - [x] **Phase 2: Interactive Widgets** — Checklist, radio, yes/no, text input widgets with consistent contract (completed 2026-05-24)
 - [x] **Phase 3: Menu System** — Pipe-delimited menu DSL, 3-level submenu navigation with breadcrumbs (completed 2026-05-24)
 - [x] **Phase 4: Module Architecture** — Remote script fetching, metadata parsing, isolated execution with inline prompts (completed 2026-05-24)
-- [ ] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch
-- [ ] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell
+- [x] **Phase 5: Integration & Orchestrator** — Full flu.sh script wiring TUI + menus + modules, TTY reattach, spinner, git branch (completed 2026-05-24)
+- [x] **Phase 6: PowerShell Port** — Full feature parity for Windows and cross-platform PowerShell (completed 2026-05-25)
+
+*See `.planning/milestones/v1.0-ROADMAP.md` for full details.*
+
+</details>
+
+<details>
+<summary>✅ v1.1 Feature Parity & Polish (Phases 7-9) — SHIPPED 2026-05-25</summary>
+
+- [x] **Phase 7: Feature Parity** — All 18 fu.sh operations in TUI menu with module scripts (completed 2026-05-25)
+- [x] **Phase 8: Intro Polish** — ASCII dev-fu logo and platform info on startup (completed 2026-05-25)
+- [x] **Phase 9: Documentation** — README restructured with flu.sh as primary (completed 2026-05-25)
+
+*See `.planning/milestones/v1.1-ROADMAP.md` for full details.*
+
+</details>
+
+### 🚧 v2.0 Modular Ecosystem (In Progress)
+
+**Milestone Goal:** Transform flu.sh from a functional TUI into a production-grade modular ecosystem — hardened module pipeline, modern CLI tool suite, and cross-platform PowerShell parity.
+
+- [ ] **Phase 10: Module Pipeline Hardening** — SHA256 verification, caching, progress bar, and execution logging
+- [ ] **Phase 11: Modern CLI Tools** — lazygit, starship, zoxide, and eza install/remove modules
+- [x] **Phase 12: Advanced Module System** — CLI batch mode and module registry with auto-discovery
+- [ ] **Phase 13: UI & Terminal Polish** — Color themes and terminal resize handling
+- [ ] **Phase 14: PowerShell Parity** — flu.ps1 mirrors all v1.1 + v2.0 features
 
 ## Phase Details
 
-### Phase 1: TUI Engine Core
-**Goal**: Developer has a fully portable, POSIX-compliant TUI engine that renders interactive single-select menus with keyboard navigation, working identically across bash, zsh, dash, ash, and busybox sh
-**Depends on**: Nothing (first phase)
-**Requirements**: ENGN-01, ENGN-02, ENGN-03, ENGN-04, ENGN-05, ENGN-06, ENGN-07, ENGN-08, WDGT-04, INTG-03, INTG-04
+### Phase 10: Module Pipeline Hardening
+**Goal**: Users can trust fetched modules are authentic, see download progress, benefit from caching, and review execution history
+**Depends on**: Phase 9 (v1.1 complete)
+**Requirements**: SECU-01, PERF-01, PERF-02, ADVN-03
 **Success Criteria** (what must be TRUE):
-  1. User can navigate a list of 20+ items using Up/Down arrows, j/k vi keys, PgUp/PgDn, and Home/End — seeing reverse-video highlight and scroll indicators (↑more/↓more) when content overflows
-  2. User can select an item with Enter, cancel with Esc or q, and jump directly to any item by typing its number (multi-digit accumulator)
-  3. Script displays a numbered text prompt instead of TUI when TERM=dumb or no TTY is available
-  4. Every screen shows a contextual help footer listing available keybindings
-  5. Terminal state is fully restored on every exit path including Ctrl-C and signals (INT, TERM, HUP, QUIT) — verified working on bash, dash, and busybox sh
+  1. User sees a SHA256 mismatch error and module execution is blocked when a fetched script is tampered or corrupted
+  2. User sees a progress bar with bytes received during module script downloads
+  3. User's second run of the same module skips the download (cache hit) and expired cache entries are re-fetched
+  4. User can inspect a local log file showing tool name, action, success/failure, version, and timestamp for every module execution
 **Plans**: 2 plans
 
 Plans:
-- [x] 01-01-PLAN.md — Terminal primitives, signal handling, shell-aware input system, and fallback prompt
-- [x] 01-02-PLAN.md — Single-select menu widget with navigation, rendering, and number jump
+- [ ] 10-01-PLAN.md — SHA256 checksums, module caching, and download progress (SECU-01, PERF-01, PERF-02)
+- [ ] 10-02-PLAN.md — Execution logging to TSV file (ADVN-03)
 
-### Phase 2: Interactive Widgets
-**Goal**: Users can interact with checklists, radio lists, text inputs, and confirmation dialogs using consistent keyboard patterns, all built on the Phase 1 TUI engine
-**Depends on**: Phase 1
-**Requirements**: WDGT-01, WDGT-02, WDGT-03, WDGT-05, WDGT-06
+### Phase 11: Modern CLI Tools
+**Goal**: Users can install and remove four modern CLI tools (lazygit, starship, zoxide, eza) through the flu.sh menu
+**Depends on**: Phase 10
+**Requirements**: TOOL-01, TOOL-02, TOOL-03, TOOL-04
 **Success Criteria** (what must be TRUE):
-  1. User can toggle individual items in a multi-select checklist with Space key ([x]/[ ]) and toggle all items at once with Select All / Deselect All keys
-  2. User is prompted with Yes/No confirmation before destructive operations (remove, uninstall) and can proceed or cancel
-  3. User can choose exactly one option from a radio-button list with (•)/(○) indicators
-  4. User can enter freeform text in an inline input with cursor movement and backspace editing
-**Plans**: 3 plans
-
-Plans:
-- [x] 02-01-PLAN.md — Extend key reader with Ctrl+D/Delete/*/- keys + implement tui_checklist() multi-select checkbox widget
-- [x] 02-02-PLAN.md — Implement tui_radio() single-select and tui_yesno() confirmation dialog widgets
-- [x] 02-03-PLAN.md — Implement tui_text_input() freeform text entry widget with line editing
-**UI hint**: yes
-
-### Phase 3: Menu System
-**Goal**: Users navigate hierarchical menus defined by a simple DSL, with breadcrumbs and intuitive back navigation across 3 levels of nesting
-**Depends on**: Phase 1
-**Requirements**: MENU-01, MENU-02, MENU-03, MENU-04
-**Success Criteria** (what must be TRUE):
-  1. User can navigate up to 3 levels of nested submenus (Main → Category → Sub-option) and return to the parent menu with Esc or Left arrow
-  2. User sees a breadcrumb trail showing current position (e.g., Main > Dev Tools > Python) at every menu level
-  3. Menu definitions use a pipe-delimited DSL parseable with awk in POSIX sh — loading and navigating a 50-item definition works correctly with no external dependencies
+  1. User can install lazygit via the menu and launch it as a TUI git client
+  2. User can install starship and see the cross-shell prompt active in their current shell session
+  3. User can install zoxide and use `z` to jump to frecency-ranked directories
+  4. User can install eza and use it as a colorized, modern `ls` replacement
+  5. User can remove any of the four tools via the menu and the tool is fully uninstalled
 **Plans**: 2 plans
 
 Plans:
-- [x] 03-01-PLAN.md — Menu DSL parser with pipe-delimited awk parsing and tree query functions (flu_menu_load, flu_menu_get_children, flu_menu_is_leaf, flu_menu_get_breadcrumb, flu_menu_get_action)
-- [x] 03-02-PLAN.md — Navigation engine with custom TUI renderer, 3-level submenu event loop, breadcrumb display, Left arrow back-navigation, and numbered fallback mode
-**UI hint**: yes
+- [ ] 11-01-PLAN.md — lazygit and starship install/remove scripts + menu.db entries (TOOL-01, TOOL-02)
+- [ ] 11-02-PLAN.md — zoxide and eza install/remove scripts + menu.db entries + README + MANIFEST (TOOL-03, TOOL-04)
 
-### Phase 4: Module Architecture
-**Goal**: Scripts fetch, validate, and execute remote module scripts from GitHub on demand — with platform context, inline parameter collection, and clear result reporting
-**Depends on**: Phase 1, Phase 2
-**Requirements**: MODL-01, MODL-02, MODL-03, MODL-04, MODL-05
+### Phase 12: Advanced Module System
+**Goal**: Users can run flu.sh non-interactively from the command line and browse/discover available modules from a registry
+**Depends on**: Phase 10
+**Requirements**: ADVN-01, ADVN-02
 **Success Criteria** (what must be TRUE):
-  1. User can select a menu option that triggers a remote module script to be fetched from GitHub (curl with wget fallback) and executed
-  2. Module scripts declare metadata (name, args, platforms) via structured comment headers that the system parses and validates before execution
-  3. Modules execute in isolated subshells receiving platform context (FLU_OS, FLU_DISTRO, FLU_PKG_MGR, etc.) via environment variables
-  4. Before module execution, the user is prompted for variable parameters via inline prompts (radio, text, yes/no) — e.g., choosing global vs local install scope
-  5. Module results display to the user with clear success/failure status and actionable recovery hints on failure
-**Plans**: 3 plans
+  1. User can run `flu.sh --install go,rust,starship --yes` and have all three tools installed without entering the TUI
+  2. User can run `flu.sh --list` to see all available modules including community-contributed ones from the registry
+  3. User can discover and install a community-contributed module not bundled with flu.sh by default
+**Plans**: 2 plans
 
 Plans:
-- [x] 04-01-PLAN.md — Module Fetch Engine & Metadata Parser (Wave 1)
-- [x] 04-02-PLAN.md — Module Execution & Parameter Prompts (Wave 2)
-- [x] 04-03-PLAN.md — Result Display & Error Reporting (Wave 3)
+- [x] 12-01-PLAN.md — CLI batch mode: --install, --remove, --list, --yes flags (ADVN-01)
+- [x] 12-02-PLAN.md — Module registry with auto-discovery and community modules (ADVN-02)
 
-### Phase 5: Integration & Orchestrator
-**Goal**: flu.sh is a complete, working single-file script that wires TUI, menus, and modules together — deployable via curl-pipe-bash and coexisting with fu.sh on a dedicated development branch
-**Depends on**: Phase 1, Phase 2, Phase 3, Phase 4
-**Requirements**: ENGN-09, INTG-01, INTG-02, INTG-05, GIT-01
+### Phase 13: UI & Terminal Polish
+**Goal**: Users can customize flu.sh's appearance with color themes and the menu stays usable when the terminal is resized
+**Depends on**: Phase 10
+**Requirements**: UI-01, UI-02
 **Success Criteria** (what must be TRUE):
-  1. User can run flu.sh via curl-pipe-bash and it correctly reattaches to /dev/tty for interactive TUI display
-  2. A rotating spinner displays during any network fetch operation so the user knows the script hasn't hung
-  3. Error messages include actionable recovery hints (not just "failed") — the user always knows what to do next
-  4. flu.sh coexists with fu.sh — both scripts are independent, non-conflicting, and can coexist in the same repository
-  5. Development occurs on branch `flu.sh`, merged to `main` when validated and stable
-**Plans**: 3 plans
-
-Plans:
-- [ ] 05-01-PLAN.md — Spinner widget: async rotating character animation in tui.sh
-- [ ] 05-02-PLAN.md — Orchestrator core: TTY reattachment, subsystem sourcing, menu loop, module dispatch with spinner
-- [ ] 05-03-PLAN.md — Error recovery mapping, signal-safe terminal restoration, git branch setup
-
-### Phase 6: PowerShell Port
-**Goal**: Windows and cross-platform PowerShell users have full feature parity with the POSIX flu.sh — same menus, widgets, navigation, and module execution
-**Depends on**: Phase 5
-**Requirements**: PS-01, PS-02, PS-03
-**Success Criteria** (what must be TRUE):
-  1. PowerShell users get the same TUI menu system with widgets, submenu navigation, and inline prompts as flu.sh
-  2. PowerShell port fetches and executes the same remote modules with adapted argument passing for the Windows ecosystem
-  3. The port works on both PowerShell 5.1 (Windows built-in) and PowerShell 7 (cross-platform)
+  1. User can set `FLU_THEME=light` and see a light color palette throughout the menu, with fallback to default for unknown theme names
+  2. User can set `FLU_THEME=monochrome` and see a no-color output suitable for non-color terminals
+  3. User can resize the terminal window while the menu is displayed and the menu redraws correctly without losing the current selection
 **Plans**: TBD
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
-**UI hint**: yes
+- [ ] 13-01: TBD
+
+### Phase 14: PowerShell Parity
+**Goal**: Windows and PowerShell users get all v1.1 + v2.0 features in flu.ps1 — expanded menu, module scripts, checksums, caching, CLI batch mode, color themes, and modern CLI tools
+**Depends on**: Phase 10, Phase 11, Phase 12, Phase 13
+**Requirements**: PS-01
+**Success Criteria** (what must be TRUE):
+  1. User running flu.ps1 sees the same expanded menu with all v1.1 + v2.0 tool entries as flu.sh
+  2. User running flu.ps1 benefits from SHA256 checksum verification and module caching during script fetching
+  3. User running flu.ps1 can use CLI batch mode (`flu.ps1 --install ... --yes`) and color themes (`$env:FLU_THEME`)
+  4. User running flu.ps1 can install/remove the four modern CLI tools (lazygit, starship, zoxide, eza) where platform-appropriate
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD
+- [ ] 14-02: TBD
+
+### 📋 v3.0 Rust Binary (Planned)
+
+**Milestone Goal:** Refactor the entire flu.sh POSIX shell ecosystem into a single portable Rust binary — zero runtime dependencies, cross-platform, with all TUI menus, module fetching, registry, and execution embedded in one static binary.
+
+- [x] **Phase 15: Rust Project Scaffold + CLI** — Cargo project, clap CLI args, platform detection (completed 2026-06-11)
+- [x] **Phase 16: TUI Engine** — Port tui.sh terminal primitives, box drawing, keyboard input, widgets (select, checklist, radio, text input, yesno) (completed 2026-06-11)
+- [x] **Phase 17: Menu System** — Port menu.sh DSL parser, hierarchical navigation, embed menu.db at compile time (completed 2026-06-11)
+- [x] **Phase 18: Module Pipeline** — Port modules.sh fetch/cache/SHA256/execute subsystem (completed 2026-06-11)
+- [x] **Phase 19: Registry + Batch Mode** — Community module registry, CLI batch commands (--install, --remove, --list) (completed 2026-06-11)
+- [x] **Phase 20: Integration** — Logo, startup display, main event loop, error recovery, signal handling (completed 2026-06-11)
+- [x] **Phase 21: Build & Distribution** — Cross-compile targets, CI, release binaries, curl-pipe-bash installer (completed 2026-06-11)
+
+## v3.0 Phase Details
+
+### Phase 15: Rust Project Scaffold + CLI
+**Goal**: Establish the Rust project with CLI argument parsing and platform detection that mirrors flu.sh's CLI interface
+**Depends on**: None (foundational)
+**Success Criteria** (what must be TRUE):
+  1. `cargo build` produces a `fust` binary that runs on Linux and macOS
+  2. `fust --help` shows the same flags as `flu.sh --help`
+  3. `fust --list` outputs the menu structure from embedded menu.db
+  4. Platform detection sets OS, distro, package manager, arch (matching flu.sh's FLU_* variables)
+**Plans**: 1 plan
+
+Plans:
+- [x] 15-01-PLAN.md — Cargo project scaffold, clap CLI, platform detection, menu.db parser
+
+### Phase 16: TUI Engine
+**Goal**: Port the entire tui.sh rendering engine — terminal control, box drawing, cursor positioning, keyboard input, and all interactive widgets
+**Depends on**: Phase 15
+**Success Criteria** (what must be TRUE):
+  1. TUI renders a bordered box with centered title matching flu.sh's visual style
+  2. All 5 widget types work: select, checklist, radio, text input, yes/no
+  3. Keyboard navigation (arrow keys, vim keys, enter, escape, pgup/pgdn) works identically to flu.sh
+  4. Terminal is always restored on exit (including signal interrupts)
+**Plans**: 2 plans (Wave 1: 16-01, Wave 2: 16-02)
+
+Plans:
+- [x] 16-01-PLAN.md — Terminal primitives, box drawing, keyboard input, cursor control (ratatui + crossterm)
+- [x] 16-02-PLAN.md — Interactive widgets: select, checklist, radio, text input, yesno
+
+### Phase 17: Menu System
+**Goal**: Port the hierarchical menu DSL parser and 3-level navigation engine from menu.sh
+**Depends on**: Phase 16
+**Success Criteria** (what must be TRUE):
+  1. Menu renders identically to flu.sh with colored borders, breadcrumbs, and numbered items
+  2. Users navigate 3-level hierarchy (category → subcategory → action) with keyboard
+  3. Space-bar queue (multi-select) works for batch execution
+  4. menu.db is embedded at compile time and parsed at startup
+**Plans**: 1 plan
+
+Plans:
+- [x] 17-01-PLAN.md — Menu DSL parser, navigation engine, rendering, embedded menu.db
+
+### Phase 18: Module Pipeline
+**Goal**: Port the module fetch, cache, SHA256 verify, metadata parse, and execute subsystem from modules.sh
+**Depends on**: Phase 15
+**Success Criteria** (what must be TRUE):
+  1. Modules are fetched from GitHub with retry logic (3 attempts)
+  2. SHA256 checksums are verified against MANIFEST.sha256
+  3. Module scripts are cached locally with TTL expiry
+  4. Modules execute in isolated subprocesses with timeout enforcement
+  5. Metadata (@name, @platforms, @version, @params, @deps, @timeout) is parsed from comment headers
+**Plans**: 2 plans
+
+Plans:
+- [x] 18-01-PLAN.md — Module fetch, cache, SHA256 verification, HTTP client (reqwest + sha2) (SECU-01, PERF-01, PERF-02)
+
+- [x] 18-02-PLAN.md — Metadata parser, parameter collection, isolated execution with timeout (ADVN-03)
+### Phase 19: Registry + Batch Mode
+**Goal**: Port community module registry and CLI batch mode from modules.sh/flu.sh
+**Depends on**: Phase 17, Phase 18
+**Success Criteria** (what must be TRUE):
+  1. `flu --install go,rust --yes` installs both tools without TUI interaction
+  2. `flu --list --json` outputs JSON array of all modules including community ones
+  3. Community module registry is fetched, cached, and merged with official modules
+  4. Dynamic menu assembly merges official menu.db + community modules at runtime
+**Plans**: 1 plan
+
+Plans:
+- [x] 19-01-PLAN.md — Registry fetch/cache, batch run, batch list, dynamic menu assembly
+
+### Phase 20: Integration
+**Goal**: Wire everything together — logo, startup display, main event loop, error recovery, signal handling
+**Depends on**: Phase 17, Phase 18, Phase 19
+**Success Criteria** (what must be TRUE):
+  1. Running `flu` with no flags shows the branded dev-fu ASCII logo, then platform info, then the main menu
+  2. Selecting a menu item fetches and executes the module with progress feedback
+  3. Exit codes are mapped to actionable user hints (timeout, permission denied, etc.)
+  4. Ctrl-C always restores terminal state cleanly
+**Plans**: 1 plan
+
+Plans:
+- [x] 20-01-PLAN.md — Logo rendering, startup display, main event loop, error recovery, signal handling
+
+### Phase 21: Build & Distribution
+**Goal**: Cross-compile for all target platforms, set up CI, and create a curl-pipe-bash installer
+**Depends on**: Phase 20
+**Success Criteria** (what must be TRUE):
+  1. Static binaries are produced for: linux-amd64, linux-arm64, macos-amd64, macos-arm64
+  2. `curl -fsSL https://flu.sh | bash` downloads and runs the correct binary
+  3. Binary size is under 5MB (stripped, static)
+  4. GitHub Actions CI builds and releases on tag push
+**Plans**: 1 plan
+
+Plans:
+- [x] 21-01-PLAN.md — Cross-compile setup, GitHub Actions CI, release workflow, install script
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order. With parallelization enabled:
-- Phase 1 (foundation, no parallelism)
-- Phase 2 + Phase 3 (parallel — both build on Phase 1, independent of each other)
-- Phase 4 (needs Phase 2 for inline prompt widgets)
-- Phase 5 (needs all prior phases)
-- Phase 6 (needs complete system from Phase 5)
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. TUI Engine Core | 2/2 | Complete | 2026-05-23 |
-| 2. Interactive Widgets | 3/3 | Complete | 2026-05-24 |
-| 3. Menu System | 2/2 | Complete    | 2026-05-24 |
-| 4. Module Architecture | 3/3 | Complete    | 2026-05-24 |
-| 5. Integration & Orchestrator | 0/3 | Planned | - |
-| 6. PowerShell Port | 0/? | Not started | - |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. TUI Engine Core | v1.0 | 2/2 | Complete | 2026-05-23 |
+| 2. Interactive Widgets | v1.0 | 3/3 | Complete | 2026-05-24 |
+| 3. Menu System | v1.0 | 2/2 | Complete | 2026-05-24 |
+| 4. Module Architecture | v1.0 | 3/3 | Complete | 2026-05-24 |
+| 5. Integration & Orchestrator | v1.0 | 3/3 | Complete | 2026-05-24 |
+| 6. PowerShell Port | v1.0 | 5/5 | Complete | 2026-05-25 |
+| 7. Feature Parity | v1.1 | 3/3 | Complete | 2026-05-25 |
+| 8. Intro Polish | v1.1 | 1/1 | Complete | 2026-05-25 |
+| 9. Documentation | v1.1 | 3/3 | Complete | 2026-05-25 |
+| 10. Module Pipeline Hardening | v2.0 | 0/2 | Planned | - |
+| 11. Modern CLI Tools | v2.0 | 0/2 | Planned | - |
+| 12. Advanced Module System | v2.0 | 2/2 | Complete | 2026-05-28 |
+| 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
+| 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
+| 15. Rust Project Scaffold + CLI | v3.0 | 1/1 | Complete | 2026-06-11 |
+| 16. TUI Engine | v3.0 | 2/2 | Complete | 2026-06-11 |
+| 17. Menu System | v3.0 | 1/1 | Complete | 2026-06-11 |
+| 18. Module Pipeline | v3.0 | 2/2 | Complete | 2026-06-11 |
+| 19. Registry + Batch Mode | v3.0 | 1/1 | Complete | 2026-06-11 |
+| 20. Integration | v3.0 | 1/1 | Complete | 2026-06-11 |
+| 21. Build & Distribution | v3.0 | 1/1 | Complete | 2026-06-11 |

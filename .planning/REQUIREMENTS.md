@@ -1,151 +1,85 @@
-# Requirements: dev-fu / flu.sh
+# Requirements: dev-fu / flu.sh v2.0
 
-**Defined:** 2026-05-23
+**Defined:** 2026-05-28
+**Milestone:** v2.0 Modular Ecosystem
 **Core Value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
 
-## v1 Requirements
+## v2.0 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+### Module Security
 
-### TUI Engine
+- [ ] **SECU-01**: flu.sh verifies SHA256 checksums of fetched module scripts against a manifest before execution, rejecting tampered or corrupted scripts
 
-- [ ] **ENGN-01**: User can navigate menu items with Up/Down arrow keys and j/k vi keys
-- [ ] **ENGN-02**: User can select current item with Enter, cancel/go back with Esc or q
-- [ ] **ENGN-03**: Currently highlighted item displays with reverse-video (`\033[7m`) indicator
-- [ ] **ENGN-04**: User sees scroll indicators (↑more/↓more) when list content exceeds visible area
-- [ ] **ENGN-05**: User can paginate through long lists with PgUp/PgDn keys
-- [ ] **ENGN-06**: User can jump to first/last item with Home/End keys
-- [ ] **ENGN-07**: User can jump directly to an item by typing its number (multi-digit accumulator)
-- [ ] **ENGN-08**: Script renders numbered text prompt fallback when TERM=dumb or no TTY available
-- [ ] **ENGN-09**: Script reattaches to /dev/tty when invoked via curl-pipe-bash
+### Module Performance
 
-### Widgets
+- [ ] **PERF-01**: flu.sh caches fetched module scripts locally with a configurable TTL, skipping re-download when cache is valid
+- [ ] **PERF-02**: flu.sh displays a progress bar during module script downloads showing bytes received / total
 
-- [ ] **WDGT-01**: User can toggle individual items in a multi-select checklist with Space key ([x]/[ ])
-- [ ] **WDGT-02**: User can toggle all items at once with Select All / Deselect All key
-- [ ] **WDGT-03**: User is prompted with Yes/No confirmation before destructive operations (remove, uninstall)
-- [ ] **WDGT-04**: Every screen displays a contextual help footer with available keybindings
-- [ ] **WDGT-05**: User can choose exactly one option from a radio-button list (•)/(○) — single-select
-- [ ] **WDGT-06**: User can enter freeform text in an inline text input with cursor movement and backspace
+### Advanced Module Features
 
-### Menu System
+- [ ] **ADVN-01**: flu.sh supports CLI batch mode for non-interactive execution (e.g., `flu.sh --install go,rust,starship --yes`) without entering the TUI
+- [x] **ADVN-02**: flu.sh supports a module registry with auto-discovery, allowing users to browse and install community-contributed module scripts
+- [ ] **ADVN-03**: flu.sh logs module execution results (tool, action, success/failure, version, timestamp) to a local log file
 
-- [ ] **MENU-01**: Menu supports up to 3 levels of nested submenus (Main → Category → Sub-option)
-- [ ] **MENU-02**: User sees a breadcrumb trail showing current position (e.g., Main > Dev Tools > Python)
-- [ ] **MENU-03**: User can return to parent menu with Esc or Left arrow key
-- [ ] **MENU-04**: Menu definitions use a pipe-delimited DSL parseable with awk in POSIX sh
+### UI & Terminal
 
-### Module Architecture
+- [ ] **UI-01**: flu.sh supports color themes via FLU_THEME env var (dark, light, monochrome, custom) with fallback to default
+- [ ] **UI-02**: flu.sh handles terminal resize events during menu display, redrawing the menu without losing state
 
-- [ ] **MODL-01**: Script fetches module scripts from remote GitHub URLs on demand (curl with wget fallback)
-- [ ] **MODL-02**: Module scripts declare metadata (name, args, platforms) via structured comment headers
-- [ ] **MODL-03**: Modules execute in isolated subshells receiving platform context via environment variables (FLU_OS, FLU_DISTRO, FLU_PKG_MGR, etc.)
-- [ ] **MODL-04**: Inline prompts (radio, text, yes/no) collect variable parameters before module execution
-- [ ] **MODL-05**: Module output is displayed to user with success/failure status and recovery hints on failure
+### Modern CLI Tools
 
-### Integration
+- [ ] **TOOL-01**: flu.sh can install and remove lazygit (TUI git client) via curl-pipe install
+- [ ] **TOOL-02**: flu.sh can install and remove starship (cross-shell prompt), replacing or coexisting with fancy prompts
+- [ ] **TOOL-03**: flu.sh can install and remove zoxide (smart cd with frecency) via curl-pipe install
+- [ ] **TOOL-04**: flu.sh can install and remove eza (modern ls replacement) via curl-pipe or package manager
 
-- [ ] **INTG-01**: Rotating spinner displays during network fetch operations
-- [ ] **INTG-02**: Error messages include actionable recovery hints (not just "failed")
-- [ ] **INTG-03**: Core TUI engine code is POSIX sh compatible — works on bash, zsh, dash, ash, busybox sh
-- [ ] **INTG-04**: Terminal state is fully restored on every exit path (signal traps for INT, TERM, HUP, QUIT)
-- [ ] **INTG-05**: flu.sh coexists with fu.sh — both are independent, non-conflicting scripts
+### Cross-Platform
 
-### PowerShell
+- [ ] **PS-01**: flu.ps1 mirrors all v1.1 + v2.0 features (expanded menu, module scripts, intro logo, checksums, caching, CLI batch mode, color themes, modern CLI tools)
 
-- [ ] **PS-01**: PowerShell port (flu.ps1) implements the same TUI menu system, widgets, submenu navigation, and inline prompts
-- [ ] **PS-02**: PowerShell port fetches and executes the same remote modules with adapted argument passing
-- [ ] **PS-03**: PowerShell port works on PowerShell 5.1 (Windows) and PowerShell 7 (cross-platform)
+## Future Requirements
 
-### Git
+Deferred to future milestones.
 
-- [ ] **GIT-01**: Development occurs on branch `flu.sh`, merged to `main` when validated and stable
-
-## v2 Requirements
-
-Deferred to future release. Tracked but not in current roadmap.
-
-### TUI Enhancements
-
-- **ENGN-10**: Terminal resize handling — script detects SIGWINCH and re-renders to new dimensions
-- **ENGN-11**: Substring search/filter — user types to narrow visible list items in real-time
-
-### Module Enhancements
-
-- **MODL-06**: Module registry with auto-discovery — manifest.tsv on GitHub lists all available modules
-- **MODL-07**: Module caching with TTL — fetched scripts cached in /tmp with age-based invalidation
-- **MODL-08**: SHA256 checksum verification for remote module scripts before execution
-
-### Integration Enhancements
-
-- **INTG-06**: CLI batch mode — `flu.sh --install python --global` for non-interactive scripting
-- **INTG-07**: Color themes via FLU_THEME env var (dracula, solarized, monokai presets)
-- **INTG-08**: Progress bar for known-length download operations
-- **INTG-09**: Contextual description panel — 2-3 line description below menu when cursor on item
-- **INTG-10**: Module execution logging to file with timestamps
+- Auto-update mechanism for flu.sh itself
+- Configuration file / state persistence
+- Localization beyond English + Bahasa Melayu
+- Web-based module browser
+- Module script sandboxing
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Fuzzy search | Pathological in POSIX sh; use substring filter or pipe to fzf |
-| Mouse support | Inconsistent across terminals/SSH; project philosophy is keyboard-only |
-| Configuration file / state persistence | Stateless design is the identity; env vars for customization |
-| Plugin hot-reload / filesystem watcher | Not a long-running daemon; modules fetched per-invocation |
-| Internationalization (i18n) | Terminal i18n is a nightmare (CJK width, RTL); English-only |
-| Embedded TUI compositor / window manager | Pure ANSI; sequential full-screen widgets, not split panes |
-| Auto-update for flu.sh | Manual curl-pipe-bash or git pull is intentional |
-| Interactive dependency resolution | Modules handle their own deps internally like existing fu.sh |
-| GUI / web interface | Terminal-only identity |
-| Complex input validation widgets | No date pickers, file browsers, dropdowns — text + regex only |
+| GUI or web-based interface | Terminal-only by design |
+| Package creation/publishing | Setup utility, not a package manager |
+| Additional CLI tools beyond 4 | Ship 4 first, add more in v2.1+ based on user feedback |
+| Module script sandboxing | Shell scripts inherently have system access; checksums provide integrity |
+| Auto-update for flu.sh | Manual curl-pipe-bash or git pull; defer complexity |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENGN-01 | Phase 1 | Pending |
-| ENGN-02 | Phase 1 | Pending |
-| ENGN-03 | Phase 1 | Pending |
-| ENGN-04 | Phase 1 | Pending |
-| ENGN-05 | Phase 1 | Pending |
-| ENGN-06 | Phase 1 | Pending |
-| ENGN-07 | Phase 1 | Pending |
-| ENGN-08 | Phase 1 | Pending |
-| ENGN-09 | Phase 5 | Pending |
-| WDGT-01 | Phase 2 | Pending |
-| WDGT-02 | Phase 2 | Pending |
-| WDGT-03 | Phase 2 | Pending |
-| WDGT-04 | Phase 1 | Pending |
-| WDGT-05 | Phase 2 | Pending |
-| WDGT-06 | Phase 2 | Pending |
-| MENU-01 | Phase 3 | Pending |
-| MENU-02 | Phase 3 | Pending |
-| MENU-03 | Phase 3 | Pending |
-| MENU-04 | Phase 3 | Pending |
-| MODL-01 | Phase 4 | Pending |
-| MODL-02 | Phase 4 | Pending |
-| MODL-03 | Phase 4 | Pending |
-| MODL-04 | Phase 4 | Pending |
-| MODL-05 | Phase 4 | Pending |
-| INTG-01 | Phase 5 | Pending |
-| INTG-02 | Phase 5 | Pending |
-| INTG-03 | Phase 1 | Pending |
-| INTG-04 | Phase 1 | Pending |
-| INTG-05 | Phase 5 | Pending |
-| PS-01 | Phase 6 | Pending |
-| PS-02 | Phase 6 | Pending |
-| PS-03 | Phase 6 | Pending |
-| GIT-01 | Phase 5 | Pending |
+| SECU-01 | Phase 10 | Pending |
+| PERF-01 | Phase 10 | Pending |
+| PERF-02 | Phase 10 | Pending |
+| ADVN-03 | Phase 10 | Pending |
+| TOOL-01 | Phase 11 | Pending |
+| TOOL-02 | Phase 11 | Pending |
+| TOOL-03 | Phase 11 | Pending |
+| TOOL-04 | Phase 11 | Pending |
+| ADVN-01 | Phase 12 | Pending |
+| ADVN-02 | Phase 12 | ✓ Complete |
+| UI-01 | Phase 13 | Pending |
+| UI-02 | Phase 13 | Pending |
+| PS-01 | Phase 14 | Pending |
 
 **Coverage:**
-- v1 requirements: 33 total
-- Mapped to phases: 33
-- Unmapped: 0 ✓
+- v2.0 requirements: 13 total
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
-*Requirements defined: 2026-05-23*
-*Last updated: 2026-05-23 after roadmap creation*
+*Requirements defined: 2026-05-28*
+*Milestone: v2.0 Modular Ecosystem*

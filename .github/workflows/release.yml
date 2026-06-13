@@ -1,0 +1,168 @@
+name: CI / Release
+
+on:
+  push:
+    tags: ["v*"]
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fust
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fust
+
+      - name: Run tests
+        run: cargo test
+
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: ci
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            use_zig: true
+            ext: ""
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            use_zig: true
+            ext: ""
+          - target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            use_zig: true
+            ext: ""
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            use_zig: false
+            ext: ""
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            use_zig: false
+            ext: ""
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            use_zig: false
+            ext: .exe
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            use_zig: false
+            ext: .exe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: fust
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fust
+
+      - name: Install zig
+        if: matrix.use_zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: "0.13.0"
+
+      - name: Install cargo-zigbuild
+        if: matrix.use_zig
+        run: cargo install cargo-zigbuild --locked
+
+      - name: Build (zigbuild)
+        if: matrix.use_zig
+        run: cargo zigbuild --release --target ${{ matrix.target }}
+
+      - name: Build (cargo)
+        if: "!matrix.use_zig"
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.use_zig && matrix.target != 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y -q llvm
+
+      - name: Strip binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "${{ matrix.use_zig }}" = "true" ] && [ "${{ matrix.target }}" != "x86_64-unknown-linux-musl" ]; then
+            llvm-strip -s target/${{ matrix.target }}/release/fust
+          else
+            strip target/${{ matrix.target }}/release/fust
+          fi
+
+      - name: Package tarball (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          tar -czf fust-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release fust
+          shasum -a 256 fust-${{ matrix.target }}.tar.gz > fust-${{ matrix.target }}.sha256
+
+      - name: Package zip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "target/${{ matrix.target }}/release/fust.exe" -DestinationPath "fust-${{ matrix.target }}.zip"
+          $hash = (Get-FileHash "fust-${{ matrix.target }}.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  fust-${{ matrix.target }}.zip" | Out-File -Encoding utf8 "fust-${{ matrix.target }}.sha256"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fust-${{ matrix.target }}
+          path: |
+            fust/fust-${{ matrix.target }}.*
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Merge checksums
+        run: |
+          cat artifacts/*.sha256 > checksums.txt
+          echo "--- Checksums ---"
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.zip
+            checksums.txt

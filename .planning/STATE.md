@@ -1,60 +1,62 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-05-24T19:22:39.397Z"
-last_activity: 2026-05-24 -- Phase 5 execution started
+milestone: v3.0
+milestone_name: Rust Binary
+status: complete
+stopped_at: v3.0 milestone complete
+  last_updated: "2026-06-11T21:00:00Z"
+  last_activity: 2026-06-11 -- Phase 21 (Build & Distribution) complete
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 10
-  percent: 77
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 9
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-23)
+See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A single script that works everywhere POSIX (and PowerShell) — zero dependencies, curl-pipe-bash ready — with a professional interactive menu that fetches and executes modular install scripts on demand.
-**Current focus:** Phase 5 — Integration & Orchestrator
+**Current focus:** v3.0 Rust Binary milestone — COMPLETE
 
 ## Current Position
 
-Phase: 5 (Integration & Orchestrator) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 5
-Last activity: 2026-05-24 -- Phase 5 execution started
+Phase: 21 of 21 (Build & Distribution) — COMPLETE
+Plan: 21-01 complete
+Status: Milestone complete
+Last activity: 2026-06-11 — Phase 21 (Build & Distribution) complete
 
-Progress: [████████░░] 39%
+Progress: [███████████████████] 100% (7/7 phases in v3.0)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 10
-- Average duration: 6 min
-- Total execution time: 0.5 hours
+- Total plans completed: 24 (17 v1.0 + 7 v1.1)
+- Total execution time: ~12 hours across both milestones
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. TUI Engine Core | 2 | 12 min | 6 min |
-| 2. Interactive Widgets | 3 | 18 min | 6 min |
-| 3 | 2 | - | - |
-| 4 | 3 | - | - |
+| 1. TUI Engine Core | 2 | — | — |
+| 2. Interactive Widgets | 3 | — | — |
+| 3. Menu System | 2 | — | — |
+| 4. Module Architecture | 3 | — | — |
+| 5. Integration & Orchestrator | 3 | — | — |
+| 6. PowerShell Port | 5 | — | — |
+| 7. Feature Parity | 3 | — | — |
+| 8. Intro Polish | 1 | — | — |
+| 9. Documentation | 3 | — | — |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (4min), 01-02 (8min), 02-01 (11min), 02-02 (4min), 02-03 (3min)
-- Trend: On track
-
-*Updated after each plan completion*
+- v1.0: 17 plans in ~11 hours, stable velocity
+- v1.1: 7 plans in 1 day, rapid execution (established patterns)
 
 ## Accumulated Context
 
@@ -63,12 +65,19 @@ Progress: [████████░░] 39%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- (Roadmap): 7 research phases consolidated to 6 with coarse granularity — Terminal Primitives + Menu Widget merged into Phase 1
-- (Phase 1 context): tui.sh — single file, source+function API, shell-aware hybrid input, full-screen box rendering, auto-detect Unicode, configurable key timeout
-
-- (Phase 1 execution): Refactored key reading from stdout/$() to globals — $() subshell was killing _tui_digit_char for number jump and stripping newline bytes for Enter key
-- (Phase 1 execution): Added clear_screen to tui_restore() — cursor was left at wrong position after exit
-- (Phase 1 execution): Guarded empty item list in tui_select(), fixed octal crash on leading zeros in fallback prompt
+- [v3.0 Phase 15-01]: clap v4 derive for CLI parsing — idiomatic, auto-generates help/version
+- [v3.0 Phase 15-01]: include_str! for compile-time menu.db embedding — zero runtime file dependency
+- [v3.0 Phase 15-01]: serde rename label→name for JSON field matching flu.sh output
+- [v3.0 Phase 15-01]: Platform detection via std::env::consts + sh -c subprocess matching flu.sh exactly
+- [v2.0 Phase 12-02]: Separate community module fetch pipeline (flu_registry_fetch_module) for clean security model separation
+- [v2.0 Phase 12-02]: Awk line copies (_l = $0) for JSON parsing — avoids $0 mutation breaking subsequent pattern matching
+- [v2.0 Phase 12-02]: Dynamic menu assembly via temp merged file rather than modifying menu.sh internals
+- [v2.0 Phase 12-01]: Action ID validation against menu.db for CLI batch mode security (T-12-01)
+- [v2.0 Phase 12-01]: Manual while/case CLI parser over getopts — getopts cannot handle --flag value patterns
+- [v2.0 Phase 12-01]: Conditional ANSI output via [ -t 1 ] check rather than post-hoc sed stripping
+- [v1.1 Phase 7]: Standardized module contract — `set -eu`, `_maybe_sudo()`, FLU_PKG_MGR fallback
+- [v1.1 Phase 7]: 6-category menu grouping (later refined to 5)
+- [v1.1 Phase 9]: Menu.db as authoritative source for README documentation
 
 ### Pending Todos
 
@@ -76,18 +85,25 @@ None.
 
 ### Blockers/Concerns
 
-- **POSIX portability risk:** Existing checklist.sh has bashisms ($'\033', echo -e, GNU sed \x1b) that must be fixed in Phase 1. Every line needs ShellCheck -s sh validation.
-- **Escape sequence timing over SSH:** dd-based key reading has timing issues over high-latency connections. stty min/time inter-byte timeout needs empirical validation across dash/ash/busybox.
-- **PowerShell 5.1 ANSI support:** PS 5.1 doesn't support ANSI escape sequences natively — Phase 6 will need a completely separate TUI implementation approach.
+None.
 
 ## Deferred Items
 
+Items acknowledged and carried forward from milestone closures:
+
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Module | Module caching with TTL | Now SECU-01 in v2.0 | v1.0 close |
+| Module | SHA256 checksum verification | Now PERF-01 in v2.0 | v1.0 close |
+| Module | Module registry with auto-discovery | ✓ Completed in 12-02 | v1.0 close |
+| Integration | CLI batch mode for flu.sh | ✓ Completed in 12-01 | v1.0 close |
+| Integration | Color themes via FLU_THEME env var | Now UI-01 in v2.0 | v1.0 close |
+| Integration | Progress bar for downloads | Now PERF-02 in v2.0 | v1.0 close |
+| Integration | Module execution logging | Now ADVN-03 in v2.0 | v1.0 close |
+| Engine | Terminal resize handling | Now UI-02 in v2.0 | v1.0 close |
 
 ## Session Continuity
 
-Last session: 2026-05-24T17:19:10.690Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-module-architecture/04-CONTEXT.md
+Last session: 2026-06-11
+Stopped at: v3.0 milestone complete — all 7 phases done
+Resume file: .planning/phases/21-build-distribution/21-01-SUMMARY.md

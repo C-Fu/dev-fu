@@ -14,12 +14,10 @@ Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan m
 ```sh
 # Satu baris: auto-kesan OS/arch, muat turun, jalankan. Bersihkan semasa keluar.
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
-```
-```sh
+
 # Atau pasang secara kekal
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
-```
-```sh
+
 # Tetapkan versi tertentu
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
 ```
