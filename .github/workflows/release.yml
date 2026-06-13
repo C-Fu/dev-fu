@@ -151,6 +151,14 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Stage curl-pipe scripts
+        run: |
+          cp run.sh artifacts/run.sh
+          cp install.sh artifacts/install.sh
+          cd artifacts
+          sha256sum run.sh install.sh > run-install.sha256
+          cat run-install.sha256
+
       - name: Merge checksums
         run: |
           cat artifacts/*.sha256 > checksums.txt
@@ -165,4 +173,6 @@ jobs:
           files: |
             artifacts/*.tar.gz
             artifacts/*.zip
+            artifacts/run.sh
+            artifacts/install.sh
             checksums.txt
