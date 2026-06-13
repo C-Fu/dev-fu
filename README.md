@@ -30,7 +30,7 @@ curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | 
 
 ```sh
 # Pin a specific version
-curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
+curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.6 sh
 ```
 
 ### flu.sh (POSIX shell — modular TUI)
