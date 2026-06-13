@@ -1,11 +1,18 @@
 # dev-fu — Satu sekerip untuk siap sedia dev environment dalam 99% mesen engkorang ([English](README.md))
 
+```
+    ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗
+██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║
+╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║
+██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║
+╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝
+    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝
+```
+
 [![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu-sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan menu bersarang dan pengambilan modul atas permintaan. **`fu.sh`** adalah pemasang monolitik yang teruji. Kedua-duanya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
-
-> **`fu.sh`** (skrip monolitik asal) masih tersedia — lihat [README-Fu.ms-MY.md](fu-sh/README-Fu.ms-MY.md) untuk dokumentasi `fu.sh`.
+Tiga skrip, satu matlamat. **`fust`** ialah binari Rust utama — jalankan ia tanpa memasang melalui satu baris, tiada kebergantungan shell diperlukan. **`flu.sh`** ialah skrip shell semua-dalam-satu dengan menu yang berfungsi di mana-mana, di mana-mana sahaja — sistem TUI modular sifar kebergantungan, sedia curl-pipe-bash yang mengambil dan melaksanakan skrip pasang atas permintaan. **`fu.sh`** ialah versi pertama skrip shell yang sama yang berfungsi di mana-mana, di mana-mana sahaja, pada mana-mana platform dan seni bina. Ketiga-tiganya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
 
 ## Mula Pantas
 
@@ -14,10 +21,14 @@ Dua skrip, satu matlamat. **`flu.sh`** adalah sistem TUI modular baharu dengan m
 ```sh
 # Satu baris: auto-kesan OS/arch, muat turun, jalankan. Bersihkan semasa keluar.
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
+```
 
+```sh
 # Atau pasang secara kekal
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+```
 
+```sh
 # Tetapkan versi tertentu
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
 ```

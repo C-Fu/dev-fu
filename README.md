@@ -1,13 +1,18 @@
 # dev-fu — One command to bootstrap a developer machine ([Bahasa Melayu](README.ms-MY.md))
 
+```
+    ██╗ ██╗██████╗ ███████╗██╗   ██╗      ███████╗██╗   ██╗
+██╗   ██╔╝██╔╝██╔══██╗██╔════╝██║   ██║      ██╔════╝██║   ██║
+╚═╝  ██╔╝██╔╝ ██║  ██║█████╗  ██║   ██║█████╗█████╗  ██║   ██║
+██╗ ██╔╝██╔╝  ██║  ██║██╔══╝  ╚██╗ ██╔╝╚════╝██╔══╝  ██║   ██║
+╚═╝██╔╝██╔╝   ██████╔╝███████╗ ╚████╔╝       ██║     ╚██████╔╝
+    ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝
+```
+
 [![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**`flu.sh`** is a zero-dependency, curl-pipe-bash-ready TUI menu system that fetches and executes modular install scripts on demand. Runs on any POSIX shell — bash, zsh, dash, ash, busybox — across 10+ Linux distros, macOS, WSL2, Chromebook, and Android (Termux).
-
-> **`fu.sh`** (the original monolithic script) is still available — see [fu-sh/README-Fu.md](fu-sh/README-Fu.md).
->
-> **`fust`** (Rust binary port) is also available — see [fust/README-fust.md](fust/README-fust.md).
+**`fust`** is the main Rust binary — run it without installing via a one-liner, no shell dependencies required. **`flu.sh`** is the all-in-one shell-based script with menus that works anywhere, everywhere — a zero-dependency, curl-pipe-bash-ready TUI menu system that fetches and executes modular install scripts on demand. **`fu.sh`** is the first version of the same shell script that works anywhere, everywhere, on any platform and architecture. All three run on any POSIX shell — bash, zsh, dash, ash, busybox — across 10+ Linux distros, macOS, WSL2, Chromebook, and Android (Termux).
 
 ## Quick Start
 
@@ -16,10 +21,14 @@
 ```sh
 # One-liner: auto-detects OS/arch, downloads, runs. Cleans up on exit.
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | sh
+```
 
+```sh
 # Or install permanently
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/install.sh | sh
+```
 
+```sh
 # Pin a specific version
 curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_VERSION=v3.0.0-alpha.3 sh
 ```
