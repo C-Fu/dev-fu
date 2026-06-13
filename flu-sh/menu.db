@@ -13,6 +13,14 @@ AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
 AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
 AI Tools|GSD (Rokicool)|🛠 Install GSD (Rokicool)|install_gsd_rokicool
 AI Tools|GSD (Redux)|🛠 Install GSD (Redux)|install_gsd_redux
+AI Tools|Open GSD|🧠 Install gsd-core|install_gsd_core
+AI Tools|Open GSD|🗑 Remove gsd-core|remove_gsd_core
+AI Tools|Open GSD|🤖 Install gsd-pi|install_gsd_pi
+AI Tools|Open GSD|🗑 Remove gsd-pi|remove_gsd_pi
+AI Tools|Open GSD|🌐 Install gsd-browser|install_gsd_browser
+AI Tools|Open GSD|🗑 Remove gsd-browser|remove_gsd_browser
+AI Tools|Open GSD|📦 Install all Open GSD|install_gsd_all
+AI Tools|Open GSD|🗑 Remove all Open GSD|remove_gsd_all
 AI Tools|Hermes Agent|🤖 Install Hermes Agent|install_hermes_agent
 AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
 

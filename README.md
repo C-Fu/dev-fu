@@ -82,6 +82,7 @@ bash ./fu-sh/fu.sh
 - **POSIX sh compatible** — Tested on bash 4+, zsh, dash, ash (Alpine/BusyBox).
 - **Platform detection** — Auto-detects OS, distro, package manager, and CPU architecture on startup.
 - **19 operations across 5 categories** — Most install operations have a matching remove.
+- **Open GSD suite** — One-click install for [open-gsd](https://github.com/open-gsd) (gsd-core, gsd-pi, gsd-browser). Node.js LTS is auto-installed if missing.
 
 ## flu.sh Menu Structure
 
@@ -95,6 +96,7 @@ flu.sh v1.1
 │   ├── 🤖 OpenCode (install/remove)
 │   ├── 🛠 GSD (Rokicool)
 │   ├── 🛠 GSD (Redux)
+│   ├── 🧠 Open GSD (gsd-core / gsd-pi / gsd-browser / all)
 │   ├── 🤖 Hermes Agent
 │   └── 🏛 OpenChamber
 ├── 🐹 Languages & Runtimes
@@ -146,12 +148,12 @@ flu.sh uses a remote on-demand module system. Each menu option maps to a standal
 | Category | Module Scripts | Count |
 |----------|---------------|-------|
 | Languages & Runtimes | `install_go.sh`, `install_rust.sh`, `install_python.sh`, `install_nvm_node.sh`, `install_bun.sh`, `install_php_laravel.sh` (+ matching remove scripts) | 12 |
-| Tools | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh` (+ matching remove scripts) | 7 |
+| Tools | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh`, `install_gsd_core.sh`, `install_gsd_pi.sh`, `install_gsd_browser.sh`, `install_gsd_all.sh` (+ matching remove scripts) | 15 |
 | Shell | `create_fancy_prompt.sh`, `create_fancy_prompt_blue.sh`, `install_avahi.sh` (+ matching remove scripts) | 6 |
 | Diagnostics | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
 | Settings | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
 
-**Total: 31 module scripts.** See [flu-sh/modules/README.md](flu-sh/modules/README.md) for the full action ID registry and module contract specification.
+**Total: 39 module scripts.** See [flu-sh/modules/README.md](flu-sh/modules/README.md) for the full action ID registry and module contract specification.
 
 ### Architecture Diagram
 

@@ -82,6 +82,7 @@ bash ./fu-sh/fu.sh
 - **Serasi POSIX sh** — Diuji pada bash 4+, zsh, dash, ash (Alpine/BusyBox).
 - **Pengesanan platform** — Auto-kesan OS, distro, pengurus pakej, dan seni bina CPU semasa permulaan.
 - **19 operasi merentasi 5 kategori** — Kebanyakan operasi pemasangan mempunyai pilihan keluarkan yang sepadan.
+- **Suite Open GSD** — Pemasangan satu-klik untuk [open-gsd](https://github.com/open-gsd) (gsd-core, gsd-pi, gsd-browser). Node.js LTS dipasang automatik jika tiada.
 
 ## Struktur Menu flu.sh
 
@@ -95,6 +96,7 @@ flu.sh v1.1
 │   ├── 🤖 OpenCode (pasang/keluarkan)
 │   ├── 🛠 GSD (Rokicool)
 │   ├── 🛠 GSD (Redux)
+│   ├── 🧠 Open GSD (gsd-core / gsd-pi / gsd-browser / semua)
 │   ├── 🤖 Hermes Agent
 │   └── 🏛 OpenChamber
 ├── 🐹 Bahasa & Runtimes
@@ -146,12 +148,12 @@ flu.sh menggunakan sistem modul jauh atas permintaan. Setiap pilihan menu dipeta
 | Kategori | Skrip Modul | Bilangan |
 |----------|-------------|----------|
 | Bahasa & Runtimes | `install_go.sh`, `install_rust.sh`, `install_python.sh`, `install_nvm_node.sh`, `install_bun.sh`, `install_php_laravel.sh` (+ skrip keluarkan sepadan) | 12 |
-| Alatan | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh` (+ skrip keluarkan sepadan) | 7 |
+| Alatan | `install_docker.sh`, `install_tailscale.sh`, `install_yarn.sh`, `install_opencode_gsd.sh`, `install_gsd_core.sh`, `install_gsd_pi.sh`, `install_gsd_browser.sh`, `install_gsd_all.sh` (+ skrip keluarkan sepadan) | 15 |
 | Shell | `create_fancy_prompt.sh`, `create_fancy_prompt_blue.sh`, `install_avahi.sh` (+ skrip keluarkan sepadan) | 6 |
 | Diagnostik | `status_check.sh`, `status_check_compare.sh`, `upgrade_all.sh` | 3 |
 | Tetapan | `set_github_token.sh`, `configure_mouse_disable.sh`, `configure_mouse_enable.sh` | 3 |
 
-**Jumlah: 31 skrip modul.** Lihat [flu-sh/modules/README.md](modules/README.md) untuk pendaftaran ID tindakan penuh dan spesifikasi kontrak modul.
+**Jumlah: 39 skrip modul.** Lihat [flu-sh/modules/README.md](modules/README.md) untuk pendaftaran ID tindakan penuh dan spesifikasi kontrak modul.
 
 ### Gambarajah Seni Bina
 
