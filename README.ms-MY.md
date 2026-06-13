@@ -95,7 +95,6 @@ flu.sh v1.1
 ├── 🤖 Alat AI
 │   ├── 🤖 OpenCode (pasang/keluarkan)
 │   ├── 🛠 GSD (Rokicool)
-│   ├── 🛠 GSD (Redux)
 │   ├── 🧠 Open GSD (gsd-core / gsd-pi / gsd-browser / semua)
 │   ├── 🤖 Hermes Agent
 │   └── 🏛 OpenChamber

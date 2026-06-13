@@ -120,13 +120,6 @@
 </details>
 
 <details>
-<summary>GSD (Redux)</summary>
-
-- Install GSD (Redux) (`install_gsd_redux`)
-
-</details>
-
-<details>
 <summary>Hermes Agent</summary>
 
 - Install Hermes Agent (`install_hermes_agent`)
