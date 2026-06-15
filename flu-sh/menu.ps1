@@ -348,10 +348,10 @@ function Show-FluMenuNavigate {
 
         # Build title based on level
         $titlePrefix = switch ($pathStack.Count) {
-            0 { "flu.sh v0.1.0 — Main Menu" }
-            1 { "flu.sh v0.1.0 — $($pathStack[0])" }
-            2 { "flu.sh v0.1.0 — $($pathStack[0]) > $($pathStack[1])" }
-            default { "flu.sh v0.1.0" }
+            0 { "flu.sh $($Script:FLU_VERSION) — Main Menu" }
+            1 { "flu.sh $($Script:FLU_VERSION) — $($pathStack[0])" }
+            2 { "flu.sh $($Script:FLU_VERSION) — $($pathStack[0]) > $($pathStack[1])" }
+            default { "flu.sh $($Script:FLU_VERSION)" }
         }
 
         # Render the menu level using Show-TuiSelect

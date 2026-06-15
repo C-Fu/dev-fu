@@ -42,6 +42,7 @@ $FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $FLU_SCRIPT_DIR) {
     $FLU_SCRIPT_DIR = Get-Location
 }
+$Script:FLU_VERSION = "v3.0.0-alpha.6"
 
 # Source subsystems in dependency order (matching flu.sh D-01 order):
 #   tui.ps1 first (TUI primitives)
@@ -169,7 +170,7 @@ function Show-FluStartup {
         $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
 
         Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight `
-            -Title "$($Script:TUI_CYAN)flu.ps1 v0.1.0$($Script:TUI_RESET)"
+            -Title "$($Script:TUI_CYAN)flu.ps1 $($Script:FLU_VERSION)$($Script:TUI_RESET)"
 
         $infoX = $boxX + 3
         $row = $boxY + 3
@@ -203,7 +204,7 @@ function Show-FluStartup {
         Restore-Tui
     } else {
         # Non-TUI: plain text
-        Write-Host "flu.ps1 v0.1.0"
+        Write-Host "flu.ps1 $($Script:FLU_VERSION)"
         Write-Host "OS: $($env:FLU_OS) | Distro: $($env:FLU_DISTRO)"
         Write-Host "Package Manager: $($env:FLU_PKG_MGR) | Arch: $($env:FLU_ARCH)"
         Write-Host ""

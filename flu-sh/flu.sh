@@ -38,6 +38,7 @@ fi
 # ──────────────
 # Resolve script location for sourcing sibling files
 FLU_SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+FLU_VERSION="v3.0.0-alpha.6"
 
 # Source subsystems in dependency order (D-01):
 #   tui.sh first (defines TUI_RESET and rendering primitives)
@@ -333,7 +334,7 @@ if [ "$_tui_use_tui" = "true" ]; then
 
     # Draw the box
     _tui_draw_box "$_flu_su_box_x" "$_flu_su_box_y" "$_flu_su_box_w" 9 \
-        "${TUI_CYAN}flu.sh v0.1.0${TUI_RESET}"
+        "${TUI_CYAN}flu.sh ${FLU_VERSION}${TUI_RESET}"
 
     # Render platform details inside the box
     _flu_su_inner_x=$((_flu_su_box_x + 3))
@@ -371,7 +372,7 @@ else
     printf '%s\n' "  dev-fu — Environment Setup Utility"
     printf '%s\n' "=============================================="
     printf '\n'
-    printf 'flu.sh v0.1.0\n'
+    printf 'flu.sh %s\n' "$FLU_VERSION"
     printf 'OS: %s | Distro: %s | Package Manager: %s | Arch: %s\n\n' \
         "$FLU_OS" "$FLU_DISTRO" "$FLU_PKG_MGR" "$FLU_ARCH"
 fi
