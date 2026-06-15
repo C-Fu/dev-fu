@@ -29,9 +29,27 @@ if [ -z "${FLU_PKG_MGR:-}" ]; then
     fi
 fi
 
-if command -v rustc >/dev/null 2>&1; then
+if [ -f "$HOME/.cargo/env" ]; then
+    . "$HOME/.cargo/env"
+fi
+
+if command -v rustc >/dev/null 2>&1 && rustc --version >/dev/null 2>&1; then
     printf 'Rust already installed: %s\n' "$(rustc --version)"
     exit 0
+fi
+
+if command -v rustup >/dev/null 2>&1; then
+    printf 'Detected rustup without a default toolchain — running "rustup default stable"...\n'
+    if rustup default stable 2>&1; then
+        if [ -f "$HOME/.cargo/env" ]; then
+            . "$HOME/.cargo/env"
+        fi
+        if command -v rustc >/dev/null 2>&1 && rustc --version >/dev/null 2>&1; then
+            printf 'Rust installed: %s\n' "$(rustc --version)"
+            exit 0
+        fi
+    fi
+    printf 'rustup default stable did not produce a working rustc — falling back to rustup-init...\n' >&2
 fi
 
 if command -v curl >/dev/null 2>&1; then
@@ -46,9 +64,13 @@ fi
 sh /tmp/rustup.sh -y || { rm -f /tmp/rustup.sh; printf 'Rust install failed\n' >&2; exit 1; }
 rm -f /tmp/rustup.sh
 
-# Add cargo to PATH for current session
 if [ -f "$HOME/.cargo/env" ]; then
     . "$HOME/.cargo/env"
 fi
 
-printf 'Rust installed successfully\n'
+if ! command -v rustc >/dev/null 2>&1 || ! rustc --version >/dev/null 2>&1; then
+    printf 'Rust install completed but rustc is not usable. Run "rustup default stable" manually.\n' >&2
+    exit 1
+fi
+
+printf 'Rust installed: %s\n' "$(rustc --version)"
