@@ -177,7 +177,7 @@ mod tests {
              # @name: Test Module\n\
              # @params:\n\
              # @platforms: linux\n\
-             # @version: 3.0.0-alpha.6\n\
+             # @version: 3.0.0-alpha.8\n\
              #\n\
              echo hello\n";
         let meta = parse_metadata(content).unwrap();
