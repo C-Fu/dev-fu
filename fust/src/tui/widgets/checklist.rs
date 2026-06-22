@@ -373,13 +373,13 @@ mod tests {
         // Toggle item 0 on
         state.checked[state.cursor] = !state.checked[state.cursor];
         state.selected_count = state.checked.iter().filter(|&&c| c).count();
-        assert_eq!(state.checked[0], true);
+        assert!(state.checked[0]);
         assert_eq!(state.selected_count, 2);
 
         // Toggle item 0 off
         state.checked[state.cursor] = !state.checked[state.cursor];
         state.selected_count = state.checked.iter().filter(|&&c| c).count();
-        assert_eq!(state.checked[0], false);
+        assert!(!state.checked[0]);
         assert_eq!(state.selected_count, 1);
     }
 
