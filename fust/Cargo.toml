@@ -1,6 +1,6 @@
 [package]
 name = "fust"
-version = "3.0.0-alpha.8"
+version = "3.0.0-alpha.9"
 edition = "2021"
 description = "Modular developer environment setup utility"
 build = "build.rs"
@@ -11,12 +11,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
 ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
-crossterm = { version = "0.28", features = ["use-dev-tty"] }
+crossterm = "0.28"
 sha2 = "0.10"
 hex = "0.4"
-
-[target.'cfg(unix)'.dependencies]
-signal-hook = "0.3"
 
 [target.'cfg(unix)'.dependencies.reqwest]
 version = "0.12"

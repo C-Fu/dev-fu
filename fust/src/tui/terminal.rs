@@ -7,13 +7,8 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 
-#[cfg(unix)]
-use signal_hook::SigId;
-
 pub struct TerminalGuard {
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    #[cfg(unix)]
-    signal_ids: Vec<SigId>,
 }
 
 impl TerminalGuard {
@@ -35,14 +30,7 @@ impl TerminalGuard {
             default_hook(info);
         }));
 
-        #[cfg(unix)]
-        let signal_ids = install_signal_handlers()?;
-
-        Ok(Self {
-            terminal,
-            #[cfg(unix)]
-            signal_ids,
-        })
+        Ok(Self { terminal })
     }
 
     pub fn terminal(&mut self) -> &mut Terminal<CrosstermBackend<Stdout>> {
@@ -65,35 +53,12 @@ impl Drop for TerminalGuard {
             DisableMouseCapture
         );
         let _ = std::panic::take_hook();
-        #[cfg(unix)]
-        {
-            for id in &self.signal_ids {
-                signal_hook::low_level::unregister(*id);
-            }
-        }
     }
 }
 
 fn atty_check() -> bool {
     use std::io::IsTerminal;
     io::stdout().is_terminal() && io::stdin().is_terminal()
-}
-
-#[cfg(unix)]
-fn install_signal_handlers() -> anyhow::Result<Vec<SigId>> {
-    use signal_hook::{consts::signal::*, low_level::register};
-    let mut ids = Vec::new();
-    for &sig in &[SIGINT, SIGTERM, SIGHUP] {
-        let id = unsafe {
-            register(sig, move || {
-                let _ = disable_raw_mode();
-                let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture);
-                std::process::exit(128 + sig);
-            })?
-        };
-        ids.push(id);
-    }
-    Ok(ids)
 }
 
 #[cfg(test)]
