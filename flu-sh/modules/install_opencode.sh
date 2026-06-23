@@ -11,7 +11,7 @@
 
 set -eu
 
-if ! command -v npm >/dev/null 2>&1; then
+if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then
     printf 'npm is required. Install Node.js first.\n' >&2
     exit 1
 fi
