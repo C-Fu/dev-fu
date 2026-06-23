@@ -12,7 +12,7 @@
 set -eu
 
 # Check npm is available
-if ! command -v npm >/dev/null 2>&1; then
+if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then
     printf 'npm is required to install OpenCode + GSD (Rokicool) + OpenChamber.\n' >&2
     printf 'Please install Node.js first (use "Install NVM + Node LTS" from the Languages menu).\n' >&2
     exit 1
