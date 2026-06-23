@@ -7,7 +7,7 @@
 
 ## Objective
 
-Port community module registry and CLI batch mode from flu.sh/modules.sh to the Rust binary (fust).
+Port community module registry and CLI batch mode from flu-sh/modules.sh to the Rust binary (fust).
 
 ## What Was Built
 

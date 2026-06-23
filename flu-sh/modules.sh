@@ -56,7 +56,7 @@ flu_module_resolve_url() {
       ;;
   esac
   # Official modules — standard base URL
-  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/}"
+  _fmr_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/main/flu-sh/modules/}"
   printf '%s%s.sh\n' "$_fmr_base" "$_fmr_action"
   unset _fmr_action _fmr_base
   return 0
@@ -71,7 +71,7 @@ flu_module_resolve_url() {
 # Outputs manifest content to stdout on success.
 # Returns 0 on success, 1 on failure (soft-fail per D-03).
 _flu_fetch_manifest() {
-  _ffm_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/}"
+  _ffm_base="${FLU_MODULES_BASE_URL:-https://raw.githubusercontent.com/C-Fu/dev-fu/main/flu-sh/modules/}"
   _ffm_url="${_ffm_base}MANIFEST.sha256"
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL --connect-timeout 5 "$_ffm_url" 2>/dev/null

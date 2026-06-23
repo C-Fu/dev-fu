@@ -146,3 +146,7 @@ None. All recovery hints are fully wired. No placeholder messages, TODO markers,
 - [x] Commit `2db4364` exists (RED: failing tests)
 - [x] Commit `5800865` exists (GREEN: implementation)
 - [x] `flu.sh` git branch exists and is current
+
+---
+
+> **Post-completion note:** The `flu.sh` branch was later retired. Modules are now served from `main/flu-sh/modules/`; `fust` and `flu.sh` fetch from there. This summary is preserved as historical context.

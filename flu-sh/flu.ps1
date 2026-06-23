@@ -6,11 +6,11 @@
 #   that fetches and executes modular install scripts on demand.
 #   PowerShell port of flu.sh — full feature parity.
 # Compatibility: PowerShell 5.1+ / PowerShell 7+
-# Branch: flu.sh (development), merged to main when stable
+# Branch: main (source of truth), modules fetched from main/flu-sh/modules/
 # ============================================================
 # Deployment:
 #   Local:  .\flu.ps1
-#   Remote: irm https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/flu.ps1 | iex
+#   Remote: irm https://raw.githubusercontent.com/C-Fu/dev-fu/main/flu-sh/flu.ps1 | iex
 #   Requires: PowerShell 5.1+ (Windows) or PowerShell 7 (cross-platform)
 #   Sibling files: tui.ps1, menu.ps1, modules.ps1, menu.db must be in same directory
 # ============================================================

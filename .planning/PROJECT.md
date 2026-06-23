@@ -109,7 +109,7 @@ A single script that works everywhere POSIX (and PowerShell) — zero dependenci
 | 3-level max submenu depth | Menu → Category → Option without unbounded complexity | ✓ Good |
 | Remote on-demand module fetching | Single-file curl-pipe deployment, modules independently updatable | ✓ Good |
 | Inline prompts for variables | Consistent with fu.sh UX, simpler cross-shell | ✓ Good |
-| flu.sh branch for development | Isolated development, merge to main when validated | ✓ Good |
+| flu.sh branch retired; modules served from `main/flu-sh/modules/` | Eliminated dual-branch maintenance and merge conflicts; `fust` and `flu.sh` fetch from main | ✓ Updated |
 | Source+function API for subsystems | Library-first design, demo-second — all subsystems sourceable | ✓ Good |
 | Pipe-delimited menu DSL with awk | Same parsing pattern as menu.db, zero dependencies | ✓ Good |
 | 6-category menu grouping (later 5) | Groups 31 entries into logical navigation tiers | ✓ Good |

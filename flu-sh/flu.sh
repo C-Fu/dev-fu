@@ -6,7 +6,7 @@
 #   that fetches and executes modular install scripts on demand.
 #   Coexists with fu.sh — both are independent scripts.
 # Compatibility: bash, zsh, dash, ash, busybox sh
-# Branch: flu.sh (development), merged to main when stable
+# Branch: main (source of truth), modules fetched from main/flu-sh/modules/
 # ============================================================
 
 # ──────────────

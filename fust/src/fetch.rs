@@ -4,7 +4,7 @@ use std::time::{Duration, SystemTime};
 use anyhow::{anyhow, Result};
 use sha2::{Digest, Sha256};
 
-const DEFAULT_BASE_URL: &str = "https://raw.githubusercontent.com/C-Fu/dev-fu/flu.sh/modules/";
+const DEFAULT_BASE_URL: &str = "https://raw.githubusercontent.com/C-Fu/dev-fu/main/flu-sh/modules/";
 const DEFAULT_CACHE_TTL: u64 = 86400;
 const MAX_RETRIES: u32 = 3;
 
