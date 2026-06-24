@@ -252,7 +252,8 @@ fn main() -> anyhow::Result<()> {
                 }
             }
             if exit_code != 0 {
-                eprintln!("\nHint: Run with verbose output for more details.");
+                eprintln!("\nTip: Run a module directly to debug:  sh -x <module.sh>");
+                eprintln!("     Some modules need bash — on Alpine: apk add bash");
             }
             std::process::exit(exit_code);
         }

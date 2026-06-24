@@ -1,6 +1,6 @@
 [package]
 name = "fust"
-version = "3.0.0-alpha.10"
+version = "3.0.0-alpha.11"
 edition = "2021"
 description = "Modular developer environment setup utility"
 build = "build.rs"
