@@ -49,6 +49,15 @@ _is_musl() {
     [ "${FLU_PKG_MGR:-}" = "apk" ]
 }
 
+# Open GSD CLI packages use #!/usr/bin/env bash shebangs and cannot run on
+# Alpine/musl systems where bash is not installed. We respect the "no bash on
+# Alpine" constraint by failing early with a clear, actionable message.
+if _is_musl && ! command -v bash >/dev/null 2>&1; then
+    printf 'Open GSD tools require bash, which is not installed on this Alpine/musl system.\n' >&2
+    printf 'Install bash manually (apk add bash) or use a glibc-based distribution.\n' >&2
+    exit 1
+fi
+
 # ──────────────
 # Auto-install Node.js LTS (NVM) if npm/npx are missing
 # ──────────────

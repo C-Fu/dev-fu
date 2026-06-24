@@ -1,5 +1,5 @@
 # MANIFEST.sha256 — SHA256 checksums for flu.sh module scripts
-# Generated: 2026-06-13
+# Generated: 2026-06-24
 # Verify: cd modules && sha256sum -c --strict MANIFEST.sha256
 95bc63c1069da7795610ca2a7593501bb4bb1f8fa56ec5c833a1ef77f8fcc6f0  configure_mouse_disable.sh
 19021cd2ed4adeaa7e66c2ca07fc6d33c16b82d94ad12e152ca9ca7addb8f45e  configure_mouse_enable.sh
@@ -15,7 +15,7 @@ f6856e4da69723bd640f04ad7bf84fb777c01b4a899c1d777f1f2c45591453f8  install_bun.sh
 5f0ce41c31f15ce13ae4444771c687b4efb863ed79fd3421fad3c85e82a03e39  install_fish.sh
 eeb768067b7dc5846a0eb0e93c34b8a0ad515880a43f17168715758712afad2f  install_go.sh
 b3802d010e58ef3a31d8be7858b8f9b8c5cbc6282e896cab7f3c3997a90a1858  install_gsd_rokicool.sh
-c93ed7a4ee7161c2d32dc6c1e51a70bf52a4b3129bd9774d47703c7880522135  install_gsd_all.sh
+5a73b14c33ec29e994f19e7eaab6151e2c7d75504ec896e55d6d12c4d7591a0c  install_gsd_all.sh
 ad30dc10cba2a8c5b8e48be7b522373cd0ab1441ae24800ce16a6b7c77b2d04d  install_gsd_browser.sh
 6b9c0cc2efa003ecc0f3124839114359c995644949e6f75468bbfc09f07af77f  install_gsd_core.sh
 93d342746bffecab2ebe9878740a4993a65cedc578033ba9cc52a66a359c5b88  install_gsd_pi.sh
