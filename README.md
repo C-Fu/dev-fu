@@ -9,7 +9,7 @@
     ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝
 ```
 
-[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu.sh)
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/main/flu-sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **`fust`** is the main Rust binary — run it without installing via a one-liner, no shell dependencies required. **`flu.sh`** is the all-in-one shell-based script with menus that works anywhere, everywhere — a zero-dependency, curl-pipe-bash-ready TUI menu system that fetches and executes modular install scripts on demand. **`fu.sh`** is the first version of the same shell script that works anywhere, everywhere, on any platform and architecture. All three run on any POSIX shell — bash, zsh, dash, ash, busybox — across 10+ Linux distros, macOS, WSL2, Chromebook, and Android (Termux).

@@ -9,7 +9,7 @@
     ╚═╝ ╚═╝    ╚═════╝ ╚══════╝  ╚═══╝        ╚═╝      ╚═════╝
 ```
 
-[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/flu.sh/flu-sh/flu.sh)
+[![POSIX sh](https://img.shields.io/badge/POSIX-sh-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://github.com/C-Fu/dev-fu/blob/main/flu-sh/flu.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Tiga skrip, satu matlamat. **`fust`** ialah binari Rust utama — jalankan ia tanpa memasang melalui satu baris, tiada kebergantungan shell diperlukan. **`flu.sh`** ialah skrip shell semua-dalam-satu dengan menu yang berfungsi di mana-mana, di mana-mana sahaja — sistem TUI modular sifar kebergantungan, sedia curl-pipe-bash yang mengambil dan melaksanakan skrip pasang atas permintaan. **`fu.sh`** ialah versi pertama skrip shell yang sama yang berfungsi di mana-mana, di mana-mana sahaja, pada mana-mana platform dan seni bina. Ketiga-tiganya tiada kebergantungan, sedia curl-pipe-bash — berjalan pada mana-mana shell POSIX (bash, zsh, dash, ash, busybox) merentasi 10+ distro Linux, macOS, WSL2, Chromebook, dan Android (Termux).
