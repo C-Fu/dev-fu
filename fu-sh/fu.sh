@@ -1671,6 +1671,19 @@ _is_musl() {
     command -v apk >/dev/null 2>&1
 }
 
+_ensure_alpine_bash() {
+    # Alpine/musl ships no bash by default (only ash/busybox). Downstream
+    # installs invoked from this script need bash: the NVM and Bun installer
+    # scripts (bash /tmp/*-install.sh) and npm native-module builds (node-gyp
+    # + postinstall scripts for better-sqlite3 / node-pty etc.). Ensure bash
+    # is present on Alpine before those run. Idempotent no-op elsewhere.
+    command -v bash >/dev/null 2>&1 && return 0
+    command -v apk  >/dev/null 2>&1 || return 0
+    echo -e "${CYAN}  Installing bash (Alpine prerequisite)...${NC}"
+    pkg_install bash || { echo -e "${RED}  ✗ Failed to install bash${NC}"; return 1; }
+    return 0
+}
+
 install_nvm_node() {
     echo -e "${CYAN}${EMOJI_NODE}  ${BOLD}Install NVM + Node LTS${NC}"
 
@@ -1681,6 +1694,7 @@ install_nvm_node() {
     fi
     echo
 
+    _ensure_alpine_bash || return 1
     if _is_musl; then
         if command -v node >/dev/null 2>&1; then
             echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Node.js already installed: $(node --version)"
@@ -1755,6 +1769,7 @@ install_bun() {
     echo -e "${DIM}   Fast JavaScript runtime & package manager${NC}"
     echo
 
+    _ensure_alpine_bash || return 1
     if command -v bun >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Bun already installed: $(bun --version)"
         return 0
@@ -1790,6 +1805,7 @@ install_yarn() {
     echo -e "${DIM}   Fast, reliable dependency management${NC}"
     echo
 
+    _ensure_alpine_bash || return 1
     if command -v yarn >/dev/null 2>&1; then
         echo -e "  ${GREEN}${EMOJI_CHECK}${NC} Yarn already installed: $(yarn --version)"
         return 0
@@ -2081,6 +2097,7 @@ install_opencode_gsd() {
     echo -e "${DIM}   AI-powered development environment${NC}"
     echo
 
+    _ensure_alpine_bash || return 1
     [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
 
     local need_opencode=0 need_gsd=0 need_openchamber=0
