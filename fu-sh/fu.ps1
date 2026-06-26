@@ -1645,8 +1645,39 @@ function Upgrade-All {
 
     if ((Get-Command opencode -ErrorAction SilentlyContinue) -or ((npm list -g opencode-ai 2>$null) -match "opencode-ai")) {
         Write-Host "${CYAN}  Upgrading OpenCode...${NC}"
-        npm upgrade -g opencode-ai
-        $upgraded = $true
+        $ocOk = $false
+        $ocOfficial = Join-Path $HOME ".opencode/bin/opencode.exe"
+        if (Get-Command curl -ErrorAction SilentlyContinue) {
+            try {
+                $tmp = New-TemporaryFile
+                Invoke-WebRequest -UseBasicParsing -Uri "https://opencode.ai/install" -OutFile "$tmp.ps1" -ErrorAction Stop
+                & "$tmp.ps1" *>$null
+                Remove-Item "$tmp.ps1" -ErrorAction SilentlyContinue
+                if ((Test-Path $ocOfficial) -and (& $ocOfficial --version 2>$null)) {
+                    $ocOk = $true
+                }
+            } catch {}
+            if (-not $ocOk) {
+                try {
+                    npm upgrade -g opencode-ai *>$null
+                    if (Get-Command opencode -ErrorAction SilentlyContinue) { $ocOk = $true }
+                } catch {}
+            }
+        } else {
+            try {
+                npm upgrade -g opencode-ai *>$null
+                if (Get-Command opencode -ErrorAction SilentlyContinue) { $ocOk = $true }
+            } catch {}
+        }
+        if ($ocOk) {
+            $upgraded = $true
+            $ocVer = ((& $ocOfficial --version 2>$null) -replace "`r`n","" -replace "`n","")
+            if (-not $ocVer) { $ocVer = (opencode --version 2>$null) -replace "`r`n","" -replace "`n","" }
+            if (-not $ocVer) { $ocVer = "updated" }
+            Write-Host "${DIM}  OpenCode: ${NC}$ocVer"
+        } else {
+            Write-Host "${YELLOW}  OpenCode upgrade failed${NC}"
+        }
     }
 
     if ((Get-Command openchamber -ErrorAction SilentlyContinue) -or ((npm list -g @openchamber/web 2>$null) -match "openchamber")) {

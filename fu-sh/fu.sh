@@ -2003,8 +2003,24 @@ upgrade_all() {
 
     if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
         echo -e "${CYAN}  Upgrading OpenCode...${NC}"
-        npm upgrade -g opencode-ai || echo -e "${YELLOW}  OpenCode upgrade failed${NC}"
-        upgraded=1
+        _oc_ok=0
+        _oc_official="$HOME/.opencode/bin/opencode"
+        if command -v curl >/dev/null 2>&1; then
+            if curl -fsSL https://opencode.ai/install | sh >/dev/null 2>&1 && [ -x "$_oc_official" ] && "$_oc_official" --version >/dev/null 2>&1; then
+                _oc_ok=1
+            elif npm upgrade -g opencode-ai >/dev/null 2>&1 && opencode --version >/dev/null 2>&1; then
+                _oc_ok=1
+            fi
+        elif npm upgrade -g opencode-ai >/dev/null 2>&1 && opencode --version >/dev/null 2>&1; then
+            _oc_ok=1
+        fi
+        if [ "$_oc_ok" = "1" ]; then
+            upgraded=1
+            _oc_ver=$( ( [ -x "$_oc_official" ] && "$_oc_official" --version 2>/dev/null) || opencode --version 2>/dev/null || echo "updated" )
+            echo -e "${DIM}  OpenCode: ${NC}$_oc_ver"
+        else
+            echo -e "${YELLOW}  OpenCode upgrade failed${NC}"
+        fi
     fi
 
     if npx --yes gsd-opencode --version 2>/dev/null | grep -q '[0-9]'; then

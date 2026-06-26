@@ -204,11 +204,30 @@ if command -v tailscale >/dev/null 2>&1; then
 fi
 
 # ─── OpenCode ──────────────────────
-if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
+_official_bin="${HOME}/.opencode/bin/opencode"
+if [ -x "$_official_bin" ] || command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
     printf 'Upgrading OpenCode...\n'
-    npm update -g opencode-ai 2>/dev/null || { printf '  OpenCode upgrade failed\n' >&2; failures=$((failures + 1)); }
-    upgraded=1
-    printf '  OpenCode: %s\n' "$(opencode --version 2>/dev/null | head -1 || printf 'updated')"
+    oc_ok=0
+    if command -v curl >/dev/null 2>&1; then
+        if curl -fsSL https://opencode.ai/install | sh 2>/dev/null && [ -x "$_official_bin" ] && "$_official_bin" --version >/dev/null 2>&1; then
+            oc_ok=1
+        else
+            if npm update -g opencode-ai 2>/dev/null && opencode --version >/dev/null 2>&1; then
+                oc_ok=1
+            fi
+        fi
+    else
+        if npm update -g opencode-ai 2>/dev/null && opencode --version >/dev/null 2>&1; then
+            oc_ok=1
+        fi
+    fi
+    if [ "$oc_ok" = "1" ]; then
+        upgraded=1
+        printf '  OpenCode: %s\n' "$( ( [ -x "$_official_bin" ] && "$_official_bin" --version 2>/dev/null) || opencode --version 2>/dev/null || printf 'updated' )"
+    else
+        printf '  OpenCode upgrade failed\n' >&2
+        failures=$((failures + 1))
+    fi
 fi
 
 # ─── GSD ───────────────────────────

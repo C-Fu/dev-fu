@@ -2,29 +2,54 @@
 # @name: Install OpenCode + GSD (Rokicool) + OpenChamber
 # @params:
 # @platforms: linux, darwin
-# @version: 1.1.0
-# @deps: npm
+# @version: 1.2.0
+# @deps: curl or npm
 # @timeout: 600
 #
-# Installs OpenCode, GSD (Rokicool), and OpenChamber via npm.
-# Requires Node.js and npm to be available on the system.
+# Installs OpenCode, GSD (Rokicool), and OpenChamber.
+# OpenCode uses the official installer (preferred) with npm fallback,
+# because the opencode-ai npm wrapper has a buggy postinstall on some
+# ARM64 Linux systems (e.g. Raspberry Pi OS with glibc).
+# GSD and OpenChamber are installed via npm.
 
 set -eu
 
-# Check npm is available
-if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then
-    printf 'npm is required to install OpenCode + GSD (Rokicool) + OpenChamber.\n' >&2
-    printf 'Please install Node.js first (use "Install NVM + Node LTS" from the Languages menu).\n' >&2
-    exit 1
-fi
+_OFFICIAL_BIN="$HOME/.opencode/bin/opencode"
+
+_opencode_works() {
+    if [ -x "$_OFFICIAL_BIN" ] && "$_OFFICIAL_BIN" --version >/dev/null 2>&1; then
+        return 0
+    fi
+    if command -v opencode >/dev/null 2>&1 && opencode --version >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+_install_opencode() {
+    if command -v curl >/dev/null 2>&1; then
+        printf 'Installing OpenCode via official installer...\n'
+        if curl -fsSL https://opencode.ai/install | sh && _opencode_works; then
+            return 0
+        fi
+        printf 'Official installer failed, trying npm...\n'
+    fi
+    if command -v npm >/dev/null 2>&1 && npm --version >/dev/null 2>&1; then
+        printf 'Installing OpenCode via npm...\n'
+        if npm install -g opencode-ai && _opencode_works; then
+            return 0
+        fi
+    fi
+    return 1
+}
 
 # Check which components are already installed
 need_opencode=0
 need_gsd=0
 need_openchamber=0
 
-if command -v opencode >/dev/null 2>&1 || npm list -g opencode-ai >/dev/null 2>&1; then
-    opencode_ver=$(opencode --version 2>/dev/null || printf 'installed')
+if _opencode_works; then
+    opencode_ver=$( ( [ -x "$_OFFICIAL_BIN" ] && "$_OFFICIAL_BIN" --version 2>/dev/null) || (command -v opencode >/dev/null 2>&1 && opencode --version 2>/dev/null) || printf 'installed' )
     printf 'OpenCode already installed [%s]\n' "$opencode_ver"
 else
     printf 'OpenCode will be installed\n'
@@ -53,13 +78,21 @@ if [ "$need_opencode" = "0" ] && [ "$need_gsd" = "0" ] && [ "$need_openchamber" 
     exit 0
 fi
 
+# Check npm is available (needed for GSD and OpenChamber)
+if [ "$need_gsd" = "1" ] || [ "$need_openchamber" = "1" ]; then
+    if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then
+        printf 'npm is required to install GSD (Rokicool) and OpenChamber.\n' >&2
+        printf 'Please install Node.js first (use "Install NVM + Node LTS" from the Languages menu).\n' >&2
+        exit 1
+    fi
+fi
+
 printf '\nInstalling selected components...\n'
 install_errors=0
 
 # Install OpenCode
 if [ "$need_opencode" = "1" ]; then
-    printf 'Installing OpenCode...\n'
-    if npm install -g opencode-ai && npm list -g opencode-ai >/dev/null 2>&1; then
+    if _install_opencode; then
         printf 'OpenCode installed successfully\n'
     else
         printf 'OpenCode install failed\n' >&2
