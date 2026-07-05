@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 Phase: 21 of 21 (Build & Distribution) — COMPLETE
 Plan: 21-01 complete
 Status: Milestone complete
-Last activity: 2026-06-24 - Completed quick task 260624-4PL: ok for alpine, add bash before installing opencode and anything needing npm.
+Last activity: 2026-07-05 - Completed quick task 260705-iyu: gsd-sdk PATH setup + fust v3.0.0-alpha.14 release
 
 Progress: [███████████████████] 100% (7/7 phases in v3.0)
 
@@ -92,6 +92,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260624-4PL | ok for alpine, add bash before installing opencode and anything needing npm. | 2026-06-24 | fdbd5e3 | [260624-4PL-alpine-bash-prereq](./quick/260624-4PL-alpine-bash-prereq/) |
+| 260705-iyu | gsd-sdk PATH setup + fust v3.0.0-alpha.14 release | 2026-07-05 | 4d8d11b | [260705-iyu-check-gsd-rokicool-install-add-npm-insta](./quick/260705-iyu-check-gsd-rokicool-install-add-npm-insta/) |
 
 ## Deferred Items
 
