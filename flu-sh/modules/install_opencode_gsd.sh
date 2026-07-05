@@ -111,6 +111,22 @@ if [ "$need_gsd" = "1" ]; then
     fi
 fi
 
+# Ensure gsd-sdk (bundled with gsd-opencode) is on PATH
+if command -v npm >/dev/null 2>&1; then
+    _npm_prefix=$(npm prefix -g 2>/dev/null || true)
+    if [ -n "$_npm_prefix" ] && [ -f "${_npm_prefix}/bin/gsd-sdk" ]; then
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "${_npm_prefix}/bin/gsd-sdk" "$HOME/.local/bin/gsd-sdk"
+        case ":${PATH}:" in
+            *":$HOME/.local/bin:"*) ;;
+            *)
+                printf '⚠ %s is not in your PATH.\n' "$HOME/.local/bin"
+                printf '  Add it with: export PATH="%s:$PATH"\n' "$HOME/.local/bin"
+                ;;
+        esac
+    fi
+fi
+
 # Install OpenChamber
 if [ "$need_openchamber" = "1" ]; then
     printf 'Installing OpenChamber...\n'
