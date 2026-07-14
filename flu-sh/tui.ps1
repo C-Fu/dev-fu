@@ -1,5 +1,5 @@
-﻿# ============================================================
-# tui.ps1 — PowerShell TUI Engine Foundation
+# ============================================================
+# tui.ps1 -- PowerShell TUI Engine Foundation
 #
 # ANSI rendering primitives, terminal init/restore with PS
 # version detection, keyboard input via [Console]::ReadKey(),
@@ -47,7 +47,7 @@ public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
             }
         }
     } catch {
-        # VT processing not available — ASCII fallback mode
+        # VT processing not available -- ASCII fallback mode
     }
 }
 # Set [Console]::OutputEncoding for Unicode box drawing support
@@ -112,7 +112,7 @@ function Apply-FluTheme {
             $Script:TUI_REV     = "$ESC[0m"
         }
         'dark' {
-            # Dark theme: standard ANSI colors (default — no change needed)
+            # Dark theme: standard ANSI colors (default -- no change needed)
         }
         default {
             # Unknown theme: fall back to dark (no change)
@@ -132,9 +132,9 @@ try {
 } catch {}
 
 if ($outputEncodingIsUtf8 -and $Script:FluAnsiSupported) {
-    $Script:TUI_BOX_TL = '┌'; $Script:TUI_BOX_TR = '┐'
-    $Script:TUI_BOX_BL = '└'; $Script:TUI_BOX_BR = '┘'
-    $Script:TUI_BOX_H  = '─'; $Script:TUI_BOX_V  = '│'
+    $Script:TUI_BOX_TL = '+'; $Script:TUI_BOX_TR = '+'
+    $Script:TUI_BOX_BL = '+'; $Script:TUI_BOX_BR = '+'
+    $Script:TUI_BOX_H  = '-'; $Script:TUI_BOX_V  = '|'
 } else {
     $Script:TUI_BOX_TL = '+'; $Script:TUI_BOX_TR = '+'
     $Script:TUI_BOX_BL = '+'; $Script:TUI_BOX_BR = '+'
@@ -145,7 +145,7 @@ if ($outputEncodingIsUtf8 -and $Script:FluAnsiSupported) {
 # Section 4: TTY / Terminal Availability Check
 # ---------------------------------------------------------------------------
 
-# _tui_use_tui equivalent — detect if TUI mode is possible
+# _tui_use_tui equivalent -- detect if TUI mode is possible
 $Script:_tui_use_tui = $true
 try {
     if ($Host.UI.RawUI.WindowSize.Height -lt 5) { $Script:_tui_use_tui = $false }
@@ -163,7 +163,7 @@ if ([Console]::IsInputRedirected) { $Script:_tui_use_tui = $false }
 function Initialize-Tui {
     <#
     .SYNOPSIS
-    Initialize terminal for TUI mode — hide cursor, enable raw key input.
+    Initialize terminal for TUI mode -- hide cursor, enable raw key input.
     #>
     if (-not $Script:_tui_use_tui) { return }
     # Save cursor visibility state, hide cursor
@@ -185,7 +185,7 @@ function Initialize-Tui {
 function Restore-Tui {
     <#
     .SYNOPSIS
-    Restore terminal to normal state — show cursor, clear screen, restore key mode.
+    Restore terminal to normal state -- show cursor, clear screen, restore key mode.
     #>
     try {
         [Console]::CursorVisible = $true
@@ -342,9 +342,9 @@ function Read-TuiKey {
     .SYNOPSIS
     Read a single keypress using [Console]::ReadKey() and decode to symbolic name.
     Sets $Script:_tui_rk_result and $Script:_tui_rk_digit.
-    Caller reads these script-scope variables — do NOT wrap in $().
+    Caller reads these script-scope variables -- do NOT wrap in $().
 
-    Per D-09: uses [Console]::ReadKey() — PowerShell's native single-keypress API.
+    Per D-09: uses [Console]::ReadKey() -- PowerShell's native single-keypress API.
     [Console]::ReadKey() already decodes escape sequences, so arrow keys,
     PgUp/PgDn, Home/End all map to ConsoleKey enum values.
     No manual escape sequence parsing needed (unlike POSIX tui.sh).
@@ -420,7 +420,7 @@ function Read-TuiKey {
         'Backspace'  { $Script:_tui_rk_result = $Script:TUI_KEY_BACKSPACE; return }
         'Delete'     { $Script:_tui_rk_result = $Script:TUI_KEY_DELETE; return }
 
-        # Ctrl+D handling — ReadKey exposes modifiers
+        # Ctrl+D handling -- ReadKey exposes modifiers
         'D' {
             if ($modifiers -band [System.ConsoleModifiers]::Control) {
                 $Script:_tui_rk_result = $Script:TUI_KEY_CTRL_D; return
@@ -489,10 +489,10 @@ function Show-TuiSelect {
     Falls back to numbered text prompt when $_tui_use_tui is $false.
 
     Matching tui.sh tui_select() behaviors:
-      - Items overflow → scroll with ↑more / ↓more indicators
+      - Items overflow -> scroll with ^more / vmore indicators
       - PgUp/PgDn jump by page height
       - Home/End jump to first/last
-      - Number accumulator: typing 1,2,3 → jumps to item index as digits accumulate
+      - Number accumulator: typing 1,2,3 -> jumps to item index as digits accumulate
       - Help footer with keyboard legend
       - Reverse video highlight on current item ($Script:TUI_REV)
     #>
@@ -626,7 +626,7 @@ function Show-TuiSelect {
             # Top scroll indicator
             if ($itemCount -gt $renderedVisible -and $topIndex -gt 0) {
                 Move-TuiCursor -Row $itemStartRow -Col ($boxX + 2)
-                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "^ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
                 $itemStartRow++
                 $renderedVisible--
             }
@@ -660,7 +660,7 @@ function Show-TuiSelect {
             # Bottom scroll indicator
             if ($itemCount -gt $visibleRows -and ($topIndex + $itemsToRender) -lt $itemCount) {
                 Move-TuiCursor -Row $itemsEndRow -Col ($boxX + 2)
-                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "v $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
             }
 
             # Fill remaining body rows with empty V-bordered lines up to footer
@@ -674,7 +674,7 @@ function Show-TuiSelect {
             }
 
             # Help footer row
-            $footerText = "↑↓ jk move  ↵ select  Esc/q cancel  ? help  Home End PgUp PgDn"
+            $footerText = "^v jk move  [.] select  Esc/q cancel  ? help  Home End PgUp PgDn"
             $footerCol = $boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2))
             Move-TuiCursor -Row $footerRow -Col $footerCol
             Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
@@ -776,7 +776,7 @@ function Show-TuiSelect {
                 $running = $false
             }
             $Script:TUI_KEY_HELP {
-                # Toggle help — for now, just redraw (extended help in future plans)
+                # Toggle help -- for now, just redraw (extended help in future plans)
                 $needsRedraw = $true
                 $digitAccum = ''
             }
@@ -835,7 +835,7 @@ function Show-TuiSelectFallback {
 }
 
 # ============================================================
-# tui.ps1 — Interactive Widgets (Plan 06-02)
+# tui.ps1 -- Interactive Widgets (Plan 06-02)
 #
 # Multi-select checklist, radio single-select, yes/no
 # confirmation, and freeform text input widgets.
@@ -875,8 +875,8 @@ function Show-TuiChecklist {
       - * key selects ALL items (TUI_KEY_ASTERISK)
       - - key deselects ALL items (TUI_KEY_MINUS)
       - Reverse-video highlight on current item
-      - Scroll indicators ↑more/↓more
-      - Help footer: "↑↓ jk move  Space toggle  * all  - none  ↵ confirm  Esc/q cancel"
+      - Scroll indicators ^more/vmore
+      - Help footer: "^v jk move  Space toggle  * all  - none  [.] confirm  Esc/q cancel"
     #>
     param(
         [string]$Title,
@@ -936,7 +936,7 @@ function Show-TuiChecklist {
 
             if ($needsScroll -and $topIndex -gt 0) {
                 Write-TuiAt -Row $itemStartRow -Col ($boxX + 2)
-                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "^ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
                 $itemStartRow++
                 $_renderCount--
             }
@@ -968,12 +968,12 @@ function Show-TuiChecklist {
             if ($needsScroll -and ($topIndex + $_renderCount) -lt $itemCount) {
                 $bottomRow = $itemStartRow + $i
                 Write-TuiAt -Row $bottomRow -Col ($boxX + 2)
-                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "v $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
             }
 
             # Footer
             $footerRow = $boxY + $boxHeight - 2
-            $footerText = "↑↓ jk move  Space toggle  * all  - none  ↵ confirm  Esc/q cancel"
+            $footerText = "^v jk move  Space toggle  * all  - none  [.] confirm  Esc/q cancel"
             Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
             Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
 
@@ -1096,13 +1096,13 @@ function Show-TuiRadio {
     0-based index of default selection (optional).
 
     .DESCRIPTION
-    Renders items with (•) for selected, (○) for unselected.
+    Renders items with (*) for selected, (( )) for unselected.
     Enter confirms. Esc/q cancels.
     Sets $Script:TUI_RESULT to 0-based selected index.
     Sets $Script:TUI_RESULT to -1 on cancel.
 
     Matching tui_radio() behaviors:
-      - (•) indicator on selected item, (○) on others
+      - (*) indicator on selected item, (( )) on others
       - Arrows/vi-keys to move selection
       - Scroll indicators and help footer
     #>
@@ -1155,7 +1155,7 @@ function Show-TuiRadio {
 
             if ($needsScroll -and $topIndex -gt 0) {
                 Write-TuiAt -Row $itemStartRow -Col ($boxX + 2)
-                Write-Host "↑ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "^ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
                 $itemStartRow++
                 $_renderCount--
             }
@@ -1165,8 +1165,8 @@ function Show-TuiRadio {
                 $row = $itemStartRow + $i
                 $isCurrent = ($itemIdx -eq $currentIndex)
 
-                # Radio dot indicator: (•) for selected, (○) for unselected
-                $dot = if ($isCurrent) { '(•)' } else { '(○)' }
+                # Radio dot indicator: (*) for selected, (( )) for unselected
+                $dot = if ($isCurrent) { '(*)' } else { '(( ))' }
                 $label = $Items[$itemIdx]
                 $maxLabel = $innerWidth - 4
                 if ($label.Length -gt $maxLabel) {
@@ -1185,11 +1185,11 @@ function Show-TuiRadio {
             if ($needsScroll -and ($topIndex + $_renderCount) -lt $itemCount) {
                 $bottomRow = $itemStartRow + $i
                 Write-TuiAt -Row $bottomRow -Col ($boxX + 2)
-                Write-Host "↓ $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
+                Write-Host "v $($Script:TUI_DIM)more$($Script:TUI_RESET)" -NoNewline
             }
 
             $footerRow = $boxY + $boxHeight - 2
-            $footerText = "↑↓ jk move  ↵ confirm  Esc/q cancel"
+            $footerText = "^v jk move  [.] confirm  Esc/q cancel"
             Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
             Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
 
@@ -1239,7 +1239,7 @@ function Show-TuiYesNo {
     .PARAMETER Message
     Question text displayed in the box body.
     .PARAMETER Default
-    "yes" or "no" — which option is pre-highlighted.
+    "yes" or "no" -- which option is pre-highlighted.
 
     .DESCRIPTION
     Renders a box with the message and Yes/No options.
@@ -1334,7 +1334,7 @@ function Show-TuiYesNo {
 
             # Footer
             $footerRow = $boxY + $boxHeight - 2
-            $footerText = "← → move  ↵ confirm  Esc/q cancel"
+            $footerText = "<- -> move  [.] confirm  Esc/q cancel"
             Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
             Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
 
@@ -1385,7 +1385,7 @@ function Show-TuiTextInput {
 
     Sets $Script:TUI_RESULT to entered text on submit.
     Sets $Script:TUI_RESULT to "" on cancel.
-    Note: Unlike other widgets, 'q' does NOT cancel — users need to type all letters.
+    Note: Unlike other widgets, 'q' does NOT cancel -- users need to type all letters.
 
     Matching tui_text_input() behaviors:
       - Inline cursor with bold reverse-video position indicator
@@ -1394,7 +1394,7 @@ function Show-TuiTextInput {
       - Home/End jump to start/end of text
       - Ctrl+A/Ctrl+E also mapped to Home/End
       - Max length enforced (no overflow beyond box width)
-      - Help footer: "Type text  ← → move  Home End  Backspace Delete  ↵ submit  Esc cancel"
+      - Help footer: "Type text  <- -> move  Home End  Backspace Delete  [.] submit  Esc cancel"
     #>
     param(
         [string]$Title,
@@ -1478,14 +1478,14 @@ function Show-TuiTextInput {
 
             # Footer
             $footerRow = $boxY + $boxHeight - 2
-            $footerText = "Type text  ← → move  Home End  Backspace Delete  ↵ submit  Esc cancel"
+            $footerText = "Type text  <- -> move  Home End  Backspace Delete  [.] submit  Esc cancel"
             Write-TuiAt -Row $footerRow -Col ($boxX + [Math]::Max(0, [Math]::Floor(($boxWidth - $footerText.Length) / 2)))
             Write-Host "$($Script:TUI_DIM)$footerText$($Script:TUI_RESET)" -NoNewline
 
             $needsRedraw = $false
         }
 
-        # Read key directly — we need both ConsoleKey (for navigation) and KeyChar (for text).
+        # Read key directly -- we need both ConsoleKey (for navigation) and KeyChar (for text).
         # Using [Console]::ReadKey() directly instead of Read-TuiKey/Read-TuiChar to avoid
         # the double-consumption bug: Read-TuiKey eats the key, leaving nothing for Read-TuiChar.
         $keyInfo = $null
@@ -1563,7 +1563,7 @@ function Show-TuiTextInput {
 
         # --- Printable character insertion ---
         # Note: Unlike other widgets, Show-TuiTextInput does NOT cancel on 'q'
-        # — users need to type all letters including 'q'. Esc is the cancel key.
+        # -- users need to type all letters including 'q'. Esc is the cancel key.
         $charCode = [int][char]$char
         if ($charCode -ge 32 -and $charCode -le 126 -and $textBuilder.Length -lt $inputMaxLen) {
             $textBuilder.Insert($cursorPos, $char)

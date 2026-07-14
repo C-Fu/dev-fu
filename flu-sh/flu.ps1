@@ -1,10 +1,10 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # ============================================================
-# flu.ps1 — Modular TUI Menu System (PowerShell Port)
+# flu.ps1 -- Modular TUI Menu System (PowerShell Port)
 # ============================================================
 # Description: A zero-dependency, irm-iex-ready TUI menu
 #   that fetches and executes modular install scripts on demand.
-#   PowerShell port of flu.sh — full feature parity.
+#   PowerShell port of flu.sh -- full feature parity.
 # Compatibility: PowerShell 5.1+ / PowerShell 7+
 # Branch: main (source of truth), modules fetched from main/flu-sh/modules/
 # ============================================================
@@ -15,10 +15,10 @@
 #   Sibling files: tui.ps1, menu.ps1, modules.ps1, menu.db must be in same directory
 # ============================================================
 
-# ──────────────
-# 📋 CLI Argument Parsing (matching flu.sh behavior — before TTY reattach)
-# ──────────────
-# D-05: Same CLI flags as flu.sh — --install, --remove, --list, --yes, --json, --help
+# --------------
+# --- CLI Argument Parsing (matching flu.sh behavior -- before TTY reattach)
+# --------------
+# D-05: Same CLI flags as flu.sh -- --install, --remove, --list, --yes, --json, --help
 # PowerShell param() binding provides native argument parsing.
 
 param(
@@ -30,9 +30,9 @@ param(
     [switch]$help
 )
 
-# ──────────────
-# 📋 Early CLI Detection (before TTY reattach — matching flu.sh behavior)
-# ──────────────
+# --------------
+# --- Early CLI Detection (before TTY reattach -- matching flu.sh behavior)
+# --------------
 
 $Script:_fluIsCli = $help -or $list -or $install -or $remove
 
@@ -83,12 +83,12 @@ if ($install -or $remove) {
     exit $exitCode
 }
 
-# Not in CLI mode — proceed normally (TTY reattach, etc.)
+# Not in CLI mode -- proceed normally (TTY reattach, etc.)
 $Script:_fluIsCli = $false
 
-# ──────────────
-# 📡 TTY Reattachment (for irm | iex)
-# ──────────────
+# --------------
+# [*] TTY Reattachment (for irm | iex)
+# --------------
 # PowerShell equivalent of flu.sh's exec 0</dev/tty.
 # When piped via Invoke-Expression (irm ... | iex), stdin is redirected.
 # We need to re-attach to the console for interactive ReadKey.
@@ -99,15 +99,15 @@ if (-not $Script:_fluIsCli -and [Console]::IsInputRedirected) {
     try {
         # Attempt to reattach to console stdin
         $stdin = [Console]::OpenStandardInput()
-        # This works for irm | iex scenarios — Console.ReadKey will now read from console
+        # This works for irm | iex scenarios -- Console.ReadKey will now read from console
     } catch {
-        # No console available — TUI fallback mode will be used
+        # No console available -- TUI fallback mode will be used
     }
 }
 
-# ──────────────
-# 📦 Subsystem Sourcing (per D-02)
-# ──────────────
+# --------------
+# [*] Subsystem Sourcing (per D-02)
+# --------------
 # Resolve script directory for dot-sourcing sibling files
 $FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $FLU_SCRIPT_DIR) {
@@ -123,18 +123,18 @@ $Script:FLU_VERSION = "v3.0.0-alpha.6"
 . "$FLU_SCRIPT_DIR\menu.ps1"
 . "$FLU_SCRIPT_DIR\modules.ps1"
 
-# ──────────────
-# 🛡 Signal-Safe Cleanup
-# ──────────────
+# --------------
+# [*] Signal-Safe Cleanup
+# --------------
 # Orchestrator-level safety net: ensures terminal is always restored.
 # Matches flu.sh _flu_cleanup_exit() pattern.
 
 function global:Exit-FluCleanup {
-    # Restore terminal (idempotent — safe to call even if already restored)
+    # Restore terminal (idempotent -- safe to call even if already restored)
     try { Restore-Tui } catch {}
     # Stop any running spinner
     try { Stop-FluSpinner } catch {}
-    Write-Host "`nflu.ps1 — Goodbye!"
+    Write-Host "`nflu.ps1 -- Goodbye!"
     exit 130
 }
 
@@ -145,9 +145,9 @@ function global:Exit-FluCleanup {
     Exit-FluCleanup
 }
 
-# ──────────────
-# 🔍 Platform Detection (per D-02, D-03)
-# ──────────────
+# --------------
+# [+] Platform Detection (per D-02, D-03)
+# --------------
 # Detect Windows platform, package manager, architecture, and WSL availability.
 # Sets environment variables matching flu.sh flu_module_set_env().
 
@@ -161,10 +161,10 @@ function Get-FluPlatform {
     Sets: FLU_OS, FLU_DISTRO, FLU_PKG_MGR, FLU_ARCH,
           FLU_IS_WSL, FLU_IS_TERMUX, FLU_IS_ROOT (admin)
     #>
-    # FLU_OS — always "windows" on flu.ps1 (PowerShell port target)
+    # FLU_OS -- always "windows" on flu.ps1 (PowerShell port target)
     $env:FLU_OS = "windows"
 
-    # FLU_DISTRO — Windows version info
+    # FLU_DISTRO -- Windows version info
     try {
         $osInfo = Get-CimInstance Win32_OperatingSystem
         $env:FLU_DISTRO = "$($osInfo.Caption) $($osInfo.Version)"
@@ -172,17 +172,17 @@ function Get-FluPlatform {
         $env:FLU_DISTRO = "Windows"
     }
 
-    # FLU_PKG_MGR — detect available package manager
+    # FLU_PKG_MGR -- detect available package manager
     $pkgMgr = "none"
     if (Get-Command winget -ErrorAction SilentlyContinue) { $pkgMgr = "winget" }
     elseif (Get-Command choco -ErrorAction SilentlyContinue) { $pkgMgr = "choco" }
     elseif (Get-Command scoop -ErrorAction SilentlyContinue) { $pkgMgr = "scoop" }
     $env:FLU_PKG_MGR = $pkgMgr
 
-    # FLU_ARCH — CPU architecture
+    # FLU_ARCH -- CPU architecture
     $env:FLU_ARCH = if ($env:PROCESSOR_ARCHITECTURE -match 'ARM') { "arm64" } else { "x86_64" }
 
-    # FLU_IS_WSL — detect WSL environment
+    # FLU_IS_WSL -- detect WSL environment
     try {
         $wslCheck = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss' -ErrorAction SilentlyContinue)
         if ($wslCheck) { $env:FLU_IS_WSL = "1" } else { $env:FLU_IS_WSL = "0" }
@@ -190,16 +190,16 @@ function Get-FluPlatform {
         $env:FLU_IS_WSL = "0"
     }
 
-    # WSL binary check (separate from FLU_IS_WSL — this is about wsl.exe availability)
+    # WSL binary check (separate from FLU_IS_WSL -- this is about wsl.exe availability)
     $Script:_fluHasWsl = $false
     try {
         if (Get-Command wsl.exe -ErrorAction SilentlyContinue) { $Script:_fluHasWsl = $true }
     } catch {}
 
-    # FLU_IS_TERMUX — not applicable on Windows
+    # FLU_IS_TERMUX -- not applicable on Windows
     $env:FLU_IS_TERMUX = "0"
 
-    # FLU_IS_ROOT — admin check
+    # FLU_IS_ROOT -- admin check
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator
     )
@@ -210,9 +210,9 @@ function Get-FluPlatform {
     $Script:FluIsWindows = $true
 }
 
-# ──────────────
-# 🖥 Startup Platform Display
-# ──────────────
+# --------------
+# [*] Startup Platform Display
+# --------------
 # Show detected platform info before entering menu.
 # PowerShell port of flu.sh startup display (lines 73-137).
 
@@ -281,7 +281,7 @@ function Show-FluStartup {
     } else {
         # Non-TUI: plain text logo
         Write-Host "=============================================="
-        Write-Host "  dev-fu — Environment Setup Utility"
+        Write-Host "  dev-fu -- Environment Setup Utility"
         Write-Host "=============================================="
         Write-Host ""
         Write-Host "flu.ps1 $($Script:FLU_VERSION)"
@@ -291,9 +291,9 @@ function Show-FluStartup {
     }
 }
 
-# ──────────────
-# 🩺 Error Recovery Mapping
-# ──────────────
+# --------------
+# [*] Error Recovery Mapping
+# --------------
 # Maps exit codes from Invoke-FluModuleExecute to actionable user hints.
 # Called after module execution in the main loop.
 # Each hint tells the user WHAT to do, not just what failed.
@@ -310,40 +310,40 @@ function Write-FluExitCodeHint {
     Action identifier for context in hints.
 
     .DESCRIPTION
-    Displays human-readable recovery hints with → arrow prefix.
+    Displays human-readable recovery hints with -> arrow prefix.
     Matching flu.sh _flu_map_exit_code() exit code mappings exactly.
     #>
     param([int]$ExitCode, [string]$ActionId)
 
     switch ($ExitCode) {
-        0 { break }  # Success — no hint needed
+        0 { break }  # Success -- no hint needed
         124 {
-            Write-Host "$($Script:TUI_YELLOW)⏱ Timeout: The operation took too long.$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → Try again. If the issue persists, check your network speed or run during off-peak hours.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_YELLOW)[T] Timeout: The operation took too long.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> Try again. If the issue persists, check your network speed or run during off-peak hours.$($Script:TUI_RESET)"
         }
         126 {
-            Write-Host "$($Script:TUI_YELLOW)🔒 Permission denied: The module script could not be executed.$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → This may indicate a corrupted download. Try running the operation again.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_YELLOW)[L] Permission denied: The module script could not be executed.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> This may indicate a corrupted download. Try running the operation again.$($Script:TUI_RESET)"
         }
         127 {
-            Write-Host "$($Script:TUI_YELLOW)❓ Command not found: A required dependency is missing.$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → Ensure all dependencies for `"$ActionId`" are installed before retrying.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_YELLOW)[?] Command not found: A required dependency is missing.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> Ensure all dependencies for `"$ActionId`" are installed before retrying.$($Script:TUI_RESET)"
         }
         1 {
-            Write-Host "$($Script:TUI_RED)✗ Operation failed (exit code 1).$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → Check your internet connection if this was a network operation.$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → Try running the operation again.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_RED)[X] Operation failed (exit code 1).$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> Check your internet connection if this was a network operation.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> Try running the operation again.$($Script:TUI_RESET)"
         }
         default {
-            Write-Host "$($Script:TUI_RED)✗ Operation exited with code $ExitCode.$($Script:TUI_RESET)"
-            Write-Host "$($Script:TUI_DIM)   → An unexpected error occurred. Try running the operation again.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_RED)[X] Operation exited with code $ExitCode.$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_DIM)   -> An unexpected error occurred. Try running the operation again.$($Script:TUI_RESET)"
         }
     }
 }
 
-# ──────────────
-# 🌀 Spinner Animation
-# ──────────────
+# --------------
+# --- Spinner Animation
+# --------------
 # Visual feedback during network/execution operations.
 # Uses PowerShell Start-Job for async spinner rendering.
 # Matches flu.sh flu_spinner_start() / flu_spinner_stop() behavior.
@@ -351,7 +351,7 @@ function Write-FluExitCodeHint {
 # Spinner state
 $Script:_fluSpinnerJob = $null
 $Script:_fluSpinnerRunning = $false
-$Script:_fluSpinnerChars = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+$Script:_fluSpinnerChars = @('.', '.', '.', '.', '.', '.', '.', '.', '.', '.')
 
 function Start-FluSpinner {
     <#
@@ -368,7 +368,7 @@ function Start-FluSpinner {
 
     $Script:_fluSpinnerRunning = $true
     $Script:_fluSpinnerJob = Start-Job -ScriptBlock {
-        $chars = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+        $chars = @('.', '.', '.', '.', '.', '.', '.', '.', '.', '.')
         $i = 0
         while ($true) {
             $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
@@ -404,11 +404,11 @@ function Stop-FluSpinner {
     Write-Host (' ' * 20) -NoNewline
 }
 
-# ──────────────
-# 🔄 Main Event Loop
-# ──────────────
-# Core interactive loop: menu navigation → action extraction → module execution
-# → result display → error recovery. PowerShell port of flu.sh main loop.
+# --------------
+# [R] Main Event Loop
+# --------------
+# Core interactive loop: menu navigation -> action extraction -> module execution
+# -> result display -> error recovery. PowerShell port of flu.sh main loop.
 # PowerShell port of flu.sh main loop (lines 209-285).
 
 function Start-FluMainLoop {
@@ -418,10 +418,10 @@ function Start-FluMainLoop {
     PowerShell port of flu.sh main loop (lines 209-285).
 
     .DESCRIPTION
-    1. Menu Navigation → flu_menu_navigate(menu_file)
-    2. Extract Action → flu_menu_get_action(TUI_RESULT)
-    3. Module Execution → spinner + flu_module_execute(action) + result display
-    4. Error Recovery → exit code hints
+    1. Menu Navigation -> flu_menu_navigate(menu_file)
+    2. Extract Action -> flu_menu_get_action(TUI_RESULT)
+    3. Module Execution -> spinner + flu_module_execute(action) + result display
+    4. Error Recovery -> exit code hints
     Loop until user cancels at root menu.
     #>
     $menuFile = "$FLU_SCRIPT_DIR\menu.db"
@@ -445,7 +445,7 @@ function Start-FluMainLoop {
         $navResult = Show-FluMenuNavigate -DslFile $menuFile
 
         if ($navResult -ne 0) {
-            # User cancelled at root — exit cleanly
+            # User cancelled at root -- exit cleanly
             $running = $false
             continue
         }
@@ -456,7 +456,7 @@ function Start-FluMainLoop {
         $actionId = Get-FluMenuAction -Path $Script:TUI_RESULT
 
         if ([string]::IsNullOrEmpty($actionId)) {
-            # No action defined for this path — return to menu
+            # No action defined for this path -- return to menu
             continue
         }
 
@@ -464,10 +464,10 @@ function Start-FluMainLoop {
         # Start spinner BEFORE module execute so it's visible during network fetch.
         # The spinner renders via background PowerShell job.
         # Invoke-FluModuleExecute internally:
-        #   1. Invoke-FluModuleFetch() — network call (spinner visible)
+        #   1. Invoke-FluModuleFetch() -- network call (spinner visible)
         #   2. ConvertFrom-FluModuleMetadata()
         #   3. Platform compatibility check
-        #   4. Invoke-FluModuleCollectParams() — TUI prompts
+        #   4. Invoke-FluModuleCollectParams() -- TUI prompts
         #   5. Execute module via WSL/bash
         # After execute, Write-FluModuleResult displays results.
 
@@ -477,7 +477,7 @@ function Start-FluMainLoop {
 
         if ($null -eq $result) {
             # Module execution failed before producing a result
-            Write-Host "$($Script:TUI_RED)✗ Module execution failed for: $actionId$($Script:TUI_RESET)"
+            Write-Host "$($Script:TUI_RED)[X] Module execution failed for: $actionId$($Script:TUI_RESET)"
             Write-Host "$($Script:TUI_DIM)Press any key to return to menu$($Script:TUI_RESET)"
             Read-TuiKey | Out-Null
             Clear-TuiScreen
@@ -489,7 +489,7 @@ function Start-FluMainLoop {
 
         # --- Error Recovery (INTG-02) ---
         if (-not $result.Success) {
-            # Module execution failed — display orchestrator-level recovery hint
+            # Module execution failed -- display orchestrator-level recovery hint
             # This supplements the subsystem-level hints shown in the result modal
             Write-FluExitCodeHint -ExitCode $result.ExitCode -ActionId $actionId
 
@@ -504,9 +504,9 @@ function Start-FluMainLoop {
     }
 }
 
-# ──────────────
-# 🩺 Health Check
-# ──────────────
+# --------------
+# [*] Health Check
+# --------------
 # Self-test to verify all subsystems loaded correctly.
 
 function Test-FluHealth {
@@ -541,14 +541,14 @@ function Test-FluHealth {
     }
 
     if ($ok) {
-        Write-Host "$($Script:TUI_GREEN)✓ flu.ps1 health check passed$($Script:TUI_RESET)"
+        Write-Host "$($Script:TUI_GREEN)[OK] flu.ps1 health check passed$($Script:TUI_RESET)"
     }
     return $ok
 }
 
-# ──────────────
-# 🎨 Logo Art — ASCII "dev-fu" LEGO-style block characters (D-15, D-16)
-# ──────────────
+# --------------
+# --- Logo Art -- ASCII "dev-fu" LEGO-style block characters (D-15, D-16)
+# --------------
 # Renders the branded dev-fu logo centered in the terminal.
 # Uses $Script:TUI_MAGENTA for color matching flu.sh branding.
 # Logo is 6 lines tall, ~62 chars wide.
@@ -576,12 +576,12 @@ function Show-FluLogo {
     }
 
     $logoLines = @(
-        "██████╗ ███████╗██╗   ██╗       ███████╗██╗  ██╗",
-        "██╔══██╗██╔════╝██║   ██║       ██╔════╝██║  ██║",
-        "██║  ██║█████╗  ██║   ██║       █████╗  ███████║",
-        "██║  ██║██╔══╝  ╚██╗ ██╔╝       ██╔══╝  ██╔══██║",
-        "██████╔╝███████╗ ╚████╔╝        ██║     ██║  ██║",
-        "╚═════╝ ╚══════╝  ╚═══╝         ╚═╝     ╚═╝  ╚═╝"
+        "######+ #######+##+   ##+       #######+##+  ##+",
+        "##+==##+##+====+##|   ##|       ##+====+##|  ##|",
+        "##|  ##|#####+  ##|   ##|       #####+  #######|",
+        "##|  ##|##+==+  +##+ ##++       ##+==+  ##+==##|",
+        "######++#######+ +####++        ##|     ##|  ##|",
+        "+=====+ +======+  +===+         +=+     +=+  +=+"
     )
 
     for ($i = 0; $i -lt $logoLines.Count; $i++) {
@@ -590,10 +590,10 @@ function Show-FluLogo {
     }
 }
 
-# ──────────────
-# 🚀 Main Entry Point
-# ──────────────
-# Main execution — called when flu.ps1 is run directly (not dot-sourced).
+# --------------
+# --- Main Entry Point
+# --------------
+# Main execution -- called when flu.ps1 is run directly (not dot-sourced).
 
 function Start-Flu {
     <#
@@ -622,7 +622,7 @@ function Start-Flu {
     if ($Script:FLU_REGISTRY_CACHE -and $Script:FLU_REGISTRY_CACHE.Count -gt 0) {
         $mergedMenu = [System.IO.Path]::GetTempFileName() + '.db'
         Get-Content "$Script:FLU_SCRIPT_DIR\menu.db" | Set-Content $mergedMenu
-        Add-Content $mergedMenu "`n# ── 🌐 Community Modules (from registry) ──"
+        Add-Content $mergedMenu "`n# -- [www] Community Modules (from registry) --"
         foreach ($entry in $Script:FLU_REGISTRY_CACHE) {
             Add-Content $mergedMenu "Community Modules|$($entry.category)|$($entry.name)|community/$($entry.action_id)"
         }
@@ -636,12 +636,12 @@ function Start-Flu {
     Start-FluMainLoop
 
     # Step 4: Clean exit
-    Write-Host "$($Script:TUI_GREEN)flu.ps1 — Goodbye!$($Script:TUI_RESET)"
+    Write-Host "$($Script:TUI_GREEN)flu.ps1 -- Goodbye!$($Script:TUI_RESET)"
 }
 
 # Only auto-run if this is the main script (not dot-sourced)
 if ($MyInvocation.InvocationName -eq '.' -or $MyInvocation.Line -match '\.\s+.*flu\.ps1') {
-    # Being dot-sourced — don't auto-run, just load functions
+    # Being dot-sourced -- don't auto-run, just load functions
 } else {
     Start-Flu
 }

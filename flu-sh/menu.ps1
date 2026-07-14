@@ -1,5 +1,5 @@
-﻿# ============================================================
-# menu.ps1 — PowerShell Menu DSL Parser (port of menu.sh)
+# ============================================================
+# menu.ps1 -- PowerShell Menu DSL Parser (port of menu.sh)
 #
 # Parses pipe-delimited menu definition files and provides
 # tree query functions for the navigation engine.
@@ -18,7 +18,7 @@
 # ============================================================
 
 # ---------------------------------------------------------------------------
-# Section 1: Guard — verify tui.ps1 was sourced
+# Section 1: Guard -- verify tui.ps1 was sourced
 # ---------------------------------------------------------------------------
 
 # menu.sh checks for TUI_RESET. In PowerShell, check for script-scope variables
@@ -39,7 +39,7 @@ $Script:_fluMenuL3 = @()          # Unique L1|L2|L3 triples (array of strings)
 $Script:_fluMenuChildren = @()    # Cached children from last Get-FluMenuChildren call
 
 # ---------------------------------------------------------------------------
-# Section 3: DSL Parser — Import-FluMenu
+# Section 3: DSL Parser -- Import-FluMenu
 # ---------------------------------------------------------------------------
 
 function Import-FluMenu {
@@ -57,10 +57,10 @@ function Import-FluMenu {
     Lines format: L1|L2|L3|action
 
     Sets script-scope variables:
-      $Script:_fluMenuLines  — array of raw "L1|L2|L3|action" strings
-      $Script:_fluMenuL1     — array of unique L1 labels
-      $Script:_fluMenuL2     — array of unique "L1|L2" strings
-      $Script:_fluMenuL3     — array of unique "L1|L2|L3" strings
+      $Script:_fluMenuLines  -- array of raw "L1|L2|L3|action" strings
+      $Script:_fluMenuL1     -- array of unique L1 labels
+      $Script:_fluMenuL2     -- array of unique "L1|L2" strings
+      $Script:_fluMenuL3     -- array of unique "L1|L2|L3" strings
     #>
     param([string]$DslFile)
 
@@ -110,7 +110,7 @@ function Import-FluMenu {
 }
 
 # ---------------------------------------------------------------------------
-# Section 4: Child Lookup — Get-FluMenuChildren
+# Section 4: Child Lookup -- Get-FluMenuChildren
 # ---------------------------------------------------------------------------
 
 function Get-FluMenuChildren {
@@ -165,7 +165,7 @@ function Get-FluMenuChildren {
 }
 
 # ---------------------------------------------------------------------------
-# Section 5: Leaf Detection — Test-FluMenuIsLeaf
+# Section 5: Leaf Detection -- Test-FluMenuIsLeaf
 # ---------------------------------------------------------------------------
 
 function Test-FluMenuIsLeaf {
@@ -217,7 +217,7 @@ function Test-FluMenuIsLeaf {
 }
 
 # ---------------------------------------------------------------------------
-# Section 6: Breadcrumb — Get-FluMenuBreadcrumb
+# Section 6: Breadcrumb -- Get-FluMenuBreadcrumb
 # ---------------------------------------------------------------------------
 
 function Get-FluMenuBreadcrumb {
@@ -242,7 +242,7 @@ function Get-FluMenuBreadcrumb {
 }
 
 # ---------------------------------------------------------------------------
-# Section 7: Action Lookup — Get-FluMenuAction
+# Section 7: Action Lookup -- Get-FluMenuAction
 # ---------------------------------------------------------------------------
 
 function Get-FluMenuAction {
@@ -273,7 +273,7 @@ function Get-FluMenuAction {
 }
 
 # ---------------------------------------------------------------------------
-# Section 8: Menu Navigation Engine — Show-FluMenuNavigate
+# Section 8: Menu Navigation Engine -- Show-FluMenuNavigate
 # ---------------------------------------------------------------------------
 
 function Show-FluMenuNavigate {
@@ -334,7 +334,7 @@ function Show-FluMenuNavigate {
         $children = Get-FluMenuChildren -ParentPath $currentPath
 
         if ($children.Count -eq 0) {
-            # No children — shouldn't happen with valid menu.db
+            # No children -- shouldn't happen with valid menu.db
             $running = $false
             break
         }
@@ -348,9 +348,9 @@ function Show-FluMenuNavigate {
 
         # Build title based on level
         $titlePrefix = switch ($pathStack.Count) {
-            0 { "flu.sh $($Script:FLU_VERSION) — Main Menu" }
-            1 { "flu.sh $($Script:FLU_VERSION) — $($pathStack[0])" }
-            2 { "flu.sh $($Script:FLU_VERSION) — $($pathStack[0]) > $($pathStack[1])" }
+            0 { "flu.sh $($Script:FLU_VERSION) -- Main Menu" }
+            1 { "flu.sh $($Script:FLU_VERSION) -- $($pathStack[0])" }
+            2 { "flu.sh $($Script:FLU_VERSION) -- $($pathStack[0]) > $($pathStack[1])" }
             default { "flu.sh $($Script:FLU_VERSION)" }
         }
 
@@ -359,7 +359,7 @@ function Show-FluMenuNavigate {
         $selectedIndex = $Script:TUI_RESULT
 
         if ($selectedIndex -lt 0) {
-            # Esc/q/Left pressed — go back or exit
+            # Esc/q/Left pressed -- go back or exit
             if ($pathStack.Count -eq 0) {
                 # At root level, Esc cancels entirely
                 $Script:TUI_RESULT = $null
@@ -380,15 +380,15 @@ function Show-FluMenuNavigate {
         $fullPath = $pathStack -join '|'
 
         if (Test-FluMenuIsLeaf -Path $fullPath) {
-            # Leaf node selected — return the full path
+            # Leaf node selected -- return the full path
             $Script:TUI_RESULT = $fullPath
             $running = $false
             break
         }
 
-        # Intermediate node — will loop to show children on next iteration
+        # Intermediate node -- will loop to show children on next iteration
         if ($pathStack.Count -ge 3) {
-            # Max depth reached (3 levels) — treat as leaf
+            # Max depth reached (3 levels) -- treat as leaf
             $Script:TUI_RESULT = $fullPath
             $running = $false
             break
@@ -401,7 +401,7 @@ function Show-FluMenuNavigate {
 }
 
 # ---------------------------------------------------------------------------
-# Section 9: Navigation Fallback — Show-FluMenuNavigateFallback
+# Section 9: Navigation Fallback -- Show-FluMenuNavigateFallback
 # ---------------------------------------------------------------------------
 
 function Show-FluMenuNavigateFallback {
@@ -439,14 +439,14 @@ function Show-FluMenuNavigateFallback {
         $breadcrumb = Get-FluMenuBreadcrumb -Path ($pathStack -join '|')
         Write-Host ""
         Write-Host $breadcrumb
-        Write-Host "─────────────────────"
+        Write-Host "---------------------"
 
         for ($i = 0; $i -lt $children.Count; $i++) {
             $num = $i + 1
             Write-Host ("  {0}) {1}" -f $num, $children[$i])
         }
         if ($pathStack.Count -gt 0) {
-            Write-Host "  0) ← Back"
+            Write-Host "  0) <- Back"
         } else {
             Write-Host "  0) Exit"
         }

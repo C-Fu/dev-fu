@@ -1,5 +1,5 @@
-﻿# ============================================================
-# modules.Tests.ps1 — Pester tests for modules.ps1
+# ============================================================
+# modules.Tests.ps1 -- Pester tests for modules.ps1
 #
 # Run: pwsh -Command "Invoke-Pester ./flu-sh/modules.Tests.ps1"
 # ============================================================
@@ -163,7 +163,7 @@ Describe "Test-FluModuleChecksum" {
     }
 
     It "returns false when checksum mismatches manifest" {
-        # We'll need a real hash — this test checks the logic path
+        # We'll need a real hash -- this test checks the logic path
         # Mock the manifest fetch
         Mock Invoke-WebRequest {
             return @{ Content = "0000000000000000000000000000000000000000000000000000000000000000  install_python.sh" }
@@ -379,7 +379,7 @@ Describe "Resolve-FluModuleUrl (.ps1 resolution)" {
     }
 }
 
-Describe "Invoke-FluModuleExecute (.ps1 → .sh fallback)" {
+Describe "Invoke-FluModuleExecute (.ps1 -> .sh fallback)" {
     It "tries .ps1 first on Windows, falls back to .sh on failure" {
         # This test validates the execution flow by checking that
         # Invoke-FluModuleFetch is called with .ps1 extension first

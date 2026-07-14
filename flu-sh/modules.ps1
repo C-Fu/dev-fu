@@ -1,5 +1,5 @@
-﻿# ============================================================
-# modules.ps1 — Module Pipeline Library (port of modules.sh)
+# ============================================================
+# modules.ps1 -- Module Pipeline Library (port of modules.sh)
 #
 # Module fetch engine, metadata parser, parameter collection,
 # execution via WSL/bash, and result display.
@@ -15,7 +15,7 @@
 # ============================================================
 
 # ---------------------------------------------------------------------------
-# Section 1: Guard — tui.ps1 must be dot-sourced first
+# Section 1: Guard -- tui.ps1 must be dot-sourced first
 # ---------------------------------------------------------------------------
 
 if (-not (Test-Path variable:Script:TUI_RESET)) {
@@ -24,7 +24,7 @@ if (-not (Test-Path variable:Script:TUI_RESET)) {
 }
 
 # ---------------------------------------------------------------------------
-# Section 2: Module Initialization — Base URL
+# Section 2: Module Initialization -- Base URL
 # ---------------------------------------------------------------------------
 
 # Module base URL (overridable per D-06)
@@ -184,12 +184,12 @@ function Test-FluModuleChecksum {
     try {
         $manifest = (Invoke-WebRequest -Uri $manifestUrl -UseBasicParsing -TimeoutSec 10).Content
     } catch {
-        Write-Warning "[WARN] Could not fetch MANIFEST.sha256 — skipping checksum verification"
+        Write-Warning "[WARN] Could not fetch MANIFEST.sha256 -- skipping checksum verification"
         return $true
     }
     $expectedLine = ($manifest -split "`n") | Where-Object { $_ -match "\s$([regex]::Escape($ActionId))\.(ps1|sh)$" } | Select-Object -First 1
     if (-not $expectedLine) {
-        Write-Warning "[WARN] No checksum entry for $ActionId — skipping verification"
+        Write-Warning "[WARN] No checksum entry for $ActionId -- skipping verification"
         return $true
     }
     $expectedHash = ($expectedLine -split '\s+')[0]
@@ -219,7 +219,7 @@ function Invoke-FluModuleFetch {
     Action identifier (e.g., "install_python").
 
     .DESCRIPTION
-    Pipeline: cache check → network fetch (3 retries) → SHA256 checksum verify → cache store → return.
+    Pipeline: cache check -> network fetch (3 retries) -> SHA256 checksum verify -> cache store -> return.
     Uses Invoke-WebRequest (per D-07) with 3 retries and 2-second delay.
     Returns module script content as string on success.
     Returns $null and writes errors to error stream on failure.
@@ -275,23 +275,23 @@ function Invoke-FluModuleFetch {
             if ($attempt -lt $maxAttempts) {
                 Start-Sleep -Seconds $delaySeconds
             } else {
-                # All retries exhausted — report error with actionable hints
+                # All retries exhausted -- report error with actionable hints
                 Write-Error "[ERROR] Failed to fetch module: $url (status: $statusCode)"
 
                 switch ($statusCode) {
                     404 {
-                        Write-Warning "[HINT] Module not found — might be renamed or not yet published"
+                        Write-Warning "[HINT] Module not found -- might be renamed or not yet published"
                     }
                     0 {
-                        Write-Warning "[HINT] Check internet connection — unable to reach GitHub"
+                        Write-Warning "[HINT] Check internet connection -- unable to reach GitHub"
                     }
                     default {
-                        Write-Warning "[HINT] Network error (HTTP $statusCode) — check internet connection or GitHub availability"
+                        Write-Warning "[HINT] Network error (HTTP $statusCode) -- check internet connection or GitHub availability"
                     }
                 }
 
                 if ($errorMsg -match 'timeout|timed out') {
-                    Write-Warning "[HINT] Request timed out — check your network speed or try again later"
+                    Write-Warning "[HINT] Request timed out -- check your network speed or try again later"
                 }
 
                 return $null
@@ -340,7 +340,7 @@ function ConvertFrom-FluModuleMetadata {
     $deps = ''
     $timeout = ''
 
-    # Parse comment header — stop at first non-comment, non-blank line
+    # Parse comment header -- stop at first non-comment, non-blank line
     foreach ($line in $lines) {
         $trimmed = $line.Trim()
 
@@ -374,7 +374,7 @@ function ConvertFrom-FluModuleMetadata {
         return $null
     }
 
-    # Platform validation — check FLU_OS against @platforms list
+    # Platform validation -- check FLU_OS against @platforms list
     $currentOs = $env:FLU_OS
     if (-not [string]::IsNullOrEmpty($currentOs)) {
         $platList = $platforms -split ',' | ForEach-Object { $_.Trim() }
@@ -476,15 +476,15 @@ function Invoke-FluModuleCollectParams {
 
     .DESCRIPTION
     For each parameter, dispatches to appropriate TUI widget:
-      - radio  → Show-TuiRadio (choices from comma-separated list)
-      - text   → Show-TuiTextInput
-      - yesno  → Show-TuiYesNo
+      - radio  -> Show-TuiRadio (choices from comma-separated list)
+      - text   -> Show-TuiTextInput
+      - yesno  -> Show-TuiYesNo
 
     Builds and returns argument array: @('--key', 'value', '--key2', 'value2')
     Returns $null if user cancelled at any prompt.
 
     Matching flu_module_collect_params() behaviors:
-      - Empty param string → empty array (no collection needed)
+      - Empty param string -> empty array (no collection needed)
       - Cancellation (Esc) at any prompt aborts all collection
       - Radio maps TUI_RESULT index to choice string
       - Text passes TUI_RESULT directly as value
@@ -543,7 +543,7 @@ function Invoke-FluModuleCollectParams {
                 $value = $choice
             }
             default {
-                # Unknown type — default to text input
+                # Unknown type -- default to text input
                 Show-TuiTextInput -Title "$($param.Name)" -Prompt "Enter $($param.Name)"
                 $text = $Script:TUI_RESULT
                 if ([string]::IsNullOrEmpty($text)) { return $null }
@@ -686,7 +686,7 @@ function Invoke-FluModuleExecute {
         return $null
     }
 
-    # Step 1: Fetch module with .ps1→.sh fallback (per D-02, D-03, D-04)
+    # Step 1: Fetch module with .ps1->.sh fallback (per D-02, D-03, D-04)
     $scriptContent = $null
     if ($Script:FluIsWindows) {
         # Try .ps1 first (Windows-native PowerShell module)
@@ -752,7 +752,7 @@ function Invoke-FluModuleExecute {
     } catch {}
 
     if (-not $wslAvailable -and -not $bashAvailable) {
-        # No WSL/bash — graceful message per D-06
+        # No WSL/bash -- graceful message per D-06
         Remove-Item $tempScript -ErrorAction SilentlyContinue
         return [PSCustomObject]@{
             ExitCode   = 1
@@ -851,19 +851,19 @@ function Get-FluRecoveryHint {
         }
         1 {
             if ($Stderr -match 'curl|wget|fetch|Invoke-WebRequest') {
-                return "Network error — unable to reach the server. Check your internet connection."
+                return "Network error -- unable to reach the server. Check your internet connection."
             } elseif ($Stderr -match 'Permission denied|permission denied') {
-                return "Permission denied — try running with elevated privileges."
+                return "Permission denied -- try running with elevated privileges."
             } elseif ($Stderr -match 'not found|Not found') {
                 return "A required dependency was not found. Check that all dependencies are installed."
             } else {
                 return "Module exited with code 1. Check the output above for details. You can re-run this operation."
             }
         }
-        6 { return "Network error — unable to reach the server. Check your internet connection." }
-        7 { return "Network error — unable to reach the server. Check your internet connection." }
-        22 { return "Network error — unable to reach the server. Check your internet connection." }
-        28 { return "Network error — unable to reach the server. Check your internet connection." }
+        6 { return "Network error -- unable to reach the server. Check your internet connection." }
+        7 { return "Network error -- unable to reach the server. Check your internet connection." }
+        22 { return "Network error -- unable to reach the server. Check your internet connection." }
+        28 { return "Network error -- unable to reach the server. Check your internet connection." }
         default {
             return "Module exited with code $ExitCode. Check the output above for details. You can re-run this operation."
         }
@@ -884,8 +884,8 @@ function Write-FluModuleResult {
     Result object from Invoke-FluModuleExecute (with ExitCode, Stdout, Stderr, ModuleName).
 
     .DESCRIPTION
-    Success (exit 0): green ✓ status with module stdout content.
-    Failure (exit != 0): red ✗ status with exit code, stderr, and recovery hints.
+    Success (exit 0): green [OK] status with module stdout content.
+    Failure (exit != 0): red [X] status with exit code, stderr, and recovery hints.
     User presses any key to dismiss the modal.
 
     Matching flu_module_display_result() behaviors:
@@ -914,10 +914,10 @@ function Write-FluModuleResult {
 
     # Build status title
     if ($Result.Success) {
-        $title = "✓ $($Result.ModuleName) — Complete"
+        $title = "[OK] $($Result.ModuleName) -- Complete"
         $titleColor = $Script:TUI_GREEN
     } else {
-        $title = "✗ $($Result.ModuleName) — Failed (exit: $($Result.ExitCode))"
+        $title = "[X] $($Result.ModuleName) -- Failed (exit: $($Result.ExitCode))"
         $titleColor = $Script:TUI_RED
     }
 
@@ -950,7 +950,7 @@ function Write-FluModuleResult {
         $hint = Get-FluRecoveryHint -ExitCode $Result.ExitCode -Stderr $Result.Stderr
         if ($hint) {
             Write-TuiAt -Row $contentRow -Col ($boxX + 2)
-            Write-Host "$($Script:TUI_YELLOW)→ $hint$($Script:TUI_RESET)" -NoNewline
+            Write-Host "$($Script:TUI_YELLOW)-> $hint$($Script:TUI_RESET)" -NoNewline
         }
     }
 
@@ -965,7 +965,7 @@ function Write-FluModuleResult {
 }
 
 # ---------------------------------------------------------------------------
-# Section 11: Batch Execution Functions (Plan 14-02 — CLI batch mode)
+# Section 11: Batch Execution Functions (Plan 14-02 -- CLI batch mode)
 # ---------------------------------------------------------------------------
 
 function Invoke-FluBatchRun {
@@ -983,7 +983,7 @@ function Invoke-FluBatchRun {
     .DESCRIPTION
     Validates each action ID against menu.db, fetches and executes
     each module sequentially, prints results, and returns exit code.
-    Continues on failure — collects all results before final summary.
+    Continues on failure -- collects all results before final summary.
     Exit 0 if all succeed, exit 1 if any fail.
 
     Threat mitigation T-14-02-01: action IDs validated against menu.db.
@@ -1009,13 +1009,13 @@ function Invoke-FluBatchRun {
             $validActions = Get-Content $menuFile | Where-Object { $_ -notmatch '^\s*(#|$)' } | ForEach-Object { ($_ -split '\|')[3].Trim() }
             $valid = $validActions -contains $aid
             if (-not $valid) {
-                Write-Host "✗ $aid — Unknown action ID"
+                Write-Host "[X] $aid -- Unknown action ID"
                 $fail++
                 continue
             }
         }
 
-        Write-Host "▶ $aid"
+        Write-Host "> $aid"
 
         # Fetch module via the resolution pipeline
         $scriptContent = $null
@@ -1027,7 +1027,7 @@ function Invoke-FluBatchRun {
         }
 
         if (-not $scriptContent) {
-            Write-Host "✗ $aid — Fetch failed"
+            Write-Host "[X] $aid -- Fetch failed"
             $fail++
             continue
         }
@@ -1035,19 +1035,19 @@ function Invoke-FluBatchRun {
         # Parse metadata
         $metadata = ConvertFrom-FluModuleMetadata -ScriptContent $scriptContent
         if (-not $metadata) {
-            Write-Host "✗ $aid — Metadata parse error"
+            Write-Host "[X] $aid -- Metadata parse error"
             $fail++
             continue
         }
 
-        # Check for @params — reject in --yes mode (D-07)
+        # Check for @params -- reject in --yes mode (D-07)
         if (-not [string]::IsNullOrEmpty($metadata.Params)) {
             if ($Flags -eq 'yes') {
-                Write-Host "✗ $aid — Requires parameters, use interactive mode"
+                Write-Host "[X] $aid -- Requires parameters, use interactive mode"
                 $fail++
                 continue
             } else {
-                Write-Host "⚠ $aid — Requires parameters, skipping"
+                Write-Host "[!] $aid -- Requires parameters, skipping"
                 $fail++
                 continue
             }
@@ -1068,7 +1068,7 @@ function Invoke-FluBatchRun {
                     $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-File', $tempScript) -NoNewWindow -Wait -PassThru
                     $exitCode = $process.ExitCode
                 } else {
-                    Write-Host "⚠ $aid — No PowerShell available to execute module"
+                    Write-Host "[!] $aid -- No PowerShell available to execute module"
                     $exitCode = 1
                 }
             }
@@ -1086,10 +1086,10 @@ function Invoke-FluBatchRun {
 
         # Print result
         if ($exitCode -eq 0) {
-            Write-Host "✓ $aid — Complete"
+            Write-Host "[OK] $aid -- Complete"
             $ok++
         } else {
-            Write-Host "✗ $aid — Failed (exit $exitCode)"
+            Write-Host "[X] $aid -- Failed (exit $exitCode)"
             $fail++
         }
     }
