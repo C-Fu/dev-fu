@@ -1437,7 +1437,7 @@ function Show-TuiTextInput {
 
             # Render prompt label
             Write-TuiAt -Row ($boxY + 2) -Col ($boxX + 2)
-            Write-Host "$Prompt:" -NoNewline
+            Write-Host "${Prompt}:" -NoNewline
 
             # Render input field background
             $inputRow = $boxY + 3
