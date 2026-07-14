@@ -71,7 +71,28 @@ cd dev-fu
 bash ./fu-sh/fu.sh
 ```
 
-> **Windows:** Use `flu.ps1` for native PowerShell. The POSIX scripts work in WSL2 (run inside the Linux distribution, not PowerShell).
+### flu.ps1 (PowerShell — native Windows)
+
+```powershell
+# Option 1: Run from GitHub (PowerShell 5.1+)
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.ps1'))
+```
+
+```powershell
+# Option 2: Clone and run locally
+git clone https://github.com/C-Fu/dev-fu.git
+cd dev-fu
+.\flu-sh\flu.ps1
+```
+
+```powershell
+# Option 3: CLI batch mode (non-interactive)
+.\flu-sh\flu.ps1 --list
+.\flu-sh\flu.ps1 --install install_go,install_rust
+.\flu-sh\flu.ps1 --install install_node --yes
+```
+
+> **PowerShell:** `flu.ps1` requires PowerShell 5.1+ (Windows) or PowerShell 7+ (cross-platform). The POSIX scripts work in WSL2 (run inside the Linux distribution, not PowerShell).
 
 ## flu.sh Features
 
