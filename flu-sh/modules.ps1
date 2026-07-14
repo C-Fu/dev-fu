@@ -50,20 +50,29 @@ function Resolve-FluModuleUrl {
     <#
     .SYNOPSIS
     Resolve action ID to GitHub raw URL with platform-appropriate extension.
-    PowerShell port of flu_module_resolve_url().
 
     .PARAMETER ActionId
     Action identifier from menu.db (e.g., "install_python").
 
+    .PARAMETER Extension
+    Optional override: 'ps1' or 'sh'. Auto-detects from platform if omitted.
+
     .DESCRIPTION
-    On Windows ($Script:FluIsWindows = $true): returns .ps1 URL (D-02).
-    On POSIX: returns .sh URL.
+    .ps1 modules live in dev-fu repo (flu-sh/modules-ps/).
+    .sh modules live in flu-modules repo (modules/).
     #>
-    param([string]$ActionId)
-    $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
-    if ($Script:FluIsWindows) {
-        return "$base/$ActionId.ps1"
+    param([string]$ActionId, [string]$Extension = '')
+    if ($Extension) {
+        $ext = $Extension
+    } elseif ($Script:FluIsWindows) {
+        $ext = 'ps1'
+    } else {
+        $ext = 'sh'
     }
+    if ($ext -eq 'ps1') {
+        return "https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/modules-ps/$ActionId.ps1"
+    }
+    $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
     return "$base/$ActionId.sh"
 }
 
@@ -231,6 +240,9 @@ function Invoke-FluModuleFetch {
     #>
     param([string]$ActionId, [string]$Extension = '')
 
+    # Ensure TLS 1.2 for GitHub (PS 5.1 defaults to Ssl3/Tls which GitHub rejects)
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
+
     # Step 1: Check cache first (per D-08, D-11)
     if (Test-FluModuleCache -ActionId $ActionId) {
         $cached = Read-FluModuleCache -ActionId $ActionId
@@ -244,10 +256,14 @@ function Invoke-FluModuleFetch {
     $cacheDir = $Script:FLU_CACHE_DIR
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
-    # Resolve URL: if Extension provided, construct directly; otherwise use Resolve-FluModuleUrl
+    # Resolve URL: if Extension provided, use appropriate repo base; otherwise auto-detect
     if ($Extension) {
-        $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
-        $url = "$base/$ActionId.$Extension"
+        if ($Extension -eq 'ps1') {
+            $url = "https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/modules-ps/$ActionId.ps1"
+        } else {
+            $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
+            $url = "$base/$ActionId.$Extension"
+        }
     } else {
         $url = Resolve-FluModuleUrl -ActionId $ActionId
     }

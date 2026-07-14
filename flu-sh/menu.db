@@ -1,73 +1,73 @@
-# menu.db — Menu definition for flu.sh v1.1
+# menu.db --- Menu definition for flu.sh v1.1
 # Format: Category|Subcategory|Label|action_id
 # Lines starting with # are comments. Empty lines are ignored.
 # Action IDs map 1:1 to module script filenames in modules/<action_id>.sh
 
-# ── 🔍 Diagnostics ──
-Diagnostics|System|🔍 Status Check|status_check
-Diagnostics|System|🔄 Compare With Latest|status_check_compare
-Diagnostics|Updates|⬆️ Upgrade All Tools|upgrade_all
+# -- [+] Diagnostics --
+Diagnostics|System|[+] Status Check|status_check
+Diagnostics|System|[R] Compare With Latest|status_check_compare
+Diagnostics|Updates|[^] Upgrade All Tools|upgrade_all
 
-# ── 🤖 AI Tools ──
-AI Tools|OpenCode|🤖 Install OpenCode|install_opencode
-AI Tools|OpenCode|🗑 Remove OpenCode|remove_opencode
-AI Tools|GSD (Rokicool)|🛠 Install GSD (Rokicool)|install_gsd_rokicool
-AI Tools|Open GSD|🧠 Install gsd-core|install_gsd_core
-AI Tools|Open GSD|🗑 Remove gsd-core|remove_gsd_core
-AI Tools|Open GSD|🤖 Install gsd-pi|install_gsd_pi
-AI Tools|Open GSD|🗑 Remove gsd-pi|remove_gsd_pi
-AI Tools|Open GSD|🌐 Install gsd-browser|install_gsd_browser
-AI Tools|Open GSD|🗑 Remove gsd-browser|remove_gsd_browser
-AI Tools|Open GSD|📦 Install all Open GSD|install_gsd_all
-AI Tools|Open GSD|🗑 Remove all Open GSD|remove_gsd_all
-AI Tools|Hermes Agent|🤖 Install Hermes Agent|install_hermes_agent
-AI Tools|OpenChamber|🏛 Install OpenChamber|install_openchamber
+# -- [R] AI Tools --
+AI Tools|OpenCode|[R] Install OpenCode|install_opencode
+AI Tools|OpenCode|[*] Remove OpenCode|remove_opencode
+AI Tools|GSD (Rokicool)|[*] Install GSD (Rokicool)|install_gsd_rokicool
+AI Tools|Open GSD|[*] Install gsd-core|install_gsd_core
+AI Tools|Open GSD|[*] Remove gsd-core|remove_gsd_core
+AI Tools|Open GSD|[R] Install gsd-pi|install_gsd_pi
+AI Tools|Open GSD|[*] Remove gsd-pi|remove_gsd_pi
+AI Tools|Open GSD|[www] Install gsd-browser|install_gsd_browser
+AI Tools|Open GSD|[*] Remove gsd-browser|remove_gsd_browser
+AI Tools|Open GSD|[*] Install all Open GSD|install_gsd_all
+AI Tools|Open GSD|[*] Remove all Open GSD|remove_gsd_all
+AI Tools|Hermes Agent|[R] Install Hermes Agent|install_hermes_agent
+AI Tools|OpenChamber|[H] Install OpenChamber|install_openchamber
 
-# ── 🐹 Languages & Runtimes ──
-Languages & Runtimes|Go|🐹 Install Go|install_go
-Languages & Runtimes|Go|🗑 Remove Go|remove_go
-Languages & Runtimes|Rust|🦀 Install Rust|install_rust
-Languages & Runtimes|Rust|🗑 Remove Rust|remove_rust
-Languages & Runtimes|Python|🐍 Install Python + Pip + UV + Pipx|install_python
-Languages & Runtimes|Python|🗑 Remove Python|remove_python
-Languages & Runtimes|Node.js|💚 Install NVM + Node LTS|install_nvm_node
-Languages & Runtimes|Node.js|🗑 Remove NVM + Node|remove_nvm_node
-Languages & Runtimes|Bun|🥟 Install Bun|install_bun
-Languages & Runtimes|Bun|🗑 Remove Bun|remove_bun
-Languages & Runtimes|PHP|🐘 Install PHP + Laravel|install_php_laravel
-Languages & Runtimes|PHP|🗑 Remove PHP + Laravel|remove_php_laravel
-Languages & Runtimes|OpenJDK|☕ Install OpenJDK|install_openjdk
-Languages & Runtimes|OpenJDK|🗑 Remove OpenJDK|remove_openjdk
-Languages & Runtimes|Yarn|🧶 Install Yarn|install_yarn
-Languages & Runtimes|Yarn|🗑 Remove Yarn|remove_yarn
+# -- [H] Languages & Runtimes --
+Languages & Runtimes|Go|[H] Install Go|install_go
+Languages & Runtimes|Go|[*] Remove Go|remove_go
+Languages & Runtimes|Rust|> Install Rust|install_rust
+Languages & Runtimes|Rust|[*] Remove Rust|remove_rust
+Languages & Runtimes|Python|[S] Install Python + Pip + UV + Pipx|install_python
+Languages & Runtimes|Python|[*] Remove Python|remove_python
+Languages & Runtimes|Node.js|[G] Install NVM + Node LTS|install_nvm_node
+Languages & Runtimes|Node.js|[*] Remove NVM + Node|remove_nvm_node
+Languages & Runtimes|Bun|> Install Bun|install_bun
+Languages & Runtimes|Bun|[*] Remove Bun|remove_bun
+Languages & Runtimes|PHP|[E] Install PHP + Laravel|install_php_laravel
+Languages & Runtimes|PHP|[*] Remove PHP + Laravel|remove_php_laravel
+Languages & Runtimes|OpenJDK|[C] Install OpenJDK|install_openjdk
+Languages & Runtimes|OpenJDK|[*] Remove OpenJDK|remove_openjdk
+Languages & Runtimes|Yarn|> Install Yarn|install_yarn
+Languages & Runtimes|Yarn|[*] Remove Yarn|remove_yarn
 
-# ── 🚀 Modern CLI ──
-Modern CLI|lazygit|📦 Install lazygit|install_lazygit
-Modern CLI|lazygit|🗑 Remove lazygit|remove_lazygit
-Modern CLI|Starship|🚀 Install Starship|install_starship
-Modern CLI|Starship|🗑 Remove Starship|remove_starship
-Modern CLI|zoxide|📁 Install zoxide|install_zoxide
-Modern CLI|zoxide|🗑 Remove zoxide|remove_zoxide
-Modern CLI|eza|📋 Install eza|install_eza
-Modern CLI|eza|🗑 Remove eza|remove_eza
+# -- [R] Modern CLI --
+Modern CLI|lazygit|[*] Install lazygit|install_lazygit
+Modern CLI|lazygit|[*] Remove lazygit|remove_lazygit
+Modern CLI|Starship|[R] Install Starship|install_starship
+Modern CLI|Starship|[*] Remove Starship|remove_starship
+Modern CLI|zoxide|[*] Install zoxide|install_zoxide
+Modern CLI|zoxide|[*] Remove zoxide|remove_zoxide
+Modern CLI|eza|[*] Install eza|install_eza
+Modern CLI|eza|[*] Remove eza|remove_eza
 
-# ── 🐚 Shell ──
-Shell|Prompts|💜 Fancy Prompt (Purple-Pink)|create_fancy_prompt
-Shell|Prompts|🗑 Remove Fancy Prompt (Purple-Pink)|remove_fancy_prompt
-Shell|Prompts|💙 Fancy Prompt (Shades of Blue)|create_fancy_prompt_blue
-Shell|Prompts|🗑 Remove Fancy Prompt (Blue)|remove_fancy_prompt_blue
-Shell|Network|📡 Avahi Daemon (mDNS)|install_avahi
-Shell|Network|🗑 Remove Avahi Daemon|remove_avahi
-Shell|Network|🌐 Systemd-Resolved (LLMNR)|install_systemd_resolved
-Shell|Network|🗑 Remove Systemd-Resolved|remove_systemd_resolved
+# -- [.] Shell --
+Shell|Prompts|[P] Fancy Prompt (Purple-Pink)|create_fancy_prompt
+Shell|Prompts|[*] Remove Fancy Prompt (Purple-Pink)|remove_fancy_prompt
+Shell|Prompts|[B] Fancy Prompt (Shades of Blue)|create_fancy_prompt_blue
+Shell|Prompts|[*] Remove Fancy Prompt (Blue)|remove_fancy_prompt_blue
+Shell|Network|[*] Avahi Daemon (mDNS)|install_avahi
+Shell|Network|[*] Remove Avahi Daemon|remove_avahi
+Shell|Network|[www] Systemd-Resolved (LLMNR)|install_systemd_resolved
+Shell|Network|[*] Remove Systemd-Resolved|remove_systemd_resolved
 
-# ── 🛠 System Tools ──
-System Tools|Docker|🐳 Install Docker|install_docker
-System Tools|Docker|🗑 Remove Docker|remove_docker
-System Tools|Tailscale|🛜 Install Tailscale|install_tailscale
-System Tools|Tailscale|🗑 Remove Tailscale|remove_tailscale
+# -- [*] System Tools --
+System Tools|Docker|[W] Install Docker|install_docker
+System Tools|Docker|[*] Remove Docker|remove_docker
+System Tools|Tailscale|> Install Tailscale|install_tailscale
+System Tools|Tailscale|[*] Remove Tailscale|remove_tailscale
 
-# ── ⚙️ Settings ──
-Settings|GitHub|🔑 Set GitHub Token|set_github_token
-Settings|Mouse|🖱 Disable Mouse Reporting|configure_mouse_disable
-Settings|Mouse|🖱 Enable Mouse Reporting|configure_mouse_enable
+# -- [*] Settings --
+Settings|GitHub|[K] Set GitHub Token|set_github_token
+Settings|Mouse|[*] Disable Mouse Reporting|configure_mouse_disable
+Settings|Mouse|[*] Enable Mouse Reporting|configure_mouse_enable
