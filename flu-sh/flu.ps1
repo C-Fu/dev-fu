@@ -49,16 +49,16 @@ if ($MyInvocation.MyCommand.Path) {
     if (-not (Test-Path $Script:FLU_SCRIPT_DIR)) {
         New-Item -ItemType Directory -Path $Script:FLU_SCRIPT_DIR -Force | Out-Null
     }
+    # Remove stale cached files so fresh copies are always fetched
+    Remove-Item "$Script:FLU_SCRIPT_DIR\*" -Force -ErrorAction SilentlyContinue
     foreach ($f in @('tui.ps1', 'menu.ps1', 'modules.ps1', 'menu.db')) {
         $target = "$Script:FLU_SCRIPT_DIR\$f"
-        if (-not (Test-Path $target)) {
-            try {
-                Invoke-WebRequest -Uri "$Script:FLU_REMOTE_BASE/$f" -OutFile $target -UseBasicParsing -ErrorAction Stop
-            } catch {
-                Write-Error "Cannot fetch $f from GitHub. Check your internet connection."
-                $Script:FLU_SCRIPT_DIR = Get-Location
-                break
-            }
+        try {
+            Invoke-WebRequest -Uri "$Script:FLU_REMOTE_BASE/$f" -OutFile $target -UseBasicParsing -ErrorAction Stop
+        } catch {
+            Write-Error "Cannot fetch $f from GitHub. Check your internet connection."
+            $Script:FLU_SCRIPT_DIR = Get-Location
+            break
         }
     }
 }
