@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # modules.ps1 — Module Pipeline Library (port of modules.sh)
 #
 # Module fetch engine, metadata parser, parameter collection,

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # modules.Tests.ps1 — Pester tests for modules.ps1
 #
 # Run: pwsh -Command "Invoke-Pester ./flu-sh/modules.Tests.ps1"

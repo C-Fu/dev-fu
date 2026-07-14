@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # menu.ps1 — PowerShell Menu DSL Parser (port of menu.sh)
 #
 # Parses pipe-delimited menu definition files and provides

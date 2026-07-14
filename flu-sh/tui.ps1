@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # tui.ps1 — PowerShell TUI Engine Foundation
 #
 # ANSI rendering primitives, terminal init/restore with PS
