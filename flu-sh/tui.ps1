@@ -70,6 +70,57 @@ $Script:TUI_MAGENTA = "$ESC[35m"
 $Script:TUI_WHITE = "$ESC[37m"
 
 # ---------------------------------------------------------------------------
+# Section 2.5: Color Theme Support (D-17, D-18)
+# ---------------------------------------------------------------------------
+
+function Apply-FluTheme {
+    <#
+    .SYNOPSIS
+    Apply FLU_THEME to ANSI color variables.
+    Themes: dark (default), light, monochrome.
+
+    .DESCRIPTION
+    Reads $env:FLU_THEME and remaps ANSI color palette.
+    Called at startup after Get-FluPlatform.
+    Theme persists for the lifetime of the script.
+    #>
+    $theme = $env:FLU_THEME
+    if ([string]::IsNullOrEmpty($theme)) { $theme = 'dark' }
+
+    switch ($theme.ToLower()) {
+        'light' {
+            # Light theme: bright background colors (higher ANSI codes)
+            $Script:TUI_RED     = "$ESC[91m"   # Bright red
+            $Script:TUI_GREEN   = "$ESC[92m"   # Bright green
+            $Script:TUI_YELLOW  = "$ESC[93m"   # Bright yellow
+            $Script:TUI_CYAN    = "$ESC[96m"   # Bright cyan
+            $Script:TUI_MAGENTA = "$ESC[95m"   # Bright magenta
+            $Script:TUI_WHITE   = "$ESC[97m"   # Bright white
+            # Bold, dim, rev stay the same
+        }
+        'monochrome' {
+            # Monochrome: no colors at all
+            $Script:TUI_RED     = "$ESC[0m"
+            $Script:TUI_GREEN   = "$ESC[0m"
+            $Script:TUI_YELLOW  = "$ESC[0m"
+            $Script:TUI_CYAN    = "$ESC[0m"
+            $Script:TUI_MAGENTA = "$ESC[0m"
+            $Script:TUI_WHITE   = "$ESC[0m"
+            # Bold, dim, rev also reset
+            $Script:TUI_BOLD    = "$ESC[0m"
+            $Script:TUI_DIM     = "$ESC[0m"
+            $Script:TUI_REV     = "$ESC[0m"
+        }
+        'dark' {
+            # Dark theme: standard ANSI colors (default — no change needed)
+        }
+        default {
+            # Unknown theme: fall back to dark (no change)
+        }
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Section 3: Box Drawing Character Detection
 # ---------------------------------------------------------------------------
 
