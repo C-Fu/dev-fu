@@ -638,21 +638,24 @@ function Show-TuiSelect {
                 $row = $itemStartRow + $i
                 $isCurrent = ($itemIdx -eq $currentIndex)
 
-                # Render item at position
+                # Render item at position with V borders
                 $itemText = $Items[$itemIdx]
-                # Truncate to fit content width
                 if ($itemText.Length -gt $contentWidth) {
                     $itemText = $itemText.Substring(0, $contentWidth - 3) + '...'
                 }
                 $padLen = [Math]::Max(0, $contentWidth - $itemText.Length)
                 $paddedText = $itemText + (' ' * $padLen)
 
-                Move-TuiCursor -Row $row -Col ($boxX + 2)
+                Move-TuiCursor -Row $row -Col $boxX
+                Write-Host $Script:TUI_BOX_V -NoNewline
+                Write-Host " " -NoNewline
                 if ($isCurrent) {
                     Write-Host "$($Script:TUI_REV)$paddedText$($Script:TUI_RESET)" -NoNewline
                 } else {
                     Write-Host $paddedText -NoNewline
                 }
+                Write-Host " " -NoNewline
+                Write-Host $Script:TUI_BOX_V -NoNewline
             }
 
             $itemsEndRow = $itemStartRow + $itemsToRender - 1
