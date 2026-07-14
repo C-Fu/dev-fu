@@ -113,11 +113,12 @@ Plans:
   2. User running flu.ps1 benefits from SHA256 checksum verification and module caching during script fetching
   3. User running flu.ps1 can use CLI batch mode (`flu.ps1 --install ... --yes`) and color themes (`$env:FLU_THEME`)
   4. User running flu.ps1 can install/remove the four modern CLI tools (lazygit, starship, zoxide, eza) where platform-appropriate
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [ ] 14-01-PLAN.md — Core module pipeline: caching, SHA256 checksums, execution logging, .ps1 resolution (PS-01)
+- [ ] 14-02-PLAN.md — CLI batch mode, ASCII logo, color themes, startup display (PS-01)
+- [ ] 14-03-PLAN.md — .ps1 module scripts (65+), fust Windows cross-compile (PS-01)
 
 ### 📋 v3.0 Rust Binary (Planned)
 

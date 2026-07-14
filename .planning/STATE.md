@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-28)
 
 ## Current Position
 
-Phase: 21 of 21 (Build & Distribution) — COMPLETE
-Plan: 21-01 complete
-Status: Milestone complete
-Last activity: 2026-07-05 - Completed quick task 260705-iyu: gsd-sdk PATH setup + fust v3.0.0-alpha.14 release
+Phase: 14 (PowerShell Parity) — PLANNED
+Plans: 3 plans in 1 wave
+Status: Ready to execute
+Last activity: 2026-07-14 - Phase 14 plans created (caching, batch mode, .ps1 modules, cross-compile)
 
 Progress: [███████████████████] 100% (7/7 phases in v3.0)
 
