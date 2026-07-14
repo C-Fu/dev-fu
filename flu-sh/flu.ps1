@@ -219,13 +219,14 @@ function Get-FluPlatform {
 function Show-FluStartup {
     <#
     .SYNOPSIS
-    Display startup screen with detected platform info.
-    PowerShell port of flu.sh startup display (lines 73-137).
+    Display startup screen with ASCII logo and platform info.
+    PowerShell port of flu.sh startup display (lines 303-378) with logo.
 
     .DESCRIPTION
-    Shows a bordered box with OS, Distro, Package Manager, Architecture.
+    Shows the ASCII dev-fu logo at top, then a bordered box with
+    OS, Distro, Package Manager, Architecture, WSL status.
     Press any key to continue to the main menu.
-    Matches flu.sh visual output exactly (centered box, platform rows).
+    Matches flu.sh visual output exactly (logo + centered box).
     #>
     if ($Script:_tui_use_tui) {
         Initialize-Tui
@@ -234,11 +235,15 @@ function Show-FluStartup {
         $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
         $termRows = try { $Host.UI.RawUI.WindowSize.Height } catch { 24 }
 
+        # Render logo first (6 lines, top of screen)
+        Show-FluLogo
+
+        # Platform info box below logo
         $boxWidth = 50
         if ($boxWidth -gt ($termCols - 4)) { $boxWidth = $termCols - 4 }
         $boxHeight = 9
         $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
-        $boxY = [Math]::Max(0, [Math]::Floor(($termRows - $boxHeight) / 2))
+        $boxY = 7  # 6 logo lines + 1 gap
 
         Write-TuiBox -X $boxX -Y $boxY -Width $boxWidth -Height $boxHeight `
             -Title "$($Script:TUI_CYAN)flu.ps1 $($Script:FLU_VERSION)$($Script:TUI_RESET)"
@@ -274,7 +279,11 @@ function Show-FluStartup {
         Read-TuiKey | Out-Null
         Restore-Tui
     } else {
-        # Non-TUI: plain text
+        # Non-TUI: plain text logo
+        Write-Host "=============================================="
+        Write-Host "  dev-fu — Environment Setup Utility"
+        Write-Host "=============================================="
+        Write-Host ""
         Write-Host "flu.ps1 $($Script:FLU_VERSION)"
         Write-Host "OS: $($env:FLU_OS) | Distro: $($env:FLU_DISTRO)"
         Write-Host "Package Manager: $($env:FLU_PKG_MGR) | Arch: $($env:FLU_ARCH)"
@@ -538,6 +547,50 @@ function Test-FluHealth {
 }
 
 # ──────────────
+# 🎨 Logo Art — ASCII "dev-fu" LEGO-style block characters (D-15, D-16)
+# ──────────────
+# Renders the branded dev-fu logo centered in the terminal.
+# Uses $Script:TUI_MAGENTA for color matching flu.sh branding.
+# Logo is 6 lines tall, ~62 chars wide.
+
+function Show-FluLogo {
+    <#
+    .SYNOPSIS
+    Render ASCII dev-fu logo centered on screen.
+    PowerShell port of _flu_render_logo() from flu.sh.
+
+    .DESCRIPTION
+    Logo is 6 lines of UNICODE box-drawing art rendered in magenta.
+    Plain text fallback when ANSI not available (D-16).
+    #>
+    $termCols = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
+    $logoWidth = 62
+    $startCol = [Math]::Max(1, [Math]::Floor(($termCols - $logoWidth) / 2))
+
+    if ($Script:FluAnsiSupported) {
+        $color = $Script:TUI_MAGENTA
+        $reset = $Script:TUI_RESET
+    } else {
+        $color = ''
+        $reset = ''
+    }
+
+    $logoLines = @(
+        "██████╗ ███████╗██╗   ██╗       ███████╗██╗  ██╗",
+        "██╔══██╗██╔════╝██║   ██║       ██╔════╝██║  ██║",
+        "██║  ██║█████╗  ██║   ██║       █████╗  ███████║",
+        "██║  ██║██╔══╝  ╚██╗ ██╔╝       ██╔══╝  ██╔══██║",
+        "██████╔╝███████╗ ╚████╔╝        ██║     ██║  ██║",
+        "╚═════╝ ╚══════╝  ╚═══╝         ╚═╝     ╚═╝  ╚═╝"
+    )
+
+    for ($i = 0; $i -lt $logoLines.Count; $i++) {
+        Write-TuiAt -Row (1 + $i) -Col $startCol
+        Write-Host "$color$($logoLines[$i])$reset" -NoNewline
+    }
+}
+
+# ──────────────
 # 🚀 Main Entry Point
 # ──────────────
 # Main execution — called when flu.ps1 is run directly (not dot-sourced).
@@ -549,6 +602,32 @@ function Start-Flu {
     #>
     # Step 1: Detect platform
     Get-FluPlatform
+
+    # Step 1.5: Apply color theme (D-17)
+    if (Get-Command Apply-FluTheme -ErrorAction SilentlyContinue) {
+        Apply-FluTheme
+    }
+
+    # Step 1.6: Registry pre-fetch (non-blocking)
+    $Script:FLU_REGISTRY_CACHE = $null
+    try {
+        $regJson = Invoke-FluRegistryFetch -ErrorAction SilentlyContinue
+        if ($regJson) {
+            $Script:FLU_REGISTRY_CACHE = $regJson | ConvertFrom-Json
+        }
+    } catch { }
+
+    # Step 1.7: Dynamic menu assembly (merged menu.db + community modules)
+    $Script:FLU_MENU_FILE = "$Script:FLU_SCRIPT_DIR\menu.db"
+    if ($Script:FLU_REGISTRY_CACHE -and $Script:FLU_REGISTRY_CACHE.Count -gt 0) {
+        $mergedMenu = [System.IO.Path]::GetTempFileName() + '.db'
+        Get-Content "$Script:FLU_SCRIPT_DIR\menu.db" | Set-Content $mergedMenu
+        Add-Content $mergedMenu "`n# ── 🌐 Community Modules (from registry) ──"
+        foreach ($entry in $Script:FLU_REGISTRY_CACHE) {
+            Add-Content $mergedMenu "Community Modules|$($entry.category)|$($entry.name)|community/$($entry.action_id)"
+        }
+        $Script:FLU_MENU_FILE = $mergedMenu
+    }
 
     # Step 2: Show startup display
     Show-FluStartup
