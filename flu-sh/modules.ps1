@@ -49,17 +49,22 @@ $Script:FLU_CACHE_TTL = [TimeSpan]::FromHours(6)
 function Resolve-FluModuleUrl {
     <#
     .SYNOPSIS
-    Resolve action ID to GitHub raw URL.
+    Resolve action ID to GitHub raw URL with platform-appropriate extension.
     PowerShell port of flu_module_resolve_url().
 
     .PARAMETER ActionId
     Action identifier from menu.db (e.g., "install_python").
 
     .DESCRIPTION
-    Returns full URL: https://raw.githubusercontent.com/C-Fu/flu-modules/main/modules/<actionId>.sh
+    On Windows ($Script:FluIsWindows = $true): returns .ps1 URL (D-02).
+    On POSIX: returns .sh URL.
     #>
     param([string]$ActionId)
-    return "$($Script:FLU_MODULES_BASE_URL)$ActionId.sh"
+    $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
+    if ($Script:FluIsWindows) {
+        return "$base/$ActionId.ps1"
+    }
+    return "$base/$ActionId.sh"
 }
 
 # ---------------------------------------------------------------------------
@@ -224,7 +229,7 @@ function Invoke-FluModuleFetch {
       - Timeout: 10 seconds per attempt (matching curl --connect-timeout 10)
       - Actionable error messages including hints for network issues
     #>
-    param([string]$ActionId)
+    param([string]$ActionId, [string]$Extension = '')
 
     # Step 1: Check cache first (per D-08, D-11)
     if (Test-FluModuleCache -ActionId $ActionId) {
@@ -239,7 +244,13 @@ function Invoke-FluModuleFetch {
     $cacheDir = $Script:FLU_CACHE_DIR
     if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
 
-    $url = Resolve-FluModuleUrl -ActionId $ActionId
+    # Resolve URL: if Extension provided, construct directly; otherwise use Resolve-FluModuleUrl
+    if ($Extension) {
+        $base = $Script:FLU_MODULES_BASE_URL.TrimEnd('/')
+        $url = "$base/$ActionId.$Extension"
+    } else {
+        $url = Resolve-FluModuleUrl -ActionId $ActionId
+    }
     $maxAttempts = 3
     $delaySeconds = 2
 
@@ -548,6 +559,96 @@ function Invoke-FluModuleCollectParams {
 }
 
 # ---------------------------------------------------------------------------
+# Section 7.5: Execution Logging (per D-10, D-12)
+# ---------------------------------------------------------------------------
+
+function Get-FluLogPath {
+    <#
+    .SYNOPSIS
+    Resolve execution log file path.
+    PowerShell port of _flu_log_execution log file resolution.
+
+    .DESCRIPTION
+    Returns path: %APPDATA%\flu-sh\execution.log (per D-10).
+    #>
+    $logDir = "$env:APPDATA\flu-sh"
+    return Join-Path $logDir "execution.log"
+}
+
+function ConvertFrom-FluActionOperation {
+    <#
+    .SYNOPSIS
+    Classify action type from action_id prefix.
+    PowerShell port of _flu_classify_operation().
+
+    .PARAMETER ActionId
+    Action identifier (e.g., "install_python").
+
+    .DESCRIPTION
+    Returns operation type string based on action ID prefix.
+    Matches the POSIX _flu_classify_operation() classification.
+    #>
+    param([string]$ActionId)
+    if ($ActionId -match '^install_') { return 'install' }
+    if ($ActionId -match '^remove_') { return 'remove' }
+    if ($ActionId -match '^create_') { return 'create' }
+    if ($ActionId -match '^configure_') { return 'configure' }
+    if ($ActionId -match '^set_') { return 'set' }
+    if ($ActionId -match '^status_') { return 'status' }
+    if ($ActionId -match '^upgrade_') { return 'upgrade' }
+    return 'other'
+}
+
+function Write-FluExecutionLog {
+    <#
+    .SYNOPSIS
+    Append execution record to TSV log file.
+    PowerShell port of _flu_log_execution().
+
+    .PARAMETER ActionId
+    Action identifier executed.
+
+    .PARAMETER Operation
+    Classified operation type (install, remove, etc.).
+
+    .PARAMETER Result
+    Execution result: 'success' or 'fail'.
+
+    .PARAMETER Version
+    Module version string. Empty string becomes '-'.
+
+    .PARAMETER DurationSeconds
+    Execution duration in seconds. 0 with success becomes '-'.
+
+    .DESCRIPTION
+    Writes TSV row to %APPDATA%\flu-sh\execution.log with columns:
+    timestamp, action_id, operation, result, version, duration_seconds.
+    Creates header row if file does not exist (per D-12 format).
+    #>
+    param(
+        [string]$ActionId,
+        [string]$Operation,
+        [string]$Result,
+        [string]$Version,
+        [int]$DurationSeconds
+    )
+    $logPath = Get-FluLogPath
+    $logDir = Split-Path $logPath -Parent
+    if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+
+    $timestamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:sszzz'
+    $version = if ([string]::IsNullOrEmpty($Version)) { '-' } else { $Version }
+    $duration = if ($DurationSeconds -eq 0 -and $Result -eq 'success') { '-' } else { $DurationSeconds.ToString() }
+
+    # Write header if file doesn't exist
+    if (-not (Test-Path $logPath)) {
+        "timestamp`taction_id`toperation`tresult`tversion`tduration_seconds" | Out-File -FilePath $logPath -Encoding utf8
+    }
+
+    "$timestamp`t$ActionId`t$Operation`t$Result`t$version`t$duration" | Out-File -FilePath $logPath -Encoding utf8 -Append
+}
+
+# ---------------------------------------------------------------------------
 # Section 8: Module Execution (Invoke-FluModuleExecute)
 # ---------------------------------------------------------------------------
 
@@ -585,8 +686,19 @@ function Invoke-FluModuleExecute {
         return $null
     }
 
-    # Step 1: Fetch module
-    $scriptContent = Invoke-FluModuleFetch -ActionId $ActionId
+    # Step 1: Fetch module with .ps1→.sh fallback (per D-02, D-03, D-04)
+    $scriptContent = $null
+    if ($Script:FluIsWindows) {
+        # Try .ps1 first (Windows-native PowerShell module)
+        $scriptContent = Invoke-FluModuleFetch -ActionId $ActionId -Extension 'ps1'
+        if (-not $scriptContent) {
+            # Fall back to .sh via WSL
+            Write-Host "  $($Script:TUI_DIM)[WSL fallback]$($Script:TUI_RESET) Trying .sh module..."
+            $scriptContent = Invoke-FluModuleFetch -ActionId $ActionId -Extension 'sh'
+        }
+    } else {
+        $scriptContent = Invoke-FluModuleFetch -ActionId $ActionId -Extension 'sh'
+    }
     if (-not $scriptContent) {
         return [PSCustomObject]@{
             ExitCode   = 1
@@ -655,6 +767,9 @@ function Invoke-FluModuleExecute {
     $shPath = $tempScript -replace '\\', '/'  # WSL path conversion
     $timeout = [int]$metadata.Timeout
 
+    # Track execution start time for logging
+    $executionStartTime = Get-Date
+
     try {
         $arguments = @()
 
@@ -689,6 +804,14 @@ function Invoke-FluModuleExecute {
 
     # Cleanup temp script
     Remove-Item $tempScript -ErrorAction SilentlyContinue
+
+    # Execution logging (per D-10, D-12)
+    $durationSeconds = [int](Get-Date).Subtract($executionStartTime).TotalSeconds
+    Write-FluExecutionLog -ActionId $ActionId `
+        -Operation $(ConvertFrom-FluActionOperation -ActionId $ActionId) `
+        -Result $(if ($exitCode -eq 0) { 'success' } else { 'fail' }) `
+        -Version $metadata.Version `
+        -DurationSeconds $durationSeconds
 
     return [PSCustomObject]@{
         ExitCode   = $exitCode
