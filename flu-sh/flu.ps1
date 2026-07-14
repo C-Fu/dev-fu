@@ -16,6 +16,77 @@
 # ============================================================
 
 # ──────────────
+# 📋 CLI Argument Parsing (matching flu.sh behavior — before TTY reattach)
+# ──────────────
+# D-05: Same CLI flags as flu.sh — --install, --remove, --list, --yes, --json, --help
+# PowerShell param() binding provides native argument parsing.
+
+param(
+    [string]$install,
+    [string]$remove,
+    [switch]$list,
+    [switch]$yes,
+    [switch]$json,
+    [switch]$help
+)
+
+# ──────────────
+# 📋 Early CLI Detection (before TTY reattach — matching flu.sh behavior)
+# ──────────────
+
+$Script:_fluIsCli = $help -or $list -or $install -or $remove
+
+if ($help) {
+    Write-Host "Usage: flu.ps1 [OPTIONS]"
+    Write-Host ""
+    Write-Host "Options:"
+    Write-Host "  --install <ids>  Install modules (comma-separated action IDs)"
+    Write-Host "  --remove <ids>   Remove modules (comma-separated action IDs)"
+    Write-Host "  --list           List available modules"
+    Write-Host "  --yes            Skip confirmations (batch mode)"
+    Write-Host "  --json           JSON output (with --list)"
+    Write-Host "  --help           Show this help message"
+    exit 0
+}
+
+if ($list) {
+    # Source subsystems needed for listing
+    $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+    if (-not $Script:FLU_SCRIPT_DIR) { $Script:FLU_SCRIPT_DIR = Get-Location }
+    . "$Script:FLU_SCRIPT_DIR\tui.ps1"
+    . "$Script:FLU_SCRIPT_DIR\modules.ps1"
+    Get-FluPlatform
+    Apply-FluTheme
+    if ($json) {
+        Invoke-FluBatchList -JsonMode
+    } else {
+        Invoke-FluBatchList
+    }
+    exit 0
+}
+
+if ($install -or $remove) {
+    $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+    if (-not $Script:FLU_SCRIPT_DIR) { $Script:FLU_SCRIPT_DIR = Get-Location }
+    . "$Script:FLU_SCRIPT_DIR\tui.ps1"
+    . "$Script:FLU_SCRIPT_DIR\modules.ps1"
+    Get-FluPlatform
+    Apply-FluTheme
+
+    $allActions = @()
+    if ($install) { $allActions += ($install -split ',') | ForEach-Object { $_.Trim() } }
+    if ($remove) { $allActions += ($remove -split ',') | ForEach-Object { $_.Trim() } }
+
+    $flags = if ($yes) { "yes" } else { "" }
+
+    $exitCode = Invoke-FluBatchRun -ActionIds $allActions -Flags $flags
+    exit $exitCode
+}
+
+# Not in CLI mode — proceed normally (TTY reattach, etc.)
+$Script:_fluIsCli = $false
+
+# ──────────────
 # 📡 TTY Reattachment (for irm | iex)
 # ──────────────
 # PowerShell equivalent of flu.sh's exec 0</dev/tty.
@@ -24,7 +95,7 @@
 # [Console]::OpenStandardInput() achieves this.
 # If no console available, we fall through to fallback prompted mode.
 
-if ([Console]::IsInputRedirected) {
+if (-not $Script:_fluIsCli -and [Console]::IsInputRedirected) {
     try {
         # Attempt to reattach to console stdin
         $stdin = [Console]::OpenStandardInput()

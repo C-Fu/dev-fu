@@ -963,3 +963,216 @@ function Write-FluModuleResult {
     Read-TuiKey | Out-Null
     Restore-Tui
 }
+
+# ---------------------------------------------------------------------------
+# Section 11: Batch Execution Functions (Plan 14-02 — CLI batch mode)
+# ---------------------------------------------------------------------------
+
+function Invoke-FluBatchRun {
+    <#
+    .SYNOPSIS
+    Non-interactive batch module execution (matching flu_batch_run).
+    PowerShell port of flu_batch_run() from modules.sh lines 739-947.
+
+    .PARAMETER ActionIds
+    Array of action IDs to execute in batch.
+
+    .PARAMETER Flags
+    Batch flags: "yes" for --yes mode (skip confirmations).
+
+    .DESCRIPTION
+    Validates each action ID against menu.db, fetches and executes
+    each module sequentially, prints results, and returns exit code.
+    Continues on failure — collects all results before final summary.
+    Exit 0 if all succeed, exit 1 if any fail.
+
+    Threat mitigation T-14-02-01: action IDs validated against menu.db.
+    #>
+    param([string[]]$ActionIds, [string]$Flags)
+
+    $ok = 0
+    $fail = 0
+
+    if ($ActionIds.Count -eq 0) {
+        Write-Error "Error: no action IDs provided"
+        return 1
+    }
+
+    $menuFile = "$Script:FLU_SCRIPT_DIR\menu.db"
+
+    foreach ($aid in $ActionIds) {
+        if ([string]::IsNullOrEmpty($aid)) { continue }
+
+        # Validate action_id against menu.db (T-14-02-01: mitigate)
+        $isCommunity = $aid -match '^community/'
+        if (-not $isCommunity -and (Test-Path $menuFile)) {
+            $validActions = Get-Content $menuFile | Where-Object { $_ -notmatch '^\s*(#|$)' } | ForEach-Object { ($_ -split '\|')[3].Trim() }
+            $valid = $validActions -contains $aid
+            if (-not $valid) {
+                Write-Host "✗ $aid — Unknown action ID"
+                $fail++
+                continue
+            }
+        }
+
+        Write-Host "▶ $aid"
+
+        # Fetch module via the resolution pipeline
+        $scriptContent = $null
+        if ($Script:FluIsWindows) {
+            $scriptContent = Invoke-FluModuleFetch -ActionId $aid -Extension 'ps1'
+        }
+        if (-not $scriptContent) {
+            $scriptContent = Invoke-FluModuleFetch -ActionId $aid
+        }
+
+        if (-not $scriptContent) {
+            Write-Host "✗ $aid — Fetch failed"
+            $fail++
+            continue
+        }
+
+        # Parse metadata
+        $metadata = ConvertFrom-FluModuleMetadata -ScriptContent $scriptContent
+        if (-not $metadata) {
+            Write-Host "✗ $aid — Metadata parse error"
+            $fail++
+            continue
+        }
+
+        # Check for @params — reject in --yes mode (D-07)
+        if (-not [string]::IsNullOrEmpty($metadata.Params)) {
+            if ($Flags -eq 'yes') {
+                Write-Host "✗ $aid — Requires parameters, use interactive mode"
+                $fail++
+                continue
+            } else {
+                Write-Host "⚠ $aid — Requires parameters, skipping"
+                $fail++
+                continue
+            }
+        }
+
+        # Execute module
+        $startTime = Get-Date
+        $tempScript = [System.IO.Path]::GetTempFileName() + '.ps1'
+        Set-Content -Path $tempScript -Value $scriptContent -NoNewline
+
+        try {
+            if ($Script:FluIsWindows) {
+                $process = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile', '-File', $tempScript) -NoNewWindow -Wait -PassThru
+                $exitCode = $process.ExitCode
+            } else {
+                # Cross-platform: use pwsh if available, otherwise skip
+                if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+                    $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-File', $tempScript) -NoNewWindow -Wait -PassThru
+                    $exitCode = $process.ExitCode
+                } else {
+                    Write-Host "⚠ $aid — No PowerShell available to execute module"
+                    $exitCode = 1
+                }
+            }
+        } catch {
+            $exitCode = 1
+        }
+
+        Remove-Item $tempScript -ErrorAction SilentlyContinue
+        $durationSeconds = [int](Get-Date).Subtract($startTime).TotalSeconds
+
+        # Log execution
+        $operation = ConvertFrom-FluActionOperation -ActionId $aid
+        $result = if ($exitCode -eq 0) { 'success' } else { 'fail' }
+        Write-FluExecutionLog -ActionId $aid -Operation $operation -Result $result -Version $metadata.Version -DurationSeconds $durationSeconds
+
+        # Print result
+        if ($exitCode -eq 0) {
+            Write-Host "✓ $aid — Complete"
+            $ok++
+        } else {
+            Write-Host "✗ $aid — Failed (exit $exitCode)"
+            $fail++
+        }
+    }
+
+    # Summary
+    Write-Host ""
+    Write-Host "$ok succeeded, $fail failed"
+
+    return $(if ($fail -gt 0) { 1 } else { 0 })
+}
+
+function Invoke-FluBatchList {
+    <#
+    .SYNOPSIS
+    List available modules in batch mode (matching flu_batch_list).
+    PowerShell port of flu_batch_list() from modules.sh lines 961-1050+.
+
+    .PARAMETER JsonMode
+    If set, output as JSON array. Otherwise, plain text table.
+
+    .DESCRIPTION
+    Reads menu.db and (optionally) community registry and outputs
+    formatted table or JSON array of available modules.
+    #>
+    param([switch]$JsonMode)
+
+    $menuFile = "$Script:FLU_SCRIPT_DIR\menu.db"
+    if (-not (Test-Path $menuFile)) {
+        Write-Error "Menu database not found: $menuFile"
+        return 1
+    }
+
+    if ($JsonMode) {
+        # JSON output
+        $entries = @()
+        Get-Content $menuFile | Where-Object { $_ -notmatch '^\s*(#|$)' } | ForEach-Object {
+            $parts = $_ -split '\|'
+            if ($parts.Count -ge 4) {
+                $entries += [PSCustomObject]@{
+                    category    = $parts[0].Trim()
+                    subcategory = $parts[1].Trim()
+                    name        = $parts[2].Trim()
+                    action_id   = $parts[3].Trim()
+                }
+            }
+        }
+        # Try community modules
+        try {
+            $registryJson = Invoke-FluRegistryFetch -ErrorAction SilentlyContinue
+            if ($registryJson) {
+                $communityEntries = $registryJson | ConvertFrom-Json
+                foreach ($entry in $communityEntries) {
+                    $entries += [PSCustomObject]@{
+                        category    = "Community Modules"
+                        subcategory = $entry.category
+                        name        = $entry.name
+                        action_id   = "community/$($entry.action_id)"
+                    }
+                }
+            }
+        } catch {}
+
+        Write-Host ($entries | ConvertTo-Json -Depth 3)
+    } else {
+        # Plain text table
+        Write-Host ("{0,-20} {1,-16} {2,-40} {3}" -f "Category", "Subcategory", "Name", "Action ID")
+        Write-Host ("{0,-20} {1,-16} {2,-40} {3}" -f "--------", "-----------", "----", "---------")
+        Get-Content $menuFile | Where-Object { $_ -notmatch '^\s*(#|$)' } | ForEach-Object {
+            $parts = $_ -split '\|'
+            if ($parts.Count -ge 4) {
+                Write-Host ("{0,-20} {1,-16} {2,-40} {3}" -f $parts[0].Trim(), $parts[1].Trim(), $parts[2].Trim(), $parts[3].Trim())
+            }
+        }
+        # Try community modules
+        try {
+            $registryJson = Invoke-FluRegistryFetch -ErrorAction SilentlyContinue
+            if ($registryJson) {
+                Write-Host "`n--- Community Modules ---"
+                $communityEntries = $registryJson | ConvertFrom-Json
+                foreach ($entry in $communityEntries) {
+                    Write-Host ("{0,-20} {1,-16} {2,-40} {3}" -f "Community Modules", $entry.category, $entry.name, "community/$($entry.action_id)")
+                }
+            }
+        } catch {}
+    }
+}
