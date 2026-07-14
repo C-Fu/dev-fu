@@ -42,7 +42,7 @@ $Script:FLU_VERSION = "v3.0.0-alpha.6"
 
 if ($MyInvocation.MyCommand.Path) {
     $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-} elseif (-not $Script:FLU_SCRIPT_DIR) {
+} else {
     # Remote/iex mode -- fetch sibling files to temp directory
     $Script:FLU_REMOTE_BASE = 'https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh'
     $Script:FLU_SCRIPT_DIR = "$env:TEMP\flu-sh"
@@ -52,7 +52,13 @@ if ($MyInvocation.MyCommand.Path) {
     foreach ($f in @('tui.ps1', 'menu.ps1', 'modules.ps1', 'menu.db')) {
         $target = "$Script:FLU_SCRIPT_DIR\$f"
         if (-not (Test-Path $target)) {
-            Invoke-WebRequest -Uri "$Script:FLU_REMOTE_BASE/$f" -OutFile $target -UseBasicParsing
+            try {
+                Invoke-WebRequest -Uri "$Script:FLU_REMOTE_BASE/$f" -OutFile $target -UseBasicParsing -ErrorAction Stop
+            } catch {
+                Write-Error "Cannot fetch $f from GitHub. Check your internet connection."
+                $Script:FLU_SCRIPT_DIR = Get-Location
+                break
+            }
         }
     }
 }
