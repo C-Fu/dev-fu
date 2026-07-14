@@ -48,11 +48,14 @@ if ($MyInvocation.MyCommand.Path) {
     if (-not (Test-Path $Script:FLU_SCRIPT_DIR)) {
         New-Item -ItemType Directory -Path $Script:FLU_SCRIPT_DIR -Force | Out-Null
     }
-    $cb = Get-Random
+    # Ensure TLS 1.2 for GitHub (PS 5.1 defaults to Ssl3/Tls which GitHub rejects)
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
+    $cb = [string](Get-Random)
     foreach ($f in @('tui.ps1', 'menu.ps1', 'modules.ps1', 'menu.db')) {
         $target = "$Script:FLU_SCRIPT_DIR\$f"
         try {
-            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/$f?cb=$cb" -OutFile $target -UseBasicParsing -ErrorAction Stop
+            $url = "https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/$f" + "?cb=$cb"
+            Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -ErrorAction Stop
         } catch {
             Write-Error "Cannot fetch $f from GitHub. Check your internet connection."
             $Script:FLU_SCRIPT_DIR = Get-Location
