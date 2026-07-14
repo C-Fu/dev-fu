@@ -34,6 +34,14 @@ $Script:FLU_MODULES_BASE_URL = if ($env:FLU_MODULES_BASE_URL) {
     "https://raw.githubusercontent.com/C-Fu/flu-modules/main/modules/"
 }
 
+# Cache and checksum configuration (per D-08, D-11)
+$Script:FLU_CACHE_DIR = if ($env:FLU_CACHE_DIR) {
+    $env:FLU_CACHE_DIR
+} else {
+    "$env:LOCALAPPDATA\flu-sh\cache"
+}
+$Script:FLU_CACHE_TTL = [TimeSpan]::FromHours(6)
+
 # ---------------------------------------------------------------------------
 # Section 3: URL Resolution
 # ---------------------------------------------------------------------------
@@ -55,19 +63,158 @@ function Resolve-FluModuleUrl {
 }
 
 # ---------------------------------------------------------------------------
+# Section 3.5: Cache Functions
+# ---------------------------------------------------------------------------
+
+function Get-FluModuleCachePath {
+    <#
+    .SYNOPSIS
+    Resolve cache file path for an action ID.
+
+    .PARAMETER ActionId
+    Action identifier (e.g., "install_python").
+
+    .DESCRIPTION
+    Returns path under $FLU_CACHE_DIR. Slashes in ActionId are replaced
+    with underscores for safe filenames.
+    #>
+    param([string]$ActionId)
+    $safeId = $ActionId -replace '[/\\]', '_'
+    return Join-Path $Script:FLU_CACHE_DIR "$safeId.ps1"
+}
+
+function Test-FluModuleCache {
+    <#
+    .SYNOPSIS
+    Check if a valid (non-expired) cache entry exists.
+
+    .PARAMETER ActionId
+    Action identifier.
+
+    .DESCRIPTION
+    Returns $true if cache file exists, is non-empty, and is within TTL.
+    #>
+    param([string]$ActionId)
+    $cachePath = Get-FluModuleCachePath -ActionId $ActionId
+    if (-not (Test-Path $cachePath)) { return $false }
+    if (-not (Get-Item $cachePath).Length -gt 0) { return $false }
+    $age = (Get-Date) - (Get-Item $cachePath).LastWriteTime
+    return $age -lt $Script:FLU_CACHE_TTL
+}
+
+function Read-FluModuleCache {
+    <#
+    .SYNOPSIS
+    Read cached module script content.
+
+    .PARAMETER ActionId
+    Action identifier.
+    #>
+    param([string]$ActionId)
+    $cachePath = Get-FluModuleCachePath -ActionId $ActionId
+    if (Test-Path $cachePath) {
+        return Get-Content $cachePath -Raw
+    }
+    return $null
+}
+
+function Write-FluModuleCache {
+    <#
+    .SYNOPSIS
+    Write module script content to cache atomically.
+
+    .PARAMETER ActionId
+    Action identifier.
+
+    .PARAMETER Content
+    Module script content to cache.
+    #>
+    param([string]$ActionId, [string]$Content)
+    $cacheDir = $Script:FLU_CACHE_DIR
+    if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+    $cachePath = Get-FluModuleCachePath -ActionId $ActionId
+    $tmpPath = "$cacheDir\.tmp_$([System.IO.Path]::GetRandomFileName())"
+    Set-Content -Path $tmpPath -Value $Content -NoNewline -Encoding utf8
+    Move-Item -Path $tmpPath -Destination $cachePath -Force
+}
+
+function Invoke-FluModuleSha256 {
+    <#
+    .SYNOPSIS
+    Compute SHA256 hash of module script content.
+
+    .PARAMETER Content
+    Script content string to hash.
+    #>
+    param([string]$Content)
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
+    $stream = [System.IO.MemoryStream]::new($bytes)
+    $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash.ToLower()
+    $stream.Dispose()
+    return $hash
+}
+
+function Test-FluModuleChecksum {
+    <#
+    .SYNOPSIS
+    Verify module script content against MANIFEST.sha256.
+
+    .PARAMETER ActionId
+    Action identifier.
+
+    .PARAMETER Content
+    Module script content to verify.
+
+    .DESCRIPTION
+    Fetches MANIFEST.sha256 from the module base URL, looks up the
+    expected SHA256 hash for the action ID, and compares it against
+    the computed hash of the content. Returns $true if valid, $false
+    if mismatch.
+
+    If the manifest cannot be fetched or the action ID has no entry,
+    a warning is emitted and $true is returned (skip verification).
+    #>
+    param([string]$ActionId, [string]$Content)
+    $manifestUrl = "$($Script:FLU_MODULES_BASE_URL)MANIFEST.sha256"
+    try {
+        $manifest = (Invoke-WebRequest -Uri $manifestUrl -UseBasicParsing -TimeoutSec 10).Content
+    } catch {
+        Write-Warning "[WARN] Could not fetch MANIFEST.sha256 — skipping checksum verification"
+        return $true
+    }
+    $expectedLine = ($manifest -split "`n") | Where-Object { $_ -match "\s$([regex]::Escape($ActionId))\.(ps1|sh)$" } | Select-Object -First 1
+    if (-not $expectedLine) {
+        Write-Warning "[WARN] No checksum entry for $ActionId — skipping verification"
+        return $true
+    }
+    $expectedHash = ($expectedLine -split '\s+')[0]
+    $actualHash = Invoke-FluModuleSha256 -Content $Content
+    if ($expectedHash -ne $actualHash) {
+        Write-Error "[ERROR] SHA256 checksum mismatch for $ActionId"
+        Write-Error "  Expected: $expectedHash"
+        Write-Error "  Actual:   $actualHash"
+        Write-Error "  The module script may be tampered or corrupted."
+        return $false
+    }
+    Write-Host "  $($Script:TUI_GREEN)[verified]$($Script:TUI_RESET) SHA256 checksum OK" -NoNewline
+    return $true
+}
+
+# ---------------------------------------------------------------------------
 # Section 4: Module Fetch (Invoke-FluModuleFetch)
 # ---------------------------------------------------------------------------
 
 function Invoke-FluModuleFetch {
     <#
     .SYNOPSIS
-    Fetch a module script from GitHub with retry logic.
+    Fetch a module script from GitHub with caching, checksum verification, and retry logic.
     PowerShell port of flu_module_fetch().
 
     .PARAMETER ActionId
     Action identifier (e.g., "install_python").
 
     .DESCRIPTION
+    Pipeline: cache check → network fetch (3 retries) → SHA256 checksum verify → cache store → return.
     Uses Invoke-WebRequest (per D-07) with 3 retries and 2-second delay.
     Returns module script content as string on success.
     Returns $null and writes errors to error stream on failure.
@@ -79,6 +226,19 @@ function Invoke-FluModuleFetch {
     #>
     param([string]$ActionId)
 
+    # Step 1: Check cache first (per D-08, D-11)
+    if (Test-FluModuleCache -ActionId $ActionId) {
+        $cached = Read-FluModuleCache -ActionId $ActionId
+        if ($cached) {
+            Write-Host "  $($Script:TUI_DIM)[cached]$($Script:TUI_RESET) $ActionId" -NoNewline
+            return $cached
+        }
+    }
+
+    # Ensure cache directory exists for later store
+    $cacheDir = $Script:FLU_CACHE_DIR
+    if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+
     $url = Resolve-FluModuleUrl -ActionId $ActionId
     $maxAttempts = 3
     $delaySeconds = 2
@@ -86,7 +246,17 @@ function Invoke-FluModuleFetch {
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         try {
             $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
-            return $response.Content
+            $content = $response.Content
+
+            # Step 3: Verify SHA256 checksum against manifest (per T-14-01)
+            if (-not (Test-FluModuleChecksum -ActionId $ActionId -Content $content)) {
+                return $null
+            }
+
+            # Step 4: Store to cache
+            Write-FluModuleCache -ActionId $ActionId -Content $content
+
+            return $content
         } catch {
             $statusCode = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
             $errorMsg = $_.Exception.Message
