@@ -63,10 +63,6 @@ jobs:
             os: windows-latest
             use_zig: false
             ext: .exe
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
-            use_zig: false
-            ext: .exe
     runs-on: ${{ matrix.os }}
     defaults:
       run:

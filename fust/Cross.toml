@@ -9,3 +9,6 @@ image = "ghcr.io/cross-rs/aarch64-unknown-linux-musl:main"
 
 [target.armv7-unknown-linux-musleabihf]
 image = "ghcr.io/cross-rs/armv7-unknown-linux-musleabihf:main"
+
+[target.x86_64-pc-windows-msvc]
+image = "ghcr.io/cross-rs/x86_64-pc-windows-msvc:main"
