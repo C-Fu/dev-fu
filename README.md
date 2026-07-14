@@ -37,12 +37,12 @@ curl -fsSL https://github.com/C-Fu/dev-fu/releases/latest/download/run.sh | FLU_
 
 ```bash
 # Option 1: curl-pipe-bash (bash / zsh / any POSIX shell)
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/flu.sh)
 ```
 
 ```sh
 # Option 1 alt: BusyBox / dash / ash (no process substitution)
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ```bash
@@ -56,12 +56,12 @@ cd dev-fu
 
 ```bash
 # Option 1: curl-pipe-bash
-bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh)
+bash <(curl -H 'Cache-Control: no-cache' -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu-sh/fu.sh)
 ```
 
 ```sh
 # Option 2: BusyBox / dash / ash
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/fu-sh/fu.sh -o /tmp/fu.sh && sh /tmp/fu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/fu-sh/fu.sh -o /tmp/fu.sh && sh /tmp/fu.sh
 ```
 
 ```bash
@@ -75,7 +75,7 @@ bash ./fu-sh/fu.sh
 
 ```powershell
 # Option 1: Run from GitHub (PowerShell 5.1+)
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.ps1'))
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/flu.ps1'))
 ```
 
 ```powershell
@@ -307,7 +307,7 @@ git clone https://github.com/C-Fu/dev-fu.git && cd dev-fu && ./flu-sh/flu.sh
 BusyBox and dash don't support process substitution (`<(curl ...)`). Use the alternate form:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/flu.sh/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
+curl -fsSL https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/flu.sh -o /tmp/flu.sh && sh /tmp/flu.sh
 ```
 
 ### Permission denied
