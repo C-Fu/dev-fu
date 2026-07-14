@@ -42,7 +42,7 @@
 - [ ] **Phase 11: Modern CLI Tools** — lazygit, starship, zoxide, and eza install/remove modules
 - [x] **Phase 12: Advanced Module System** — CLI batch mode and module registry with auto-discovery
 - [ ] **Phase 13: UI & Terminal Polish** — Color themes and terminal resize handling
-- [ ] **Phase 14: PowerShell Parity** — flu.ps1 mirrors all v1.1 + v2.0 features
+- [x] **Phase 14: PowerShell Parity** — flu.ps1 mirrors all v1.1 + v2.0 features (completed 2026-07-14)
 
 ## Phase Details
 
@@ -116,9 +116,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Core module pipeline: caching, SHA256 checksums, execution logging, .ps1 resolution (PS-01)
-- [ ] 14-02-PLAN.md — CLI batch mode, ASCII logo, color themes, startup display (PS-01)
-- [ ] 14-03-PLAN.md — .ps1 module scripts (65+), fust Windows cross-compile (PS-01)
+- [x] 14-01-PLAN.md — Core module pipeline: caching, SHA256 checksums, execution logging, .ps1 resolution (PS-01)
+- [x] 14-02-PLAN.md — CLI batch mode, ASCII logo, color themes, startup display (PS-01)
+- [x] 14-03-PLAN.md — .ps1 module scripts (65+), fust Windows cross-compile (PS-01)
 
 ### 📋 v3.0 Rust Binary (Planned)
 
@@ -245,7 +245,7 @@ Plans:
 | 11. Modern CLI Tools | v2.0 | 0/2 | Planned | - |
 | 12. Advanced Module System | v2.0 | 2/2 | Complete | 2026-05-28 |
 | 13. UI & Terminal Polish | v2.0 | 0/? | Not started | - |
-| 14. PowerShell Parity | v2.0 | 0/? | Not started | - |
+| 14. PowerShell Parity | v2.0 | 3/3 | Complete   | 2026-07-14 |
 | 15. Rust Project Scaffold + CLI | v3.0 | 1/1 | Complete | 2026-06-11 |
 | 16. TUI Engine | v3.0 | 2/2 | Complete | 2026-06-11 |
 | 17. Menu System | v3.0 | 1/1 | Complete | 2026-06-11 |
