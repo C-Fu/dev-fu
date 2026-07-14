@@ -39,19 +39,18 @@ param(
 # In remote mode (irm | iex): fetch siblings from GitHub raw URL.
 
 $Script:FLU_VERSION = "v3.0.0-alpha.6"
-$Script:FLU_SHA = "8943080"
-
 if ($MyInvocation.MyCommand.Path) {
     $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 } else {
-    # Remote/iex mode -- fetch sibling files at pinned SHA to bypass CDN cache
+    # Remote/iex mode -- fetch sibling files from GitHub
     $Script:FLU_SCRIPT_DIR = "$env:TEMP\flu-sh"
     New-Item -ItemType Directory -Path $Script:FLU_SCRIPT_DIR -Force -ErrorAction SilentlyContinue | Out-Null
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
+    Remove-Item "$Script:FLU_SCRIPT_DIR\*" -Force -ErrorAction SilentlyContinue
     foreach ($f in @('tui.ps1', 'menu.ps1', 'modules.ps1', 'menu.db')) {
         $target = "$Script:FLU_SCRIPT_DIR\$f"
         try {
-            $url = "https://raw.githubusercontent.com/C-Fu/dev-fu/$Script:FLU_SHA/flu-sh/$f"
+            $url = "https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh/$f"
             Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -ErrorAction Stop
         } catch {
             Write-Error "Cannot fetch $f from GitHub. Check your internet connection."
