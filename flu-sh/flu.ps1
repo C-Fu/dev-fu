@@ -34,6 +34,32 @@ param(
 # --- Early CLI Detection (before TTY reattach -- matching flu.sh behavior)
 # --------------
 
+# Resolve script directory for dot-sourcing sibling files.
+# In local mode (git clone): from script path.
+# In remote mode (irm | iex): fetch siblings from GitHub raw URL.
+
+$Script:FLU_VERSION = "v3.0.0-alpha.6"
+
+if ($MyInvocation.MyCommand.Path) {
+    $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+} elseif (-not $Script:FLU_SCRIPT_DIR) {
+    # Remote/iex mode -- fetch sibling files to temp directory
+    $Script:FLU_REMOTE_BASE = 'https://raw.githubusercontent.com/C-Fu/dev-fu/refs/heads/main/flu-sh'
+    $Script:FLU_SCRIPT_DIR = "$env:TEMP\flu-sh"
+    if (-not (Test-Path $Script:FLU_SCRIPT_DIR)) {
+        New-Item -ItemType Directory -Path $Script:FLU_SCRIPT_DIR -Force | Out-Null
+    }
+    foreach ($f in @('tui.ps1', 'menu.ps1', 'modules.ps1', 'menu.db')) {
+        $target = "$Script:FLU_SCRIPT_DIR\$f"
+        if (-not (Test-Path $target)) {
+            Invoke-WebRequest -Uri "$Script:FLU_REMOTE_BASE/$f" -OutFile $target -UseBasicParsing
+        }
+    }
+}
+if (-not $Script:FLU_SCRIPT_DIR) {
+    $Script:FLU_SCRIPT_DIR = Get-Location
+}
+
 $Script:_fluIsCli = $help -or $list -or $install -or $remove
 
 if ($help) {
@@ -50,9 +76,6 @@ if ($help) {
 }
 
 if ($list) {
-    # Source subsystems needed for listing
-    $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-    if (-not $Script:FLU_SCRIPT_DIR) { $Script:FLU_SCRIPT_DIR = Get-Location }
     . "$Script:FLU_SCRIPT_DIR\tui.ps1"
     . "$Script:FLU_SCRIPT_DIR\modules.ps1"
     Get-FluPlatform
@@ -66,8 +89,6 @@ if ($list) {
 }
 
 if ($install -or $remove) {
-    $Script:FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-    if (-not $Script:FLU_SCRIPT_DIR) { $Script:FLU_SCRIPT_DIR = Get-Location }
     . "$Script:FLU_SCRIPT_DIR\tui.ps1"
     . "$Script:FLU_SCRIPT_DIR\modules.ps1"
     Get-FluPlatform
@@ -108,20 +129,16 @@ if (-not $Script:_fluIsCli -and [Console]::IsInputRedirected) {
 # --------------
 # [*] Subsystem Sourcing (per D-02)
 # --------------
-# Resolve script directory for dot-sourcing sibling files
-$FLU_SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $FLU_SCRIPT_DIR) {
-    $FLU_SCRIPT_DIR = Get-Location
-}
-$Script:FLU_VERSION = "v3.0.0-alpha.6"
+# $Script:FLU_SCRIPT_DIR already resolved above (CLI detection section).
+# Reuse it here for the interactive path.
 
 # Source subsystems in dependency order (matching flu.sh D-01 order):
 #   tui.ps1 first (TUI primitives)
 #   menu.ps1 second (needs TUI_RESET)
 #   modules.ps1 third (needs TUI_RESET + widgets)
-. "$FLU_SCRIPT_DIR\tui.ps1"
-. "$FLU_SCRIPT_DIR\menu.ps1"
-. "$FLU_SCRIPT_DIR\modules.ps1"
+. "$Script:FLU_SCRIPT_DIR\tui.ps1"
+. "$Script:FLU_SCRIPT_DIR\menu.ps1"
+. "$Script:FLU_SCRIPT_DIR\modules.ps1"
 
 # --------------
 # [*] Signal-Safe Cleanup
@@ -138,12 +155,17 @@ function global:Exit-FluCleanup {
     exit 130
 }
 
-# Register Ctrl-C handler
-[Console]::CancelKeyPress += {
-    $eventArgs = $_.EventArgs
-    $eventArgs.Cancel = $true  # Prevent immediate termination
-    Exit-FluCleanup
-}
+# Register Ctrl-C handler (not available in all PowerShell hosts)
+try {
+    $cancelHandler = [Console]::CancelKeyPress
+    if ($cancelHandler -ne $null) {
+        [Console]::CancelKeyPress += {
+            $eventArgs = $_.EventArgs
+            $eventArgs.Cancel = $true
+            Exit-FluCleanup
+        }
+    }
+} catch {}
 
 # --------------
 # [+] Platform Detection (per D-02, D-03)
@@ -424,7 +446,7 @@ function Start-FluMainLoop {
     4. Error Recovery -> exit code hints
     Loop until user cancels at root menu.
     #>
-    $menuFile = "$FLU_SCRIPT_DIR\menu.db"
+    $menuFile = "$Script:FLU_SCRIPT_DIR\menu.db"
 
     # Verify menu file exists (matching flu.sh line 201-206)
     if (-not (Test-Path $menuFile)) {
@@ -535,7 +557,7 @@ function Test-FluHealth {
     }
 
     # Check menu.db
-    if (-not (Test-Path "$FLU_SCRIPT_DIR\menu.db")) {
+    if (-not (Test-Path "$Script:FLU_SCRIPT_DIR\menu.db")) {
         Write-Warning "menu.db not found"
         $ok = $false
     }
