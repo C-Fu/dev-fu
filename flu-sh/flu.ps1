@@ -266,7 +266,7 @@ function Show-FluStartup {
         # Platform info box below logo
         $boxWidth = 50
         if ($boxWidth -gt ($termCols - 4)) { $boxWidth = $termCols - 4 }
-        $boxHeight = 9
+        $boxHeight = 10
         $boxX = [Math]::Max(0, [Math]::Floor(($termCols - $boxWidth) / 2))
         $boxY = 7  # 6 logo lines + 1 gap
 
@@ -274,7 +274,7 @@ function Show-FluStartup {
             -Title "$($Script:TUI_CYAN)flu.ps1 $($Script:FLU_VERSION)$($Script:TUI_RESET)"
 
         $infoX = $boxX + 3
-        $row = $boxY + 3
+        $row = $boxY + 2
 
         Write-TuiAt -Row $row -Col $infoX
         Write-Host "$($Script:TUI_BOLD)OS: $($env:FLU_OS)$($Script:TUI_RESET)" -NoNewline
@@ -296,9 +296,9 @@ function Show-FluStartup {
         $wslStatus = if ($Script:_fluHasWsl) { "Available" } else { "Not installed" }
         Write-Host "$($Script:TUI_CYAN)WSL: $wslStatus$($Script:TUI_RESET)" -NoNewline
 
-        # Footer
-        $footerRow = $boxY + 7
-        Write-TuiAt -Row $footerRow -Col ($boxX + 3)
+        # Footer inside box
+        $row += 2
+        Write-TuiAt -Row $row -Col $infoX
         Write-Host "$($Script:TUI_DIM)Press any key to continue...$($Script:TUI_RESET)" -NoNewline
 
         Read-TuiKey | Out-Null
