@@ -640,17 +640,18 @@ function Show-TuiSelect {
 
                 # Render item at position with V borders
                 $itemText = $Items[$itemIdx]
-                if ($itemText.Length -gt $contentWidth) {
-                    $itemText = $itemText.Substring(0, $contentWidth - 3) + '...'
+                if ($itemText.Length -gt $contentWidth - 2) {
+                    $itemText = $itemText.Substring(0, $contentWidth - 5) + '...'
                 }
-                $padLen = [Math]::Max(0, $contentWidth - $itemText.Length)
-                $paddedText = $itemText + (' ' * $padLen)
+                $padLen = [Math]::Max(0, $contentWidth - 2 - $itemText.Length)
+                $cursor = if ($isCurrent) { '>' } else { ' ' }
+                $paddedText = $cursor + ' ' + $itemText + (' ' * $padLen)
 
                 Move-TuiCursor -Row $row -Col $boxX
                 Write-Host $Script:TUI_BOX_V -NoNewline
                 Write-Host " " -NoNewline
                 if ($isCurrent) {
-                    Write-Host "$($Script:TUI_REV)$paddedText$($Script:TUI_RESET)" -NoNewline
+                    Write-Host "$($Script:TUI_BOLD)$paddedText$($Script:TUI_RESET)" -NoNewline
                 } else {
                     Write-Host $paddedText -NoNewline
                 }
